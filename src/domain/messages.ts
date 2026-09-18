@@ -1,0 +1,93 @@
+/**
+ * Extension-wide message contract. Every `chrome.runtime.sendMessage` /
+ * `chrome.tabs.sendMessage` payload in this codebase is one of these types.
+ * Keeping this in one file means the service worker, popup, offscreen doc,
+ * and content script all agree on shape without importing each other's internals.
+ */
+
+import type { ModelId } from "./models";
+import type { TranscriptEvent } from "./transcript";
+
+export type DestinationRef = {
+  tabId: number;
+  frameId: number;
+  /** Opaque id the content script assigns to the picked element; meaningless outside its frame. */
+  elementId: string;
+};
+
+/** Popup -> background */
+export type PopupRequest =
+  | { kind: "get-state" }
+  | { kind: "list-capturable-tabs" }
+  | { kind: "start-capture"; sourceTabId: number }
+  | { kind: "stop-capture" }
+  | { kind: "pause-transcription" }
+  | { kind: "resume-transcription" }
+  | { kind: "begin-destination-selection" }
+  | { kind: "cancel-destination-selection" }
+  | { kind: "clear-destination" }
+  | { kind: "set-model"; modelId: ModelId }
+  | { kind: "load-model" }
+  | { kind: "download-model" };
+
+/** Background -> popup (response to PopupRequest, or a broadcast state change) */
+export type BackgroundResponse =
+  | { kind: "ok" }
+  | { kind: "error"; code: string; message: string }
+  | { kind: "capturable-tabs"; tabs: CapturableTab[] };
+
+export type CapturableTab = {
+  tabId: number;
+  title: string;
+  url: string;
+  favIconUrl?: string;
+};
+
+/** Content script -> background */
+export type ContentToBackground =
+  | { kind: "destination-picked"; elementId: string; frameId: number; label: string }
+  | { kind: "destination-selection-cancelled" }
+  | { kind: "destination-unavailable"; reason: string };
+
+/** Background -> content script */
+export type BackgroundToContent =
+  | { kind: "enter-selection-mode" }
+  | { kind: "exit-selection-mode" }
+  | { kind: "insert-text"; text: string; separator: string }
+  | { kind: "check-destination-alive" };
+
+/** Background -> offscreen document */
+export type BackgroundToOffscreen =
+  | { kind: "start-capture"; streamId: string }
+  | { kind: "stop-capture" }
+  | { kind: "pause" }
+  | { kind: "resume" }
+  | { kind: "load-model"; modelId: ModelId }
+  | { kind: "unload-model" };
+
+/** Offscreen document -> background */
+export type OffscreenToBackground =
+  | { kind: "transcript-event"; event: TranscriptEvent }
+  | { kind: "capture-started" }
+  | { kind: "capture-stopped" }
+  | { kind: "engine-status"; status: import("./models").EngineStatus };
+
+export const EXTENSION_MESSAGE_SOURCE = "voicewrite" as const;
+
+/** Envelope wrapping every message so unrelated extensions' broadcasts are ignored. */
+export type Envelope<T> = {
+  source: typeof EXTENSION_MESSAGE_SOURCE;
+  payload: T;
+};
+
+export const envelope = <T>(payload: T): Envelope<T> => ({
+  source: EXTENSION_MESSAGE_SOURCE,
+  payload,
+});
+
+export const isEnvelope = <T>(msg: unknown): msg is Envelope<T> =>
+  typeof msg === "object" &&
+  msg !== null &&
+  "source" in msg &&
+  (msg as { source: unknown }).source === EXTENSION_MESSAGE_SOURCE &&
+  "payload" in msg;

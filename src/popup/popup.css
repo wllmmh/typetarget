@@ -1,0 +1,52 @@
+:root {
+  color-scheme: light dark;
+  font-family: system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  width: 320px;
+}
+
+.popup {
+  padding: 12px 16px 16px;
+}
+
+.popup h1 {
+  font-size: 16px;
+  margin: 0 0 4px;
+}
+
+.popup h2 {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.65;
+  margin: 14px 0 6px;
+}
+
+.privacy-note {
+  font-size: 11px;
+  opacity: 0.75;
+  margin: 0 0 8px;
+}
+
+.popup select {
+  width: 100%;
+  padding: 4px;
+}
+
+.controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.controls button {
+  flex: 1 1 auto;
+}
+
+.error {
+  color: #c0392b;
+  font-size: 12px;
+}
