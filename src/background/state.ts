@@ -1,5 +1,5 @@
 import type { ModelId } from "../domain/models";
-import type { DestinationRef } from "../domain/messages";
+import type { DestinationRef, PublicAppState } from "../domain/messages";
 import { DEFAULT_MODEL } from "../domain/models";
 import type { TranscriptionStatus } from "../domain/transcript";
 
@@ -27,4 +27,14 @@ export const createInitialState = (): AppState => ({
   selectedModel: DEFAULT_MODEL,
   isSelectingDestination: false,
   lastError: null,
+});
+
+/** Strips fields the popup doesn't need (e.g. the raw DestinationRef) before sending. */
+export const toPublicState = (state: AppState): PublicAppState => ({
+  status: state.status,
+  sourceTabId: state.sourceTabId,
+  destinationLabel: state.destinationLabel,
+  selectedModel: state.selectedModel,
+  isSelectingDestination: state.isSelectingDestination,
+  lastError: state.lastError,
 });

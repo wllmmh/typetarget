@@ -6,13 +6,27 @@
  */
 
 import type { ModelId } from "./models";
-import type { TranscriptEvent } from "./transcript";
+import type { TranscriptEvent, TranscriptionStatus } from "./transcript";
 
 export type DestinationRef = {
   tabId: number;
   frameId: number;
   /** Opaque id the content script assigns to the picked element; meaningless outside its frame. */
   elementId: string;
+};
+
+/**
+ * Serializable view of background/state.ts's AppState, sent to the popup. Excludes
+ * anything not needed for rendering (no raw DOM refs, no internal-only fields) per
+ * AGENTS.md "Don't pass whole DB records to client components."
+ */
+export type PublicAppState = {
+  status: TranscriptionStatus;
+  sourceTabId: number | null;
+  destinationLabel: string | null;
+  selectedModel: ModelId;
+  isSelectingDestination: boolean;
+  lastError: { code: string; message: string } | null;
 };
 
 /** Popup -> background */
@@ -34,7 +48,8 @@ export type PopupRequest =
 export type BackgroundResponse =
   | { kind: "ok" }
   | { kind: "error"; code: string; message: string }
-  | { kind: "capturable-tabs"; tabs: CapturableTab[] };
+  | { kind: "capturable-tabs"; tabs: CapturableTab[] }
+  | { kind: "state"; state: PublicAppState };
 
 export type CapturableTab = {
   tabId: number;
@@ -43,9 +58,14 @@ export type CapturableTab = {
   favIconUrl?: string;
 };
 
-/** Content script -> background */
+/**
+ * Content script -> background. Note tabId/frameId are deliberately absent from
+ * "destination-picked": the background listener reads those from
+ * chrome.runtime.MessageSender instead of trusting a value the script asserts about
+ * itself (see src/content/main.ts).
+ */
 export type ContentToBackground =
-  | { kind: "destination-picked"; elementId: string; frameId: number; label: string }
+  | { kind: "destination-picked"; elementId: string; label: string }
   | { kind: "destination-selection-cancelled" }
   | { kind: "destination-unavailable"; reason: string };
 
@@ -65,11 +85,14 @@ export type BackgroundToOffscreen =
   | { kind: "load-model"; modelId: ModelId }
   | { kind: "unload-model" };
 
-/** Offscreen document -> background */
+/** Offscreen document -> background, as a direct reply to a BackgroundToOffscreen message. */
+export type OffscreenReply =
+  | { kind: "ok" }
+  | { kind: "error"; code: string; message: string };
+
+/** Offscreen document -> background, unsolicited (broadcast while capture is running). */
 export type OffscreenToBackground =
   | { kind: "transcript-event"; event: TranscriptEvent }
-  | { kind: "capture-started" }
-  | { kind: "capture-stopped" }
   | { kind: "engine-status"; status: import("./models").EngineStatus };
 
 export const EXTENSION_MESSAGE_SOURCE = "voicewrite" as const;
