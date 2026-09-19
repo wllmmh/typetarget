@@ -95,7 +95,7 @@ export type OffscreenToBackground =
   | { kind: "transcript-event"; event: TranscriptEvent }
   | { kind: "engine-status"; status: import("./models").EngineStatus };
 
-export const EXTENSION_MESSAGE_SOURCE = "soundwave-field" as const;
+export const EXTENSION_MESSAGE_SOURCE = "wavetype" as const;
 
 /** Envelope wrapping every message so unrelated extensions' broadcasts are ignored. */
 export type Envelope<T> = {

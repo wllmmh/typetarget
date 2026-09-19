@@ -16,7 +16,7 @@ Status tracker for the phased build described in AGENTS.md. Updated as work land
 - [x] Phase 2 — Tab capture (source selection, chrome.tabCapture, playback restoration, start/stop)
 - [x] Phase 3 — Destination selection (content script, highlighting, cross-tab messaging, safe insertion)
 - [x] Phase 4 — Local ASR (engine adapter, worker-side pieces, model loading, IndexedDB cache) — real whisper.cpp binary built and verified, see docs/whisper-wasm-provenance.md
-- [~] Phase 5 — Streaming (buffering, resampling, VAD, rolling inference, stabilization) — core pipeline, worker entry/controller/protocol, offscreen client and worker build done and verified in a real extension with the real model; AudioWorklet not started
+- [x] Phase 5 — Streaming (buffering, resampling, VAD, rolling inference, stabilization) — core pipeline, worker entry/controller/protocol, offscreen client, AudioWorklet PCM tap (16 kHz context) wired to the worker with pause/resume; verified in a real extension with the real model and real-time-paced audio. See HANDOFF.md for open performance findings
 - [ ] Phase 6 — Integration (wire capture -> pipeline -> ASR -> destination)
 - [ ] Phase 7 — Hardening (errors, lifecycle edge cases, perf, privacy audit, tests)
 

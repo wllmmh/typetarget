@@ -8,8 +8,12 @@ import type { ModelId } from "../domain/models";
 import type { AsrWorkerEvent } from "../worker/worker-protocol";
 import { createAsrWorkerClient, type AsrWorkerClient } from "./asr-worker-client";
 import { startTabCapture, type StartCaptureResult } from "./capture";
+import { startPcmStream, type PcmStream } from "./pcm-stream";
 
 let active: StartCaptureResult | null = null;
+let pcm: PcmStream | null = null;
+/** While paused, captured audio keeps playing to the speakers but is not sent to the ASR worker. */
+let paused = false;
 
 // The worker is created on first use, not at document load: it's cheap, but nothing
 // needs it until a model is requested.
@@ -35,22 +39,34 @@ const loadModel = (modelId: ModelId): Promise<OffscreenReply> =>
     getAsrWorker().send({ kind: "load-model", modelId });
   });
 
+/** Tears down capture and the PCM tap, and has the worker finalize whatever utterance was in progress. */
+const stopCapture = () => {
+  pcm?.stop();
+  pcm = null;
+  active?.stop();
+  active = null;
+  paused = false;
+  asrWorker?.send({ kind: "flush" });
+};
+
 const handleMessage = async (msg: BackgroundToOffscreen): Promise<OffscreenReply> => {
   switch (msg.kind) {
     case "start-capture": {
-      active?.stop();
+      stopCapture();
       try {
         active = await startTabCapture(msg.streamId);
+        pcm = await startPcmStream(active.sourceNode.mediaStream, (samples) => {
+          if (!paused) getAsrWorker().sendAudio(samples);
+        });
         return { kind: "ok" };
       } catch (err) {
-        active = null;
+        stopCapture();
         const message = err instanceof Error ? err.message : "Unknown capture error.";
         return { kind: "error", code: "capture-failed", message };
       }
     }
     case "stop-capture": {
-      active?.stop();
-      active = null;
+      stopCapture();
       return { kind: "ok" };
     }
     case "load-model":
@@ -59,10 +75,15 @@ const handleMessage = async (msg: BackgroundToOffscreen): Promise<OffscreenReply
       getAsrWorker().send({ kind: "unload-model" });
       return { kind: "ok" };
     }
-    case "pause":
-    case "resume":
-      // Audio -> worker wiring (and so pause/resume of it) lands in Phase 6.
+    case "pause": {
+      paused = true;
+      asrWorker?.send({ kind: "flush" });
       return { kind: "ok" };
+    }
+    case "resume": {
+      paused = false;
+      return { kind: "ok" };
+    }
     default: {
       const _exhaustive: never = msg;
       return _exhaustive;
