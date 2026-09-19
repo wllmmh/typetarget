@@ -83,10 +83,27 @@ export const loadWhisperModuleFactory = async (glueScriptUrl: string): Promise<W
 
   return (overrides) => {
     loaded ??= new Promise<WhisperModule>((resolve, reject) => {
+      // The glue starts its runtime asynchronously after importScripts returns, so a
+      // startup failure (e.g. Embind's `new Function` blocked by the extension CSP)
+      // surfaces as an unhandled rejection / uncaught error, not through onAbort.
+      // Without these listeners the promise would never settle.
+      const onRuntimeError = (event: PromiseRejectionEvent | ErrorEvent) => {
+        const reason = "reason" in event ? event.reason : event.error ?? event.message;
+        settle(() => reject(new Error(`whisper.cpp WASM runtime failed to start: ${String(reason)}`)));
+      };
+      const settle = (action: () => void) => {
+        self.removeEventListener("unhandledrejection", onRuntimeError);
+        self.removeEventListener("error", onRuntimeError);
+        action();
+      };
+      self.addEventListener("unhandledrejection", onRuntimeError);
+      self.addEventListener("error", onRuntimeError);
+
       const module: Record<string, unknown> = {
         ...overrides,
-        onRuntimeInitialized: () => resolve(module as unknown as WhisperModule),
-        onAbort: (reason: unknown) => reject(new Error(`whisper.cpp WASM runtime aborted: ${String(reason)}`)),
+        onRuntimeInitialized: () => settle(() => resolve(module as unknown as WhisperModule)),
+        onAbort: (reason: unknown) =>
+          settle(() => reject(new Error(`whisper.cpp WASM runtime aborted: ${String(reason)}`))),
       };
       // `self` is typed as DedicatedWorkerGlobalScope ("WebWorker" lib), which doesn't
       // know about the dynamically-read `Module` global the glue script consumes.
@@ -94,7 +111,7 @@ export const loadWhisperModuleFactory = async (glueScriptUrl: string): Promise<W
       try {
         importScripts(glueScriptUrl);
       } catch (err) {
-        reject(err);
+        settle(() => reject(err));
       }
     });
     return loaded;

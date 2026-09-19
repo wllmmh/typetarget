@@ -1,5 +1,5 @@
 {
-  "name": "voicewrite",
+  "name": "soundwave-field",
   "version": "0.1.0",
   "private": true,
   "description": "Local Chromium live audio transcriber extension (tab capture -> local Whisper -> cross-tab text insertion).",

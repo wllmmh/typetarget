@@ -13,20 +13,30 @@ project default. No separate `libmain.wasm` exists.
 
 ### Where the vendored copy came from
 
-There is no GitHub release artifact. The copy in use was downloaded from the official
-demo, served by GitHub Pages:
+**Built from source, not downloaded.** The hosted demo build
+(`https://ggml.ai/whisper.cpp/libmain.js`) does not work in this extension — see
+"Why it is built from source" below. The vendored file is our own build:
+
+- whisper.cpp commit `5670d5c0bbcb148feabef84400a07cfca9aa3b30` (2026-09-18, master)
+- Emscripten 6.0.9 (emsdk `latest` at the time), cmake 4.4.3 + ninja from PyPI
+- one change to `examples/whisper.wasm/CMakeLists.txt`: add `-s DYNAMIC_EXECUTION=0`
+  to the `LINK_FLAGS` list (after `-s FORCE_FILESYSTEM=1`)
+- sha256 of the result: `d9611649f3fc2c1a00fc9567067115c8e2c02c87f199f78230adcc647753a22b` (1,832,762 bytes)
+
+Rebuild recipe:
 
 ```
-curl -L -o third_party/whisper-wasm/libmain.js https://ggml.ai/whisper.cpp/libmain.js
+git clone https://github.com/emscripten-core/emsdk.git && (cd emsdk && ./emsdk install latest && ./emsdk activate latest)
+git clone https://github.com/ggml-org/whisper.cpp.git && cd whisper.cpp
+git checkout 5670d5c0bbcb148feabef84400a07cfca9aa3b30
+# add "-s DYNAMIC_EXECUTION=0 \" to LINK_FLAGS in examples/whisper.wasm/CMakeLists.txt
+source ../emsdk/emsdk_env.sh
+emcmake cmake -B build-em -G Ninja -DCMAKE_BUILD_TYPE=Release -DWHISPER_WASM_SINGLE_FILE=ON
+cmake --build build-em --target libmain -j 8
+cp build-em/bin/libmain.js <repo>/third_party/whisper-wasm/libmain.js
 ```
 
-- sha256 at the time of download (2026-09-18): `144f4bf8c2cf43c3224037b487bae497a280ee2b5ccaa45cdf54448bf6f11e8a`
-- The URL is **unversioned** (it tracks the demo's latest build), so the whisper.cpp
-  commit is unknown. Re-check the checksum before assuming a re-download is identical,
-  and re-run the real-binary check below if it differs.
-- To pin a known commit instead, build from
-  [ggml-org/whisper.cpp](https://github.com/ggml-org/whisper.cpp)
-  `examples/whisper.wasm/` with Emscripten (`emcmake` + `emmake`).
+The build is not bit-reproducible across toolchain versions; re-verify after any rebuild.
 
 ### Glue shape: classic global `Module`, not a factory
 
@@ -75,14 +85,38 @@ would need forking).
 
 ## Verified against the real binary
 
-On 2026-09-18, the vendored `libmain.js` + real `ggml-tiny.en.bin` were run through
-`WhisperCppEngine` + `loadWhisperModuleFactory` in headless Chromium (page served with
-COOP/COEP headers, worker built as an IIFE per the rules above) on `jfk.wav`. It
-transcribed correctly. That confirmed: the Embind names/signatures below, the stdout
-segment format, the stderr completion marker, and cross-origin isolation with the
-model fetch. It also surfaced that `FS_unlink` on a not-yet-existing model file throws
-`ErrnoError` errno 44 (ENOENT) — the engine now tolerates exactly that. This was a
-one-off manual harness, not a repo test; unit tests still use a fake module.
+On 2026-09-18 the vendored build + real `ggml-tiny.en.bin` were checked twice:
+
+1. Plain COOP/COEP-served page, `WhisperCppEngine.transcribe` on `jfk.wav`: correct
+   transcript. Confirmed the Embind names/signatures below, the stdout segment format,
+   the stderr completion marker, and the model fetch under `require-corp`. It also
+   surfaced that `FS_unlink` on a not-yet-existing model file throws `ErrnoError`
+   errno 44 (ENOENT) — the engine now tolerates exactly that.
+2. **Built extension loaded into Chrome**, worker started from an extension page:
+   `crossOriginIsolated` true (manifest COOP/COEP suffice), model loaded (~8.7 s),
+   `jfk.wav` fed in 100 ms chunks through `StreamingTranscriber` produced correct
+   finals split at the speaker's pauses. This is what exposed the CSP problem below
+   (against the hosted build) and confirmed the rebuild fixes it.
+
+Both were one-off manual harnesses, not repo tests; unit tests use fakes. Not yet
+verified: the offscreen document itself (only an extension page hosting the same
+worker), live tab audio, partial results under real-time pacing.
+
+## Why it is built from source: the MV3 CSP
+
+The hosted `libmain.js` cannot run in an MV3 extension. Loading the built extension
+into Chrome and starting the worker from an extension page (2026-09-18) failed at
+runtime startup with `EvalError: Evaluating a string as JavaScript violates ...
+'unsafe-eval'`. Embind builds its call invokers with `new Function(...)`
+(`createJsInvoker`, and the emval method callers), and MV3 extension pages cannot
+allow `unsafe-eval`; the `'wasm-unsafe-eval'` we do set covers only WebAssembly
+compilation. (A plain page without a CSP hides this, which is how the first check
+passed.) Building with `-sDYNAMIC_EXECUTION=0` removes those sites — the rebuilt glue
+contains no `new Function` / `eval(`.
+
+`loadWhisperModuleFactory` rejects on asynchronous runtime-startup errors, so a
+failure of this kind surfaces as a clear "runtime failed to start" error instead of a
+hang.
 
 ## Model files
 

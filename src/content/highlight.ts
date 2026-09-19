@@ -4,8 +4,8 @@
  * module only ever outlines one element at a time and always cleans up on exit.
  */
 
-const HIGHLIGHT_CLASS = "voicewrite-highlight-candidate";
-const STYLE_ELEMENT_ID = "voicewrite-highlight-style";
+const HIGHLIGHT_CLASS = "soundwave-field-highlight-candidate";
+const STYLE_ELEMENT_ID = "soundwave-field-highlight-style";
 
 const ensureStyleInjected = () => {
   if (document.getElementById(STYLE_ELEMENT_ID)) return;

@@ -9,7 +9,7 @@
  */
 import type { ModelId } from "../domain/models";
 
-const DB_NAME = "voicewrite-models";
+const DB_NAME = "soundwave-field-models";
 const DB_VERSION = 1;
 const STORE_NAME = "models";
 

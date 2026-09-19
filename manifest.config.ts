@@ -29,7 +29,7 @@ const crossOriginIsolation = {
 
 export default defineManifest({
   manifest_version: 3,
-  name: "VoiceWrite — Local Live Transcriber",
+  name: "SoundwaveField — Local Live Transcriber",
   version: pkg.version,
   description:
     "Captures a browser tab's audio and transcribes it locally with Whisper, streaming finalized text into a text field you choose. Nothing is uploaded.",

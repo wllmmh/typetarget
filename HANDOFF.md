@@ -9,18 +9,15 @@ what's fragile.
 - All of Phases 1–4 (extension skeleton, tab capture, destination selection,
   ASR engine layer) are implemented, typechecked, linted, built, and covered by
   99 passing unit tests (`npm test`).
-- **No commit exists with this Phase 2–4 work yet** — it was sitting in the working
-  tree when this session ended. First thing to do on the new machine: review the
-  diff, then commit it (the user asked to "commit, push and continue" — see
-  "Immediate next steps" below).
-- **No git remote is configured.** `git remote -v` returns nothing. You'll need to
-  create a remote (GitHub, etc.) and add it before `git push` will work.
+- Phase 2–4 work is committed (`700e189`) and `origin` is
+  `github.com/williammh/soundwave-field`. Since then, uncommitted: manifest COOP/COEP,
+  the whisper loader/engine fixes (+ tests), and these doc updates.
 - Extension has never been loaded into a real Chromium browser or click-tested.
   Everything is verified via `npm test` + `npm run build` only.
 
 ## Immediate next steps (in order)
 
-1. `cd voicewrite && npm install` (fresh clone/machine won't have `node_modules`).
+1. `cd soundwave-field && npm install` (fresh clone/machine won't have `node_modules`).
 2. Review the working tree diff (`git status`, `git diff`) — it's the accumulated
    Phase 2–4 work. Commit it. Suggested message: something like "Implement tab
    capture, destination selection, and local ASR engine layer (Phases 2-4)" — but
@@ -31,8 +28,7 @@ what's fragile.
    ```
    npx tsc -b --noEmit && npx eslint src --ext .ts,.tsx && npm test && npx vite build
    ```
-5. **Before doing anything else**, get the real whisper.cpp WASM binary — this is
-   the single biggest blocker. See "The whisper.cpp binary" section below.
+5. ~~Get the real whisper.cpp WASM binary~~ — done; see "The whisper.cpp binary" below.
 
 ## What's NOT done yet (Phase 5, 6, 7 — not started)
 
@@ -52,42 +48,28 @@ what's fragile.
   `src/background/service-worker.ts` — capture state currently lives only in memory
   and is lost if the SW restarts), no diagnostics panel.
 
-## The whisper.cpp binary — the critical blocker
+## The whisper.cpp binary — built from source, verified in the extension (2026-09-18)
 
-`src/worker/whisper-cpp-engine.ts` and `whisper-module.ts` are written against
-whisper.cpp's **real, source-verified** Embind API (confirmed by reading
-`examples/whisper.wasm/emscripten.cpp` and `src/whisper.cpp` directly from
-github.com/ggml-org/whisper.cpp during this session) — but no actual compiled
-`.wasm`/`.js` file exists anywhere in this repo. All 9 tests for the engine run
-against a hand-written fake module (`createFakeModule` in
-`whisper-cpp-engine.test.ts`) that mimics the documented behavior, not the real
-thing.
+`third_party/whisper-wasm/libmain.js` is **our own Emscripten build with
+`-s DYNAMIC_EXECUTION=0`** (gitignored; recipe, commit and checksum in
+`docs/whisper-wasm-provenance.md`). The hosted demo build does not work: Embind's
+`new Function` violates the MV3 extension CSP. The rebuilt file was verified by loading
+the built extension into Chrome, starting the ASR worker from an extension page and
+transcribing `jfk.wav` with the real `tiny.en` model. **Read the provenance doc
+before touching ASR** — key points:
 
-**Full details, exact API signatures, and the SharedArrayBuffer/pthreads situation
-are in `docs/whisper-wasm-provenance.md` — read that file before touching ASR again.**
-Short version:
-
-- Need `libmain.js` (+ possibly `libmain.wasm`) built from
-  `github.com/ggml-org/whisper.cpp`'s `examples/whisper.wasm/` via Emscripten, or
-  found as a hosted prebuilt if one exists (not confirmed either way this session).
-- Drop them in `third_party/whisper-wasm/` (already gitignored there, has its own
-  README).
-- The stock build needs `SharedArrayBuffer` (pthreads). Per the user's own stated
-  plan: launch the recording-machine browser with
-  `--enable-features=SharedArrayBuffer` (they specifically mentioned
-  `brave-browser --enable-features=SharedArrayBuffer`) rather than rebuilding
-  whisper.cpp without pthreads. `whisper-module.ts`'s `loadWhisperModuleFactory`
-  already checks for `SharedArrayBuffer` and throws a clear error if it's missing,
-  so this will fail loudly and specifically if the flag isn't set — that's
-  intentional, not a bug to fix.
-- Once the real files exist, the fastest way to validate them: swap the fake module
-  in `whisper-cpp-engine.test.ts` for a real load against `third_party/whisper-wasm/`
-  in a small manual/dev-only script or a new integration test, and confirm the
-  segment-line format (`[HH:MM:SS.mmm --> HH:MM:SS.mmm]  text` on stdout) and the
-  completion marker (`"whisper_print_timings"` substring on stderr) actually appear
-  as documented. If whisper.cpp's version has drifted from what's in
-  `docs/whisper-wasm-provenance.md`, that doc's assumptions (line format, function
-  signatess) may need re-verification against the actual vendored commit.
+- The build is a classic global-`Module` script (no `libmain` factory);
+  `print`/`printErr` are read once at startup, so they are load-time overrides.
+- **Phase 5 constraint:** pthreads are spawned from the worker's own URL as classic
+  workers named `em-pthread`. The ASR worker entry (`src/worker/main.ts`) must be an
+  IIFE bundle and, when `self.name === "em-pthread"`, only `importScripts` the glue.
+- SharedArrayBuffer comes from the manifest's COOP/COEP keys (`manifest.config.ts`) —
+  **no browser launch flag needed**. Confirmed in the real extension (extension page +
+  worker); the offscreen document itself has not been exercised yet.
+- The verification harnesses were throwaways, not in the repo; unit tests still use a
+  fake module. Consider a repo dev script if this needs repeating. (Playwright's
+  `page.evaluate` doesn't work on extension pages — their CSP forbids eval — so the
+  harness was a plain script loaded from an HTML file dropped in `dist/`.)
 
 ## Other things worth knowing before continuing
 
@@ -127,8 +109,7 @@ Short version:
 ## Recommended order of work on the new machine
 
 1. Commit + push this session's work (see "Immediate next steps").
-2. Get/build the real whisper.cpp WASM binary; validate it against
-   `docs/whisper-wasm-provenance.md`'s documented API shape.
+2. (Done) real whisper.cpp binary obtained and validated.
 3. Load the unpacked extension (`npm run build`, then load `dist/` in
    `chrome://extensions`) and manually walk through Phase 2 (tab capture + playback
    restoration) and Phase 3 (destination selection + insertion) for the first time —

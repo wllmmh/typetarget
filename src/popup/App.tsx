@@ -70,7 +70,7 @@ export const App = () => {
 
   return (
     <main className="popup">
-      <h1>VoiceWrite</h1>
+      <h1>SoundwaveField</h1>
       <p className="privacy-note">
         Audio is processed locally in your browser. Audio is not uploaded to a server.
       </p>

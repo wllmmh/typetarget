@@ -66,4 +66,18 @@ describe("loadWhisperModuleFactory", () => {
 
     await expect(factory(overrides)).rejects.toThrow("NetworkError");
   });
+
+  it("rejects when the runtime fails asynchronously after the script loaded", async () => {
+    vi.stubGlobal("importScripts", () => {
+      setTimeout(() => {
+        const event = new Event("unhandledrejection") as PromiseRejectionEvent;
+        Object.assign(event, { reason: "EvalError: unsafe-eval blocked" });
+        self.dispatchEvent(event);
+      }, 0);
+    });
+
+    const factory = await loadWhisperModuleFactory("libmain.js");
+
+    await expect(factory(overrides)).rejects.toThrow(/failed to start: EvalError: unsafe-eval blocked/);
+  });
 });
