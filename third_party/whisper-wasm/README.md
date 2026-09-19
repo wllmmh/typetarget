@@ -1,10 +1,9 @@
-Place the vendored whisper.cpp WASM build output here:
+Place the vendored whisper.cpp WASM build here:
 
-- `libmain.js`
-- `libmain.wasm` (only if built with `WHISPER_WASM_SINGLE_FILE=OFF`)
+- `libmain.js` — single-file build (wasm embedded); no separate `.wasm`.
 
-See [`docs/whisper-wasm-provenance.md`](../../docs/whisper-wasm-provenance.md) for
-exactly what to build, from where, and the API this codebase expects it to expose.
+Download command, checksum, glue shape and the rules the worker must follow are in
+[`docs/whisper-wasm-provenance.md`](../../docs/whisper-wasm-provenance.md).
 
 This directory is empty in version control on purpose — these are large, externally
 built binary artifacts, not source this repo owns.

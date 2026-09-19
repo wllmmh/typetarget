@@ -1,23 +1,25 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WhisperCppEngine } from "./whisper-cpp-engine";
-import type { WhisperModule, WhisperModuleFactory } from "./whisper-module";
+import type { WhisperModule, WhisperModuleFactory, WhisperModuleOverrides } from "./whisper-module";
 
 const MODEL_URLS = { "tiny.en": "https://example.com/tiny.en.bin", "base.en": "https://example.com/base.en.bin" };
 
-/** Builds a fake WhisperModule whose full_default asynchronously "finishes" by
- * calling the captured printErr/print callbacks, simulating the real background
- * thread's printf calls. */
+/** Builds a fake WhisperModule plus the factory that loads it. Like the real build,
+ * the fake only sees print/printErr via the overrides passed at load time (Emscripten
+ * reads them once at startup); full_default asynchronously "finishes" by calling
+ * them, simulating the real background thread's printf calls. */
 const createFakeModule = (options?: {
   segmentLines?: string[];
   contextIndexFromInit?: number;
   fullDefaultResultCode?: number;
   neverFinishes?: boolean;
-}): WhisperModule => {
+  fsUnlinkError?: unknown;
+}): { module: WhisperModule; factory: WhisperModuleFactory } => {
   const segmentLines = options?.segmentLines ?? ["[00:00:00.000 --> 00:00:01.000]  hello world"];
-  let print: (text: string) => void = () => {};
-  let printErr: (text: string) => void = () => {};
+  let print: WhisperModuleOverrides["print"] = () => {};
+  let printErr: WhisperModuleOverrides["printErr"] = () => {};
 
-  return {
+  const module: WhisperModule = {
     init: vi.fn(() => options?.contextIndexFromInit ?? 1),
     free: vi.fn(),
     full_default: vi.fn(() => {
@@ -29,29 +31,22 @@ const createFakeModule = (options?: {
       return options?.fullDefaultResultCode ?? 0;
     }),
     FS_createDataFile: vi.fn(),
-    FS_unlink: vi.fn(),
-    get print() {
-      return print;
-    },
-    set print(fn) {
-      print = fn;
-    },
-    get printErr() {
-      return printErr;
-    },
-    set printErr(fn) {
-      printErr = fn;
-    },
+    FS_unlink: vi.fn(() => {
+      if (options?.fsUnlinkError) throw options.fsUnlinkError;
+    }),
   };
+  const factory: WhisperModuleFactory = vi.fn(async (overrides) => {
+    ({ print, printErr } = overrides);
+    return module;
+  });
+  return { module, factory };
 };
 
-const createEngine = (fakeModule: WhisperModule) => {
-  const factory: WhisperModuleFactory = vi.fn().mockResolvedValue(fakeModule);
-  return new WhisperCppEngine({
+const createEngine = ({ factory }: ReturnType<typeof createFakeModule>) =>
+  new WhisperCppEngine({
     loadModuleFactory: () => Promise.resolve(factory),
     modelUrls: MODEL_URLS,
   });
-};
 
 beforeEach(() => {
   const modelBytesStream = new ReadableStream<Uint8Array>({
@@ -77,15 +72,33 @@ describe("WhisperCppEngine.load", () => {
 
     await engine.load("tiny.en");
 
-    expect(fakeModule.FS_createDataFile).toHaveBeenCalledWith(
+    expect(fakeModule.module.FS_createDataFile).toHaveBeenCalledWith(
       "/",
       "ggml-tiny.en.bin",
       expect.any(Uint8Array),
       true,
       true,
     );
-    expect(fakeModule.init).toHaveBeenCalledWith("ggml-tiny.en.bin");
+    expect(fakeModule.module.init).toHaveBeenCalledWith("ggml-tiny.en.bin");
     expect(engine.getStatus()).toEqual({ state: "ready", modelId: "tiny.en" });
+  });
+
+  it("tolerates FS_unlink reporting ENOENT (no stale model file on first load)", async () => {
+    // Shape of Emscripten's FS.ErrnoError for a missing file.
+    const fakeModule = createFakeModule({ fsUnlinkError: { name: "ErrnoError", errno: 44 } });
+    const engine = createEngine(fakeModule);
+
+    await engine.load("tiny.en");
+
+    expect(engine.getStatus()).toEqual({ state: "ready", modelId: "tiny.en" });
+  });
+
+  it("propagates other FS_unlink failures", async () => {
+    const fakeModule = createFakeModule({ fsUnlinkError: { name: "ErrnoError", errno: 13 } });
+    const engine = createEngine(fakeModule);
+
+    await expect(engine.load("tiny.en")).rejects.toEqual({ name: "ErrnoError", errno: 13 });
+    expect(engine.getStatus().state).toBe("error");
   });
 
   it("reports an error status when the module fails to init a context", async () => {
@@ -142,17 +155,16 @@ describe("WhisperCppEngine.transcribe", () => {
     }
   });
 
-  it("restores the module's original print/printErr after finishing", async () => {
-    const fakeModule = createFakeModule();
+  it("does not leak one call's output into the next", async () => {
+    const fakeModule = createFakeModule({ segmentLines: ["[00:00:00.000 --> 00:00:01.000]  hello"] });
     const engine = createEngine(fakeModule);
     await engine.load("tiny.en");
-    const printAfterLoad = fakeModule.print;
-    const printErrAfterLoad = fakeModule.printErr;
 
-    await engine.transcribe(new Float32Array(16_000));
+    const first = await engine.transcribe(new Float32Array(16_000));
+    const second = await engine.transcribe(new Float32Array(16_000));
 
-    expect(fakeModule.print).toBe(printAfterLoad);
-    expect(fakeModule.printErr).toBe(printErrAfterLoad);
+    expect(first.text).toBe("hello");
+    expect(second.text).toBe("hello");
   });
 });
 
@@ -164,7 +176,7 @@ describe("WhisperCppEngine.unload", () => {
 
     await engine.unload();
 
-    expect(fakeModule.free).toHaveBeenCalledWith(1);
+    expect(fakeModule.module.free).toHaveBeenCalledWith(1);
     expect(engine.getStatus()).toEqual({ state: "unloaded" });
   });
 

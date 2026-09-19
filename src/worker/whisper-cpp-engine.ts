@@ -17,6 +17,19 @@ const MODEL_FILENAME_IN_FS: Record<ModelId, string> = {
   "base.en": "ggml-base.en.bin",
 };
 
+/** Emscripten FS `ErrnoError.errno` for "no such file" (musl's ENOENT). */
+const ENOENT = 44;
+
+/** Removes a stale copy of `path` from the module FS (e.g. from a previous load); a missing file is expected on first load. */
+const unlinkIfPresent = (module: WhisperModule, path: string) => {
+  try {
+    module.FS_unlink(path);
+  } catch (err) {
+    const isMissingFile = typeof err === "object" && err !== null && "errno" in err && err.errno === ENOENT;
+    if (!isMissingFile) throw err;
+  }
+};
+
 export type WhisperCppEngineConfig = {
   /**
    * Loads (or returns an already-loaded) whisper.cpp module factory. Takes a
@@ -35,6 +48,10 @@ export class WhisperCppEngine implements TranscriptionEngine {
   private status: EngineStatus = { state: "unloaded" };
   private module: WhisperModule | null = null;
   private contextIndex: number | null = null;
+  // Emscripten reads print/printErr once at startup (see whisper-module.ts), so the
+  // module gets these two fixed forwarders and transcribe() swaps the sinks instead.
+  private stdoutSink: (line: string) => void = () => {};
+  private stderrSink: (line: string) => void = () => {};
 
   constructor(private readonly config: WhisperCppEngineConfig) {}
 
@@ -49,12 +66,12 @@ export class WhisperCppEngine implements TranscriptionEngine {
       const module = await factory({
         // whisper.cpp's realtime segment output arrives here; buffered per-inference
         // by transcribe() below, not consumed at load time.
-        print: () => {},
-        printErr: () => {},
+        print: (line) => this.stdoutSink(line),
+        printErr: (line) => this.stderrSink(line),
       });
 
       const filename = MODEL_FILENAME_IN_FS[modelId];
-      module.FS_unlink(`/${filename}`);
+      unlinkIfPresent(module, `/${filename}`);
       module.FS_createDataFile("/", filename, new Uint8Array(modelBytes), true, true);
 
       const contextIndex = module.init(filename);
@@ -88,9 +105,7 @@ export class WhisperCppEngine implements TranscriptionEngine {
 
     const capturedStdout: string[] = [];
     const module = this.module;
-    const originalPrint = module.print;
-    const originalPrintErr = module.printErr;
-    module.print = (line: string) => capturedStdout.push(line);
+    this.stdoutSink = (line) => capturedStdout.push(line);
 
     // Completion signal: full_default() starts inference on a background
     // std::thread and returns immediately (confirmed from emscripten.cpp source) —
@@ -106,7 +121,7 @@ export class WhisperCppEngine implements TranscriptionEngine {
     // real signal tied to the actual last statement of the background thread, not a
     // guessed delay.
     let inferenceFinished = false;
-    module.printErr = (line: string) => {
+    this.stderrSink = (line) => {
       if (line.includes("whisper_print_timings")) inferenceFinished = true;
     };
 
@@ -129,8 +144,8 @@ export class WhisperCppEngine implements TranscriptionEngine {
       const text = segments.map((s) => s.text).join(" ").trim();
       return { text };
     } finally {
-      module.print = originalPrint;
-      module.printErr = originalPrintErr;
+      this.stdoutSink = () => {};
+      this.stderrSink = () => {};
     }
   }
 

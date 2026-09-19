@@ -10,12 +10,16 @@
  * `full_default` does not return transcript text — it starts inference on a
  * background std::thread and returns immediately (0 on success). Segment text
  * arrives via whisper.cpp's internal per-segment printf (params.print_realtime=true),
- * a plain stdout printf captured via the exported `print` Emscripten runtime method
- * into `Module.print` (see whisper-line-parser.ts). Completion of that background
+ * a plain stdout printf routed to the `print` handler supplied at load time (see
+ * whisper-line-parser.ts). Completion of that background
  * thread is separately signaled through `Module.printErr` (stderr), because
  * whisper_print_timings() — the last call the thread makes — goes through
  * whisper.cpp's default log callback, which writes to stderr, not stdout (see
  * whisper-cpp-engine.ts for exactly how this is used as a completion marker).
+ *
+ * `print`/`printErr` are read by Emscripten exactly once, at runtime startup
+ * (`if (Module["print"]) out = Module["print"]`), so they can only be supplied as
+ * load-time overrides — reassigning them on the module afterwards has no effect.
  *
  * The actual libmain.js glue + libmain.wasm binary are not npm packages — they are
  * build output from whisper.cpp's own CMake/Emscripten build
@@ -43,39 +47,56 @@ export type WhisperModule = {
     canWrite: boolean,
   ) => void;
   FS_unlink: (path: string) => void;
-  /** Overridden by the caller to capture whisper.cpp's stdout (see whisper-cpp-engine.ts). */
+};
+
+/** Output handlers handed to Emscripten at startup; see the note on `print`/`printErr` above. */
+export type WhisperModuleOverrides = {
   print: (text: string) => void;
   printErr: (text: string) => void;
 };
 
-export type WhisperModuleFactory = (overrides: Partial<WhisperModule>) => Promise<WhisperModule>;
+export type WhisperModuleFactory = (overrides: WhisperModuleOverrides) => Promise<WhisperModule>;
 
 /**
- * Loads the vendored whisper.cpp WASM glue script and returns its module factory.
- * Emscripten's default (non-ES-module) output attaches a factory function to the
- * global scope when loaded via importScripts in a Worker — this wraps that in a
- * promise-based loader so callers don't touch globals directly.
+ * Returns a factory for the vendored whisper.cpp WASM build. The build in
+ * third_party/whisper-wasm/libmain.js is a classic (non-MODULARIZE) Emscripten script:
+ * it reads a pre-populated global `Module`, and Embind attaches `init`/`free`/
+ * `full_default` and the FS helpers to that same object once the runtime is up
+ * (signalled by `Module.onRuntimeInitialized`). It also re-loads its own script URL in
+ * each pthread worker, so `glueScriptUrl` must be a stable, fetchable URL.
+ *
+ * One runtime per worker: the script is imported once, and every call returns that
+ * same module. Overrides passed on the first call are the ones that stay in effect.
  */
 export const loadWhisperModuleFactory = async (glueScriptUrl: string): Promise<WhisperModuleFactory> => {
   if (typeof SharedArrayBuffer === "undefined") {
     throw new Error(
       "SharedArrayBuffer is not available in this context, but whisper.cpp's WASM build requires it " +
-        "(it's compiled with pthreads). Chrome gates SharedArrayBuffer behind cross-origin isolation. " +
-        "See docs/whisper-wasm-provenance.md for how to rebuild whisper.cpp without pthreads (slower, " +
-        "single-threaded, no SharedArrayBuffer needed) or how to run Chrome with the isolation flag enabled.",
+        "(it's compiled with pthreads). The extension manifest sets COOP/COEP to cross-origin-isolate " +
+        "its pages; if this fires, that isolation isn't in effect for this context (or, in a plain " +
+        "browser/test harness, launch with cross-origin isolation enabled). See " +
+        "docs/whisper-wasm-provenance.md, which also covers rebuilding whisper.cpp without pthreads.",
     );
   }
 
-  importScripts(glueScriptUrl);
-  // Emscripten's MODULARIZE output attaches a factory function named after the
-  // CMake target (`libmain` per examples/whisper.wasm/CMakeLists.txt) to the worker
-  // global scope. `self` is typed as DedicatedWorkerGlobalScope by the caller's tsconfig
-  // ("WebWorker" lib), which doesn't know about this dynamically-attached property.
-  const factory = (self as unknown as { libmain?: WhisperModuleFactory }).libmain;
-  if (!factory) {
-    throw new Error(
-      `whisper.cpp WASM glue script at "${glueScriptUrl}" did not expose the expected module factory.`,
-    );
-  }
-  return factory;
+  let loaded: Promise<WhisperModule> | null = null;
+
+  return (overrides) => {
+    loaded ??= new Promise<WhisperModule>((resolve, reject) => {
+      const module: Record<string, unknown> = {
+        ...overrides,
+        onRuntimeInitialized: () => resolve(module as unknown as WhisperModule),
+        onAbort: (reason: unknown) => reject(new Error(`whisper.cpp WASM runtime aborted: ${String(reason)}`)),
+      };
+      // `self` is typed as DedicatedWorkerGlobalScope ("WebWorker" lib), which doesn't
+      // know about the dynamically-read `Module` global the glue script consumes.
+      (self as unknown as { Module: Record<string, unknown> }).Module = module;
+      try {
+        importScripts(glueScriptUrl);
+      } catch (err) {
+        reject(err);
+      }
+    });
+    return loaded;
+  };
 };

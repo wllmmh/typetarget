@@ -1,47 +1,88 @@
 # whisper.cpp WASM: what to vendor and how
 
 This extension's ASR engine (`src/worker/whisper-cpp-engine.ts`) is written against
-whisper.cpp's official browser example, but the compiled `.wasm`/`.js` artifacts
-themselves are **not included in this repo** — they aren't an npm package, and this
-sandbox has no Emscripten toolchain to build them. This file is the checklist for
-whoever provides them.
+whisper.cpp's official browser example. The compiled glue script is **not committed**
+(`third_party/whisper-wasm/*.js` is gitignored) — this file says where it came from
+and how to get it again.
 
 ## What's needed
 
-Two files, vendored under `third_party/whisper-wasm/`:
+One file, vendored at `third_party/whisper-wasm/libmain.js`: a **single-file**
+Emscripten build (wasm embedded, ~1.8 MB), i.e. `WHISPER_WASM_SINGLE_FILE=ON`, the
+project default. No separate `libmain.wasm` exists.
 
-- `libmain.js` — Emscripten glue/loader (attaches a `libmain` factory function to
-  the global scope; see `src/worker/whisper-module.ts`).
-- `libmain.wasm` — the compiled WASM binary (only produced as a separate file if
-  built with `WHISPER_WASM_SINGLE_FILE=OFF`; the project's default embeds the wasm
-  as base64 inside `libmain.js` instead, in which case only one file exists).
+### Where the vendored copy came from
 
-Source: [ggml-org/whisper.cpp](https://github.com/ggml-org/whisper.cpp),
-`examples/whisper.wasm/` — built via its `CMakeLists.txt` + Emscripten (`emcmake` +
-`emmake`), **not** a prebuilt release artifact as far as could be confirmed; check the
-repo's releases page for a hosted prebuilt before rebuilding from source.
+There is no GitHub release artifact. The copy in use was downloaded from the official
+demo, served by GitHub Pages:
 
-## Build flags — read before building
+```
+curl -L -o third_party/whisper-wasm/libmain.js https://ggml.ai/whisper.cpp/libmain.js
+```
 
-The project's default `examples/whisper.wasm/CMakeLists.txt` link flags set
-`-s USE_PTHREADS=1`, which requires `SharedArrayBuffer` at runtime. Chrome gates
-`SharedArrayBuffer` behind cross-origin isolation; there is an open, unresolved
-whisper.cpp issue (#2437) reporting `"SharedArrayBuffer is not defined"` in Chrome
-with no in-repo fix.
+- sha256 at the time of download (2026-09-18): `144f4bf8c2cf43c3224037b487bae497a280ee2b5ccaa45cdf54448bf6f11e8a`
+- The URL is **unversioned** (it tracks the demo's latest build), so the whisper.cpp
+  commit is unknown. Re-check the checksum before assuming a re-download is identical,
+  and re-run the real-binary check below if it differs.
+- To pin a known commit instead, build from
+  [ggml-org/whisper.cpp](https://github.com/ggml-org/whisper.cpp)
+  `examples/whisper.wasm/` with Emscripten (`emcmake` + `emmake`).
 
-This project's decision (per the person building it): **use the stock pthreads
-build as-is**, and handle the SharedArrayBuffer requirement operationally rather
-than by rebuilding whisper.cpp:
+### Glue shape: classic global `Module`, not a factory
 
-- For local development/testing, launch Chromium with SharedArrayBuffer explicitly
-  enabled, e.g. `brave-browser --enable-features=SharedArrayBuffer` (or the
-  equivalent Chrome flag).
-- `src/worker/whisper-module.ts`'s `loadWhisperModuleFactory` checks for
-  `SharedArrayBuffer` up front and throws a clear, actionable error (not a silent
-  failure) if it's unavailable, naming both remediation paths: launching the browser
-  with the flag, or rebuilding whisper.cpp with `-s USE_PTHREADS=0` (slower,
-  single-threaded, no SharedArrayBuffer needed — CMakeLists.txt would need to be
-  forked/patched to make that flag configurable, since it's currently hardcoded).
+This is **not** a MODULARIZE build — there is no `libmain` factory function. The
+script reads a pre-populated global `Module`, attaches Embind exports (`init`, `free`,
+`full_default`) and the FS helpers to that same object, and calls
+`Module.onRuntimeInitialized` when ready. `loadWhisperModuleFactory`
+(`src/worker/whisper-module.ts`) wraps that in a promise: it sets `self.Module`, calls
+`importScripts`, and resolves on `onRuntimeInitialized` (rejects on `onAbort`). One
+runtime per worker; the script is imported once.
+
+Two consequences that are easy to get wrong:
+
+1. **`print`/`printErr` are read once, at startup** (`if (Module["print"]) out =
+   Module["print"]`). Reassigning them on the module afterwards does nothing. They
+   must be supplied as load-time overrides; the engine passes fixed forwarders and
+   swaps per-call sinks behind them.
+2. **pthread workers are spawned from the worker's own URL.** In a worker the build
+   sets `_scriptName = self.location.href` (no `mainScriptUrlOrBlob` support), and
+   each pthread is `new Worker(<that URL>, { name: "em-pthread" })` — a *classic*
+   worker. So the ASR worker entry must be a classic (IIFE) bundle, and when
+   `self.name === "em-pthread"` it must do nothing except `importScripts` the glue
+   script.
+
+## SharedArrayBuffer / cross-origin isolation
+
+The build uses pthreads, so it needs `SharedArrayBuffer`, which Chrome gates behind
+cross-origin isolation. The extension gets that from its manifest — no browser launch
+flag needed:
+
+```
+"cross_origin_embedder_policy": { "value": "require-corp" },
+"cross_origin_opener_policy":   { "value": "same-origin" }
+```
+
+(`manifest.config.ts`, spread in from `crossOriginIsolation` because crxjs's types
+lack these keys.) Effect on extension pages incl. the offscreen document and its
+workers. Consequence of `require-corp`: cross-origin subresources must be fetched
+with CORS; the Hugging Face model download works this way (verified).
+
+`loadWhisperModuleFactory` still checks for `SharedArrayBuffer` first and throws a
+specific error if isolation isn't in effect — intentional, not a bug to fix.
+Fallback if isolation ever becomes unworkable: rebuild without pthreads
+(`-s USE_PTHREADS=0`; slower, single-threaded; the CMakeLists hardcodes this, so it
+would need forking).
+
+## Verified against the real binary
+
+On 2026-09-18, the vendored `libmain.js` + real `ggml-tiny.en.bin` were run through
+`WhisperCppEngine` + `loadWhisperModuleFactory` in headless Chromium (page served with
+COOP/COEP headers, worker built as an IIFE per the rules above) on `jfk.wav`. It
+transcribed correctly. That confirmed: the Embind names/signatures below, the stdout
+segment format, the stderr completion marker, and cross-origin isolation with the
+model fetch. It also surfaced that `FS_unlink` on a not-yet-existing model file throws
+`ErrnoError` errno 44 (ENOENT) — the engine now tolerates exactly that. This was a
+one-off manual harness, not a repo test; unit tests still use a fake module.
 
 ## Model files
 
@@ -54,13 +95,11 @@ https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-<model>.bin
 confirmed from whisper.cpp's own `models/download-ggml-model.sh`. This project uses
 `tiny.en` and `base.en` — i.e.:
 
-- `https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.en.bin`
+- `https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.en.bin` (77,704,715 bytes, verified 2026-09-18)
 - `https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin`
 
-Exact file sizes were not independently verified in this session (check the live
-Hugging Face file listing before hardcoding a size in UI copy); commonly-cited
-approximate sizes are ~75MB (tiny.en) and ~142MB (base.en) — treat as unverified
-until confirmed against the live listing.
+Only the `tiny.en` size has been verified (above). `base.en` is commonly cited as
+~142MB — unverified; check the live Hugging Face listing before hardcoding it in UI copy.
 
 ## Verified API shape (do not re-derive from memory — check against the actual
 ## vendored files' version once available)
@@ -78,11 +117,11 @@ int    full_default(size_t index, const emscripten::val & audio,
 
 `full_default` starts inference on a background `std::thread` and returns
 immediately — it does not return transcript text. Segment text arrives via plain
-`printf` calls (`params.print_realtime = true`) captured through `Module.print`
-(stdout); the format is `[HH:MM:SS.mmm --> HH:MM:SS.mmm]  text` (confirmed against
+`printf` calls (`params.print_realtime = true`) routed to the load-time `print`
+override (stdout); the format is `[HH:MM:SS.mmm --> HH:MM:SS.mmm]  text` (confirmed against
 whisper.cpp's own README example output and its `to_timestamp()` implementation in
 `src/whisper.cpp`). Completion of the background thread is signaled by watching
-`Module.printErr` (stderr) for the substring `"whisper_print_timings"` — the first
+the `printErr` override (stderr) for the substring `"whisper_print_timings"` — the first
 line whisper.cpp's default log callback (`whisper_log_callback_default`,
 `fputs(text, stderr)`) prints once `whisper_full()` returns and the thread's last
 statement (`whisper_print_timings(...)`) runs. See `src/worker/whisper-cpp-engine.ts`
