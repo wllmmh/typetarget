@@ -6,6 +6,8 @@
  */
 
 import type { ModelId } from "./models";
+import type { EngineStatus } from "./models";
+import type { InferenceStats } from "../worker/instrumented-engine";
 import type { TranscriptEvent, TranscriptionStatus } from "./transcript";
 
 export type DestinationRef = {
@@ -23,8 +25,19 @@ export type DestinationRef = {
 export type PublicAppState = {
   status: TranscriptionStatus;
   sourceTabId: number | null;
+  /** Tab the user has picked in the popup but not started capturing yet. */
+  pendingSourceTabId: number | null;
+  /** Non-null only while a model is downloading, so the popup can show progress. */
+  modelDownload: { receivedBytes: number; totalBytes: number } | null;
+  /** Diagnostics: engine state, audio reaching the pipeline, and transcript output so far. */
+  engineState: EngineStatus["state"];
+  pipeline: { batches: number; droppedBatches: number; peakLevel: number } | null;
+  transcript: { finals: number; inserted: number };
+  inference: InferenceStats | null;
   destinationLabel: string | null;
   selectedModel: ModelId;
+  /** Cap on how long one utterance grows before it is transcribed (see domain/tuning.ts). */
+  chunkMs: number;
   isSelectingDestination: boolean;
   lastError: { code: string; message: string } | null;
 };
@@ -33,6 +46,9 @@ export type PublicAppState = {
 export type PopupRequest =
   | { kind: "get-state" }
   | { kind: "list-capturable-tabs" }
+  /** Sent when the popup opens: records the tab it was opened on as capturable (see known-tabs.ts). */
+  | { kind: "register-active-tab" }
+  | { kind: "set-source-tab"; sourceTabId: number | null }
   | { kind: "start-capture"; sourceTabId: number }
   | { kind: "stop-capture" }
   | { kind: "pause-transcription" }
@@ -41,6 +57,7 @@ export type PopupRequest =
   | { kind: "cancel-destination-selection" }
   | { kind: "clear-destination" }
   | { kind: "set-model"; modelId: ModelId }
+  | { kind: "set-chunk-ms"; chunkMs: number }
   | { kind: "load-model" }
   | { kind: "download-model" };
 
@@ -83,7 +100,8 @@ export type BackgroundToOffscreen =
   | { kind: "pause" }
   | { kind: "resume" }
   | { kind: "load-model"; modelId: ModelId }
-  | { kind: "unload-model" };
+  | { kind: "unload-model" }
+  | { kind: "set-chunk-ms"; chunkMs: number };
 
 /** Offscreen document -> background, as a direct reply to a BackgroundToOffscreen message. */
 export type OffscreenReply =
@@ -93,7 +111,11 @@ export type OffscreenReply =
 /** Offscreen document -> background, unsolicited (broadcast while capture is running). */
 export type OffscreenToBackground =
   | { kind: "transcript-event"; event: TranscriptEvent }
-  | { kind: "engine-status"; status: import("./models").EngineStatus };
+  | { kind: "model-download-progress"; modelId: ModelId; receivedBytes: number; totalBytes: number }
+  /** Periodic capture-pipeline counters, so "nothing is happening" can be diagnosed. */
+  | { kind: "pipeline-stats"; batches: number; droppedBatches: number; peakLevel: number }
+  | { kind: "inference-stats"; stats: InferenceStats }
+  | { kind: "engine-status"; status: EngineStatus };
 
 export const EXTENSION_MESSAGE_SOURCE = "wavetype" as const;
 

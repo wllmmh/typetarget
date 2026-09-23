@@ -38,6 +38,19 @@ const sendToContentScript = async (
   await chrome.tabs.sendMessage(tabId, envelope(msg));
 };
 
+/**
+ * Addressed to the one frame that owns the destination element. A tab-wide send reaches
+ * every frame the script was injected into (injection is allFrames, since the user may
+ * pick inside an iframe), and every other frame would answer "destination-unavailable"
+ * — which the background treats as the destination going away, unbinding it.
+ */
+const sendToDestinationFrame = async (
+  destination: DestinationRef,
+  msg: BackgroundToContent,
+): Promise<void> => {
+  await chrome.tabs.sendMessage(destination.tabId, envelope(msg), { frameId: destination.frameId });
+};
+
 export type DestinationCallbacks = {
   onPicked: (ref: DestinationRef, label: string) => void;
   onUnavailable: (reason: string) => void;
@@ -82,13 +95,13 @@ export class DestinationController {
   }
 
   async checkAlive(destination: DestinationRef): Promise<void> {
-    await sendToContentScript(destination.tabId, { kind: "check-destination-alive" }).catch(() => {
+    await sendToDestinationFrame(destination, { kind: "check-destination-alive" }).catch(() => {
       this.callbacks.onUnavailable("Destination tab is no longer available.");
     });
   }
 
   async insertText(destination: DestinationRef, text: string, separator: string): Promise<void> {
-    await sendToContentScript(destination.tabId, { kind: "insert-text", text, separator }).catch(() => {
+    await sendToDestinationFrame(destination, { kind: "insert-text", text, separator }).catch(() => {
       this.callbacks.onUnavailable("Destination tab is no longer available.");
     });
   }

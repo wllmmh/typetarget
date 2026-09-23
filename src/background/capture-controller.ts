@@ -5,6 +5,7 @@
  * AGENTS.md "Resource cleanup", "Error handling").
  */
 import { envelope, isEnvelope, type BackgroundToOffscreen, type OffscreenReply } from "../domain/messages";
+import type { ModelId } from "../domain/models";
 import { getTabCaptureStreamId } from "./tab-capture";
 import { ensureOffscreenDocument, closeOffscreenDocument } from "./offscreen-manager";
 
@@ -44,26 +45,72 @@ export class CaptureController {
     return this.sourceTabId;
   }
 
-  async start(sourceTabId: number): Promise<void> {
+  /**
+   * Starts capturing `sourceTabId`, then loads `modelId` in the background.
+   *
+   * Order matters: `tabCapture.getMediaStreamId` is tied to the user gesture that opened
+   * the popup, so it must be called right away. Loading the model first (as this used to)
+   * spent ~40-80s on the download before asking for the stream id, by which point the
+   * gesture was long gone. The model load is deliberately not awaited — capture is live
+   * immediately, the offscreen document drops audio until the engine is ready, and load
+   * progress/failures reach the popup through engine-status broadcasts.
+   */
+  async start(sourceTabId: number, modelId: ModelId): Promise<void> {
     const tab = await chrome.tabs.get(sourceTabId).catch(() => null);
     if (!tab) {
       throw new CaptureError("Source tab is no longer available.", "source-tab-missing");
     }
 
-    const streamId = await getTabCaptureStreamId(sourceTabId).catch((err: unknown) => {
-      const message = err instanceof Error ? err.message : "Unknown tab capture error.";
-      throw new CaptureError(`Chrome did not provide an audio track for this tab. (${message})`, "capture-failed");
-    });
+    try {
+      await ensureOffscreenDocument();
 
-    await ensureOffscreenDocument();
-    const reply = await sendToOffscreen({ kind: "start-capture", streamId });
-    if (reply.kind === "error") {
-      throw new CaptureError(reply.message, reply.code);
+      const streamId = await getTabCaptureStreamId(sourceTabId).catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : "Unknown tab capture error.";
+        throw new CaptureError(message, "capture-failed");
+      });
+
+      const started = await sendToOffscreen({ kind: "start-capture", streamId });
+      if (started.kind === "error") {
+        throw new CaptureError(started.message, started.code);
+      }
+
+      void sendToOffscreen({ kind: "load-model", modelId }).catch(() => {
+        // Reported through engine-status instead; a rejection here only means the
+        // offscreen document went away, which stop() already handles.
+      });
+    } catch (err) {
+      // Don't leave a half-started capture (or a loaded model) in an orphaned document.
+      await closeOffscreenDocument();
+      throw err;
     }
 
     this.sourceTabId = sourceTabId;
     if (!chrome.tabs.onRemoved.hasListener(this.onTabRemoved)) {
       chrome.tabs.onRemoved.addListener(this.onTabRemoved);
+    }
+  }
+
+  /** Retunes the running pipeline. Safe to call when nothing is capturing; the message just goes nowhere. */
+  async setChunkMs(chunkMs: number): Promise<void> {
+    const reply = await sendToOffscreen({ kind: "set-chunk-ms", chunkMs });
+    if (reply.kind === "error") {
+      throw new CaptureError(reply.message, reply.code);
+    }
+  }
+
+  /** Stops sending captured audio for transcription; the tab keeps playing. */
+  async pause(): Promise<void> {
+    await this.sendPauseState("pause");
+  }
+
+  async resume(): Promise<void> {
+    await this.sendPauseState("resume");
+  }
+
+  private async sendPauseState(kind: "pause" | "resume"): Promise<void> {
+    const reply = await sendToOffscreen({ kind });
+    if (reply.kind === "error") {
+      throw new CaptureError(reply.message, reply.code);
     }
   }
 

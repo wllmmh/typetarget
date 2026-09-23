@@ -56,6 +56,10 @@ export class WhisperCppEngine implements TranscriptionEngine {
   constructor(private readonly config: WhisperCppEngineConfig) {}
 
   async load(modelId: ModelId): Promise<void> {
+    // Stop/Start sends load-model again; re-initialising an already-loaded model would
+    // re-read it from the cache and leak the previous whisper context for no gain.
+    if (this.status.state === "ready" && this.status.modelId === modelId) return;
+
     this.status = { state: "loading", modelId };
     try {
       const modelBytes = await ensureModelDownloaded(modelId, this.config.modelUrls, (progress) =>
@@ -69,6 +73,13 @@ export class WhisperCppEngine implements TranscriptionEngine {
         print: (line) => this.stdoutSink(line),
         printErr: (line) => this.stderrSink(line),
       });
+
+      // The module is shared for the worker's lifetime, so a context from an earlier load
+      // must be freed here rather than left dangling.
+      if (this.contextIndex !== null) {
+        module.free(this.contextIndex);
+        this.contextIndex = null;
+      }
 
       const filename = MODEL_FILENAME_IN_FS[modelId];
       unlinkIfPresent(module, `/${filename}`);
@@ -107,11 +118,15 @@ export class WhisperCppEngine implements TranscriptionEngine {
     const module = this.module;
     this.stdoutSink = (line) => capturedStdout.push(line);
 
-    // Completion signal: full_default() starts inference on a background
-    // std::thread and returns immediately (confirmed from emscripten.cpp source) —
-    // there is no direct return value or callback for "inference finished." Its
-    // thread body calls whisper_print_timings() as its last step before the thread
-    // ends, and that function's first line is unconditionally
+    // Completion signal. The vendored build runs inference *synchronously* (see
+    // third_party/whisper-wasm/single-thread.patch: upstream detaches a std::thread, which
+    // aborts without pthreads), so by the time full_default() returns the marker below has
+    // already been printed and the poll resolves on its first tick. The marker is still
+    // what's waited on rather than the return value, because it is the one signal that holds
+    // for both the synchronous and upstream-threaded builds.
+    //
+    // whisper_print_timings() is the last call either way, and its first line is
+    // unconditionally
     // "whisper_print_timings:     load time = ..." (confirmed in whisper.cpp's
     // source, src/whisper.cpp, whisper_print_timings()/whisper_log_callback_default()).
     // That goes through whisper.cpp's *default* log callback, which writes to
@@ -126,15 +141,16 @@ export class WhisperCppEngine implements TranscriptionEngine {
     };
 
     try {
-      // `nthreads` is a runtime param independent of the module's own pthread pool
-      // size (see whisper-module.ts); 4 balances throughput against not starving
-      // the rest of the extension's contexts on typical desktop hardware. Not
-      // benchmarked yet — see AGENTS.md "Performance targets".
-      const resultCode = module.full_default(this.contextIndex, audio, options?.language ?? "en", 4, false);
+      // `nthreads` is ignored by the vendored single-threaded build (the patch forces
+      // n_threads = 1); it is still passed so the signature matches upstream's.
+      const resultCode = module.full_default(this.contextIndex, audio, options?.language ?? "en", 1, false);
       if (resultCode !== 0) {
         throw new Error(`whisper.cpp inference failed with code ${resultCode}.`);
       }
 
+      // Note: with the synchronous build this timeout cannot fire while inference runs —
+      // full_default() blocks the worker, so there is no chance to tick. It guards the case
+      // where the completion marker never arrives at all.
       await pollUntil(() => inferenceFinished, {
         timeoutMs: 30_000,
         onTimeout: "Transcription fell behind real time.", // exact wording from AGENTS.md "Error handling"

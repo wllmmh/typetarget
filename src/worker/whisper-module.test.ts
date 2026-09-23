@@ -12,9 +12,13 @@ afterEach(() => {
 });
 
 describe("loadWhisperModuleFactory", () => {
-  it("throws a clear error when SharedArrayBuffer is unavailable", async () => {
+  it("does not require SharedArrayBuffer (the vendored build is single-threaded)", async () => {
     vi.stubGlobal("SharedArrayBuffer", undefined);
-    await expect(loadWhisperModuleFactory("libmain.js")).rejects.toThrow(/SharedArrayBuffer is not available/);
+    vi.stubGlobal("importScripts", () => setTimeout(() => globalModule().onRuntimeInitialized(), 0));
+
+    const factory = await loadWhisperModuleFactory("libmain.js");
+
+    await expect(factory(overrides)).resolves.toBeDefined();
   });
 
   it("presets the global Module with the overrides, then resolves once the runtime is initialized", async () => {

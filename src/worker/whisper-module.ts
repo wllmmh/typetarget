@@ -62,23 +62,19 @@ export type WhisperModuleFactory = (overrides: WhisperModuleOverrides) => Promis
  * third_party/whisper-wasm/libmain.js is a classic (non-MODULARIZE) Emscripten script:
  * it reads a pre-populated global `Module`, and Embind attaches `init`/`free`/
  * `full_default` and the FS helpers to that same object once the runtime is up
- * (signalled by `Module.onRuntimeInitialized`). It also re-loads its own script URL in
- * each pthread worker, so `glueScriptUrl` must be a stable, fetchable URL.
+ * (signalled by `Module.onRuntimeInitialized`).
  *
  * One runtime per worker: the script is imported once, and every call returns that
  * same module. Overrides passed on the first call are the ones that stay in effect.
+ *
+ * The vendored build is single-threaded on purpose (`-s USE_PTHREADS=0`), so it needs no
+ * `SharedArrayBuffer` and therefore no cross-origin isolation. That is not a detail:
+ * COOP/COEP puts extension pages in their own render process, and a tabCapture stream id
+ * can only be consumed in the same process as the service worker that created it — with
+ * isolation on, capture failed with "Error starting tab capture". See
+ * docs/whisper-wasm-provenance.md.
  */
 export const loadWhisperModuleFactory = async (glueScriptUrl: string): Promise<WhisperModuleFactory> => {
-  if (typeof SharedArrayBuffer === "undefined") {
-    throw new Error(
-      "SharedArrayBuffer is not available in this context, but whisper.cpp's WASM build requires it " +
-        "(it's compiled with pthreads). The extension manifest sets COOP/COEP to cross-origin-isolate " +
-        "its pages; if this fires, that isolation isn't in effect for this context (or, in a plain " +
-        "browser/test harness, launch with cross-origin isolation enabled). See " +
-        "docs/whisper-wasm-provenance.md, which also covers rebuilding whisper.cpp without pthreads.",
-    );
-  }
-
   let loaded: Promise<WhisperModule> | null = null;
 
   return (overrides) => {

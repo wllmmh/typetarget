@@ -1,0 +1,61 @@
+diff --git a/examples/whisper.wasm/CMakeLists.txt b/examples/whisper.wasm/CMakeLists.txt
+index 00d19c6..be8bcbc 100644
+--- a/examples/whisper.wasm/CMakeLists.txt
++++ b/examples/whisper.wasm/CMakeLists.txt
+@@ -30,12 +30,12 @@ endif()
+ 
+ set_target_properties(${TARGET} PROPERTIES LINK_FLAGS " \
+     --bind \
+-    -s USE_PTHREADS=1 \
+-    -s PTHREAD_POOL_SIZE_STRICT=0 \
++    -s USE_PTHREADS=0 \
+     -s INITIAL_MEMORY=512MB \
+     -s MAXIMUM_MEMORY=2000MB \
+     -s ALLOW_MEMORY_GROWTH=1 \
+     -s FORCE_FILESYSTEM=1 \
++    -s DYNAMIC_EXECUTION=0 \
+     -s EXPORTED_RUNTIME_METHODS=\"['print', 'printErr', 'ccall', 'cwrap', 'HEAPU8']\" \
+     ${EXTRA_FLAGS} \
+     ")
+diff --git a/examples/whisper.wasm/emscripten.cpp b/examples/whisper.wasm/emscripten.cpp
+index 03bf413..dfb6ec2 100644
+--- a/examples/whisper.wasm/emscripten.cpp
++++ b/examples/whisper.wasm/emscripten.cpp
+@@ -73,7 +73,9 @@ EMSCRIPTEN_BINDINGS(whisper) {
+         params.print_special    = false;
+         params.translate        = translate;
+         params.language         = is_multilingual ? strdup(lang.c_str()) : "en";
+-        params.n_threads        = std::min(nthreads, std::min(16, mpow2(std::thread::hardware_concurrency())));
++        // Single-threaded build (-s USE_PTHREADS=0): ggml must not try to spawn threads.
++        (void) nthreads;
++        params.n_threads        = 1;
+         params.offset_ms        = 0;
+ 
+         std::vector<float> pcmf32;
+@@ -101,16 +103,17 @@ EMSCRIPTEN_BINDINGS(whisper) {
+             printf("\n");
+         }
+ 
+-        // run the worker
++        // Run inference synchronously. The upstream example detaches a std::thread here,
++        // which aborts outright in a no-pthreads build. Callers already treat the
++        // whisper_print_timings line on stderr as the completion signal, and it is printed
++        // before this returns, so blocking here is transparent to them.
+         {
+-            g_worker = std::thread([index, params, pcmf32 = std::move(pcmf32), is_multilingual]() {
+-                whisper_reset_timings(g_contexts[index]);
+-                whisper_full(g_contexts[index], params, pcmf32.data(), pcmf32.size());
+-                whisper_print_timings(g_contexts[index]);
+-                if (is_multilingual) {
+-                    free((void*)params.language);
+-                }
+-            });
++            whisper_reset_timings(g_contexts[index]);
++            whisper_full(g_contexts[index], params, pcmf32.data(), pcmf32.size());
++            whisper_print_timings(g_contexts[index]);
++            if (is_multilingual) {
++                free((void*)params.language);
++            }
+         }
+ 
+         return 0;

@@ -81,6 +81,26 @@ describe("DestinationController.insertText / checkAlive", () => {
     expect(onUnavailable).toHaveBeenCalledWith("Destination tab is no longer available.");
   });
 
+  // Injection is allFrames (the destination may be inside an iframe), so a tab-wide send
+  // reaches frames that never picked anything; each answered "destination-unavailable",
+  // which unbinds the destination the user did pick.
+  it("addresses only the frame that owns the destination element", async () => {
+    const controller = new DestinationController({ onPicked: vi.fn(), onUnavailable: vi.fn() });
+
+    await controller.insertText({ tabId: 5, frameId: 3, elementId: "el-1" }, "hello", " ");
+    await controller.checkAlive({ tabId: 5, frameId: 3, elementId: "el-1" });
+
+    expect(fake.tabs.sendMessage).toHaveBeenNthCalledWith(
+      1,
+      5,
+      envelope({ kind: "insert-text", text: "hello", separator: " " }),
+      { frameId: 3 },
+    );
+    expect(fake.tabs.sendMessage).toHaveBeenNthCalledWith(2, 5, envelope({ kind: "check-destination-alive" }), {
+      frameId: 3,
+    });
+  });
+
   it("does not report unavailable when insertion succeeds", async () => {
     const onUnavailable = vi.fn();
     const controller = new DestinationController({ onPicked: vi.fn(), onUnavailable });

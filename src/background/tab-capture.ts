@@ -12,12 +12,22 @@
  * flow": "The extension must require an explicit user action before starting
  * capture.").
  */
+/**
+ * Chrome's own wording for a missing activeTab grant ("Extension has not been invoked for
+ * the current page...") doesn't tell anyone what to do, and this is the single most likely
+ * way capture fails: the grant only exists for tabs the toolbar button was clicked on.
+ */
+const explain = (chromeMessage: string): string =>
+  chromeMessage.includes("has not been invoked")
+    ? "Chrome hasn't granted WaveType access to that tab. Switch to it, click the WaveType toolbar button there, then press Start."
+    : `Chrome refused to capture that tab. (${chromeMessage})`;
+
 export const getTabCaptureStreamId = (targetTabId: number): Promise<string> =>
   new Promise((resolve, reject) => {
     chrome.tabCapture.getMediaStreamId({ targetTabId }, (streamId) => {
       const { lastError } = chrome.runtime;
       if (lastError || !streamId) {
-        reject(new Error(lastError?.message ?? "Chrome did not return a tab capture stream id."));
+        reject(new Error(explain(lastError?.message ?? "Chrome did not return a tab capture stream id.")));
         return;
       }
       resolve(streamId);

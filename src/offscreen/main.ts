@@ -3,7 +3,9 @@ import {
   isEnvelope,
   type BackgroundToOffscreen,
   type OffscreenReply,
+  type OffscreenToBackground,
 } from "../domain/messages";
+import { isFromServiceWorker } from "../domain/sender";
 import type { ModelId } from "../domain/models";
 import type { AsrWorkerEvent } from "../worker/worker-protocol";
 import { createAsrWorkerClient, type AsrWorkerClient } from "./asr-worker-client";
@@ -12,17 +14,62 @@ import { startPcmStream, type PcmStream } from "./pcm-stream";
 
 let active: StartCaptureResult | null = null;
 let pcm: PcmStream | null = null;
+let statsTimer: ReturnType<typeof setInterval> | null = null;
+/**
+ * Counters behind the popup's diagnostics. Without them, "capturing but nothing typed" gives
+ * no way to tell silent capture from audio the VAD ignores from audio dropped before a model
+ * is ready. `peakLevel` resets each report so it reflects recent audio, not an all-time max.
+ */
+const stats = { batches: 0, droppedBatches: 0, peakLevel: 0 };
+
+const peakOf = (samples: Float32Array): number => {
+  let peak = 0;
+  for (const sample of samples) {
+    const magnitude = Math.abs(sample);
+    if (magnitude > peak) peak = magnitude;
+  }
+  return peak;
+};
 /** While paused, captured audio keeps playing to the speakers but is not sent to the ASR worker. */
 let paused = false;
+/** Mirrors the worker's engine status; audio sent before it is ready would just be dropped. */
+let engineReady = false;
 
 // The worker is created on first use, not at document load: it's cheap, but nothing
 // needs it until a model is requested.
 let asrWorker: AsrWorkerClient | null = null;
+let chunkMs: number | null = null;
 const asrEventListeners = new Set<(event: AsrWorkerEvent) => void>();
-const getAsrWorker = (): AsrWorkerClient =>
-  (asrWorker ??= createAsrWorkerClient((event) => {
+
+const sendToBackground = (message: OffscreenToBackground) => {
+  // The service worker is woken by an incoming message, so a rejection here means the
+  // extension is shutting down or reloading; there is nobody left to report to.
+  void chrome.runtime.sendMessage(envelope(message)).catch(() => {});
+};
+
+const getAsrWorker = (): AsrWorkerClient => {
+  if (asrWorker) return asrWorker;
+  asrWorker = createWorker();
+  if (chunkMs !== null) asrWorker.send({ kind: "set-chunk-ms", chunkMs });
+  return asrWorker;
+};
+
+const createWorker = (): AsrWorkerClient =>
+  createAsrWorkerClient((event) => {
     for (const listener of asrEventListeners) listener(event);
-  }));
+    if (event.kind === "transcript-event") sendToBackground({ kind: "transcript-event", event: event.event });
+    else if (event.kind === "engine-status") {
+      engineReady = event.status.state === "ready";
+      sendToBackground({ kind: "engine-status", status: event.status });
+    } else if (event.kind === "inference-stats") sendToBackground({ kind: "inference-stats", stats: event.stats });
+    else if (event.kind === "download-progress")
+      sendToBackground({
+        kind: "model-download-progress",
+        modelId: event.modelId,
+        receivedBytes: event.receivedBytes,
+        totalBytes: event.totalBytes,
+      });
+  });
 
 /** Resolves once the worker's engine reports "ready" (ok) or "error" for the requested load. */
 const loadModel = (modelId: ModelId): Promise<OffscreenReply> =>
@@ -41,6 +88,11 @@ const loadModel = (modelId: ModelId): Promise<OffscreenReply> =>
 
 /** Tears down capture and the PCM tap, and has the worker finalize whatever utterance was in progress. */
 const stopCapture = () => {
+  if (statsTimer !== null) clearInterval(statsTimer);
+  statsTimer = null;
+  stats.batches = 0;
+  stats.droppedBatches = 0;
+  stats.peakLevel = 0;
   pcm?.stop();
   pcm = null;
   active?.stop();
@@ -53,16 +105,35 @@ const handleMessage = async (msg: BackgroundToOffscreen): Promise<OffscreenReply
   switch (msg.kind) {
     case "start-capture": {
       stopCapture();
+      // Inference runs slower than real time, so the previous session can still have finals
+      // queued; they would otherwise be transcribed and typed into this session. Dropping
+      // them is the point — the tail of a session the user already stopped is not what they
+      // want appearing in the next one.
+      asrWorker?.send({ kind: "reset" });
       try {
         active = await startTabCapture(msg.streamId);
-        pcm = await startPcmStream(active.sourceNode.mediaStream, (samples) => {
-          if (!paused) getAsrWorker().sendAudio(samples);
+        pcm = await startPcmStream(active.audioContext, active.sourceNode, (samples) => {
+          stats.batches++;
+          stats.peakLevel = Math.max(stats.peakLevel, peakOf(samples));
+          if (paused) return;
+          // The worker drops audio until its engine is ready; count that here so the
+          // popup can distinguish "no audio" from "audio with nowhere to go yet".
+          if (engineReady) getAsrWorker().sendAudio(samples);
+          else stats.droppedBatches++;
         });
+        statsTimer = setInterval(() => {
+          sendToBackground({ kind: "pipeline-stats", ...stats });
+          stats.peakLevel = 0;
+        }, 1000);
         return { kind: "ok" };
       } catch (err) {
         stopCapture();
-        const message = err instanceof Error ? err.message : "Unknown capture error.";
-        return { kind: "error", code: "capture-failed", message };
+        const detail = err instanceof Error ? err.message : "Unknown capture error.";
+        return {
+          kind: "error",
+          code: "capture-failed",
+          message: `Chrome would not open the captured tab's audio stream. (${detail})`,
+        };
       }
     }
     case "stop-capture": {
@@ -73,6 +144,13 @@ const handleMessage = async (msg: BackgroundToOffscreen): Promise<OffscreenReply
       return loadModel(msg.modelId);
     case "unload-model": {
       getAsrWorker().send({ kind: "unload-model" });
+      return { kind: "ok" };
+    }
+    case "set-chunk-ms": {
+      // Remembered as well as forwarded: the worker may not exist yet, and is re-tuned on
+      // creation so a setting changed before capture starts is not lost.
+      chunkMs = msg.chunkMs;
+      asrWorker?.send({ kind: "set-chunk-ms", chunkMs });
       return { kind: "ok" };
     }
     case "pause": {
@@ -91,8 +169,10 @@ const handleMessage = async (msg: BackgroundToOffscreen): Promise<OffscreenReply
   }
 };
 
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (!isEnvelope<BackgroundToOffscreen>(message)) return undefined;
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // runtime.sendMessage reaches every extension context; only the service worker may
+  // drive capture. (The popup's own requests share some `kind` names, e.g. "stop-capture".)
+  if (!isEnvelope<BackgroundToOffscreen>(message) || !isFromServiceWorker(sender)) return undefined;
   handleMessage(message.payload).then((reply) => sendResponse(envelope(reply)));
   return true; // keep the channel open for the async reply
 });

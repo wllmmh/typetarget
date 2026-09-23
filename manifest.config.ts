@@ -15,18 +15,6 @@ import pkg from "./package.json";
 // No host_permissions are declared. Destination injection relies on activeTab (granted only after
 // the user clicks the extension action / a popup control) plus chrome.scripting.executeScript,
 // scoped to the single tab the user is actively selecting a destination in.
-// Cross-origin isolation for extension pages (incl. the offscreen document and the
-// ASR worker it spawns), which is what exposes SharedArrayBuffer to whisper.cpp's
-// pthreads WASM build — no browser launch flag needed. Consequence of require-corp:
-// any cross-origin subresource (e.g. the Hugging Face model download) must be fetched
-// with CORS, not no-cors. Defined separately and spread in because @crxjs/vite-plugin's
-// manifest types don't include these (valid) Chrome manifest keys yet. See
-// https://developer.chrome.com/docs/extensions/reference/manifest/cross-origin-isolation
-const crossOriginIsolation = {
-  cross_origin_embedder_policy: { value: "require-corp" },
-  cross_origin_opener_policy: { value: "same-origin" },
-};
-
 export default defineManifest({
   manifest_version: 3,
   name: "WaveType — Local Live Transcriber",
@@ -50,7 +38,13 @@ export default defineManifest({
     service_worker: "src/background/service-worker.ts",
     type: "module",
   },
-  permissions: ["tabCapture", "activeTab", "scripting", "storage", "offscreen"],
+  permissions: [
+    "tabCapture",
+    "activeTab",
+    "scripting",
+    "storage",
+    "offscreen"
+  ],
   // The destination content script (src/content/main.ts) is only ever injected
   // dynamically via chrome.scripting.executeScript, never declared in
   // content_scripts, so it needs no host_permissions grant; @crxjs/vite-plugin still
@@ -68,6 +62,5 @@ export default defineManifest({
   content_security_policy: {
     extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';",
   },
-  ...crossOriginIsolation,
   minimum_chrome_version: "116",
 });

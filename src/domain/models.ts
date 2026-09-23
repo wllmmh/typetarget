@@ -1,7 +1,13 @@
 /** Supported Whisper model identifiers for v1. English-only models per AGENTS.md. */
 export type ModelId = "tiny.en" | "base.en";
 
-export const DEFAULT_MODEL: ModelId = "base.en";
+/**
+ * tiny.en, not base.en: a cold first run must download the model before anything can be
+ * transcribed (~74 MB / ~40 s vs ~142 MB / ~81 s measured in Chrome), and per-utterance
+ * inference cost is dominated by Whisper's fixed 30 s window either way. base.en stays
+ * one dropdown pick away for accuracy.
+ */
+export const DEFAULT_MODEL: ModelId = "tiny.en";
 
 export type ModelInfo = {
   id: ModelId;
@@ -10,8 +16,8 @@ export type ModelInfo = {
 };
 
 export const MODEL_CATALOG: Record<ModelId, ModelInfo> = {
-  "tiny.en": { id: "tiny.en", label: "Tiny (English)", approxSizeMb: 75 },
-  "base.en": { id: "base.en", label: "Base (English)", approxSizeMb: 142 },
+  "tiny.en": { id: "tiny.en", label: "Tiny (English)", approxSizeMb: 74 }, // measured: 77,704,715 bytes
+  "base.en": { id: "base.en", label: "Base (English)", approxSizeMb: 142 }, // not independently verified
 };
 
 export type ModelDownloadState =

@@ -30,6 +30,8 @@ export type FakeChrome = {
       removeListener: ReturnType<typeof vi.fn>;
     };
     lastError: { message: string } | undefined;
+    id: string;
+    getURL: ReturnType<typeof vi.fn>;
     getContexts: ReturnType<typeof vi.fn>;
     ContextType: { OFFSCREEN_DOCUMENT: "OFFSCREEN_DOCUMENT" };
   };
@@ -41,6 +43,29 @@ export type FakeChrome = {
   tabCapture: {
     getMediaStreamId: ReturnType<typeof vi.fn>;
   };
+  storage: {
+    local: FakeStorageArea;
+    session: FakeStorageArea;
+  };
+};
+
+export type FakeStorageArea = {
+  get: ReturnType<typeof vi.fn>;
+  set: ReturnType<typeof vi.fn>;
+  /** Test helper: the area's current contents. */
+  data: Record<string, unknown>;
+};
+
+/** In-memory stand-in for one chrome.storage area (jsdom has no chrome.storage at all). */
+const createFakeStorageArea = (): FakeStorageArea => {
+  const area: FakeStorageArea = {
+    data: {},
+    get: vi.fn(async (key: string) => (key in area.data ? { [key]: area.data[key] } : {})),
+    set: vi.fn(async (items: Record<string, unknown>) => {
+      Object.assign(area.data, items);
+    }),
+  };
+  return area;
 };
 
 export const createFakeChrome = (): FakeChrome => {
@@ -65,6 +90,8 @@ export const createFakeChrome = (): FakeChrome => {
       sendMessage: vi.fn(),
       onMessage: { addListener: vi.fn(), removeListener: vi.fn() },
       lastError: undefined,
+      id: "test-extension-id",
+      getURL: vi.fn((path: string) => `chrome-extension://test-extension-id/${path}`),
       getContexts: vi.fn().mockResolvedValue([]),
       ContextType: { OFFSCREEN_DOCUMENT: "OFFSCREEN_DOCUMENT" },
     },
@@ -75,6 +102,10 @@ export const createFakeChrome = (): FakeChrome => {
     },
     tabCapture: {
       getMediaStreamId: vi.fn(),
+    },
+    storage: {
+      local: createFakeStorageArea(),
+      session: createFakeStorageArea(),
     },
   };
 };

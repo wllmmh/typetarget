@@ -19,9 +19,10 @@ project default. No separate `libmain.wasm` exists.
 
 - whisper.cpp commit `5670d5c0bbcb148feabef84400a07cfca9aa3b30` (2026-09-18, master)
 - Emscripten 6.0.9 (emsdk `latest` at the time), cmake 4.4.3 + ninja from PyPI
-- one change to `examples/whisper.wasm/CMakeLists.txt`: add `-s DYNAMIC_EXECUTION=0`
-  to the `LINK_FLAGS` list (after `-s FORCE_FILESYSTEM=1`)
-- sha256 of the result: `d9611649f3fc2c1a00fc9567067115c8e2c02c87f199f78230adcc647753a22b` (1,832,762 bytes)
+- two changes to `examples/whisper.wasm/CMakeLists.txt`'s `LINK_FLAGS`: add
+  `-s DYNAMIC_EXECUTION=0` and change `-s USE_PTHREADS=1` to `-s USE_PTHREADS=0`
+  (also drop the now-meaningless `-s PTHREAD_POOL_SIZE_STRICT=0`)
+- sha256 of the result: `f00f6efeb6820e269bc5a62c826346bf2bf3ac8c3e2089aacb559467ef82f005` (1,565,970 bytes)
 
 Rebuild recipe:
 
@@ -32,6 +33,7 @@ git checkout 5670d5c0bbcb148feabef84400a07cfca9aa3b30
 # add "-s DYNAMIC_EXECUTION=0 \" to LINK_FLAGS in examples/whisper.wasm/CMakeLists.txt
 source ../emsdk/emsdk_env.sh
 emcmake cmake -B build-em -G Ninja -DCMAKE_BUILD_TYPE=Release -DWHISPER_WASM_SINGLE_FILE=ON
+emcmake cmake -B build-em -G Ninja -DCMAKE_BUILD_TYPE=Release -DWHISPER_WASM_SINGLE_FILE=ON -DGGML_OPENMP=OFF
 cmake --build build-em --target libmain -j 8
 cp build-em/bin/libmain.js <repo>/third_party/whisper-wasm/libmain.js
 ```
@@ -61,27 +63,66 @@ Two consequences that are easy to get wrong:
    `self.name === "em-pthread"` it must do nothing except `importScripts` the glue
    script.
 
-## SharedArrayBuffer / cross-origin isolation
+## Why the build is single-threaded: cross-origin isolation vs tabCapture
 
-The build uses pthreads, so it needs `SharedArrayBuffer`, which Chrome gates behind
-cross-origin isolation. The extension gets that from its manifest — no browser launch
-flag needed:
+whisper.cpp's stock WASM build uses pthreads, which needs `SharedArrayBuffer`, which Chrome
+gates behind cross-origin isolation. The extension can turn that on with manifest keys
+(`cross_origin_embedder_policy: require-corp` + `cross_origin_opener_policy: same-origin`),
+and that does work: extension pages then report `crossOriginIsolated === true` and the
+pthreads build runs.
 
-```
-"cross_origin_embedder_policy": { "value": "require-corp" },
-"cross_origin_opener_policy":   { "value": "same-origin" }
-```
+**But it breaks tab capture, which is the whole point of the extension.** Cross-origin
+isolation is enforced at process level, so an isolated extension page gets its own render
+process, while the service worker stays non-isolated (verified in Chrome 153:
+`crossOriginIsolated` is `false` in the service worker and `true` on extension pages). A
+`tabCapture` stream id may only be consumed "in the same render process as the caller", so
+`getMediaStreamId` in the service worker succeeded and the offscreen document's
+`getUserMedia` then failed with Chrome's `Error starting tab capture`. That was a real
+user-visible failure, not a theory.
 
-(`manifest.config.ts`, spread in from `crossOriginIsolation` because crxjs's types
-lack these keys.) Effect on extension pages incl. the offscreen document and its
-workers. Consequence of `require-corp`: cross-origin subresources must be fetched
-with CORS; the Hugging Face model download works this way (verified).
+The two requirements are mutually exclusive with one offscreen document (an extension may
+only have one, and a service worker cannot spawn a `Worker`). Capture is non-negotiable, so
+**pthreads loses**: the vendored build is `-s USE_PTHREADS=0`, needs no `SharedArrayBuffer`,
+and the COOP/COEP manifest keys are gone. `nthreads` passed to `full_default` is therefore
+inert.
 
-`loadWhisperModuleFactory` still checks for `SharedArrayBuffer` first and throws a
-specific error if isolation isn't in effect — intentional, not a bug to fix.
-Fallback if isolation ever becomes unworkable: rebuild without pthreads
-(`-s USE_PTHREADS=0`; slower, single-threaded; the CMakeLists hardcodes this, so it
-would need forking).
+Dropping pthreads needs a **source patch as well as flags**, kept at
+`third_party/whisper-wasm/single-thread.patch` (apply with `git apply` in a whisper.cpp
+checkout). Upstream's `full_default` detaches a `std::thread` to run `whisper_full`, which
+aborts immediately in a no-pthreads build (`RuntimeError: Aborted()` on the first
+transcribe, while `init` still succeeded). The patch runs inference synchronously instead
+and forces `params.n_threads = 1`. This is transparent to callers: the
+`whisper_print_timings` completion marker is printed before `full_default` returns.
+
+**Cost, measured on this machine (12-core desktop, headless Chrome, tiny.en, same clip):**
+
+| build | per-inference |
+| --- | --- |
+| pthreads, 4 threads, `audio_ctx` 1500 | ~3.3 s |
+| single-threaded, `audio_ctx` 1500 | ~13.5 s |
+| single-threaded + `-msimd128`, `audio_ctx` 1500 | ~12.8-14.1 s |
+| single-threaded + `-msimd128`, `audio_ctx` 768 | ~7.1 s first call, then **hangs** |
+
+Two things that look like levers and are not:
+
+- **`-msimd128` bought nothing measurable** (~13 s either way), so ggml's wasm kernels here
+  are not the bottleneck SIMD would help with. The flag is still set (it does no harm).
+- **`audio_ctx` is not usable here, and is deliberately NOT in the patch.** Shrinking the
+  encoder context is the obvious fix for the 30 s-window cost and it does work — once. Two
+  variants were measured: sized per request with a 256 floor (first call 2.5 s) and a fixed
+  768 (first call 7.1 s, vs 12.8 s at 1500). In **both** cases the *second* `full_default`
+  call never returned, while the same build without `audio_ctx` ran call after call at a
+  steady ~13 s. So something about a reduced `audio_ctx` leaves the context unusable for the
+  next call. Anyone retrying this must test **repeated** inferences on one context, not a
+  single call.
+
+Remaining untried speed levers, in order of risk: a quantized model
+(`ggml-tiny.en-q5_1.bin` from the same Hugging Face repo — a pure model swap, no C++ change),
+then getting threads back by replacing `tabCapture` with `chrome.desktopCapture`, whose stream
+ids are origin-verified rather than process-verified (adds a picker and a permission).
+
+If a future build ever wants threads back, it must solve the process split first — re-adding
+the manifest keys alone will silently break capture again.
 
 ## Verified against the real binary
 
@@ -92,8 +133,9 @@ On 2026-09-18 the vendored build + real `ggml-tiny.en.bin` were checked twice:
    the stderr completion marker, and the model fetch under `require-corp`. It also
    surfaced that `FS_unlink` on a not-yet-existing model file throws `ErrnoError`
    errno 44 (ENOENT) — the engine now tolerates exactly that.
-2. **Built extension loaded into Chrome**, worker started from an extension page:
-   `crossOriginIsolated` true (manifest COOP/COEP suffice), model loaded (~8.7 s),
+2. **Built extension loaded into Chrome**, worker started from an extension page (this was
+   done against the earlier *pthreads* build, when COOP/COEP were still set):
+   `crossOriginIsolated` true, model loaded (~8.7 s),
    `jfk.wav` fed in 100 ms chunks through `StreamingTranscriber` produced correct
    finals split at the speaker's pauses. This is what exposed the CSP problem below
    (against the hosted build) and confirmed the rebuild fixes it.

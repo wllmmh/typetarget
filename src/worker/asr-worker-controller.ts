@@ -13,7 +13,7 @@ export type AsrWorkerController = {
 
 export type AsrWorkerControllerDeps = {
   engine: TranscriptionEngine;
-  transcriber: Pick<StreamingTranscriber, "pushAudio" | "flush" | "reset">;
+  transcriber: Pick<StreamingTranscriber, "pushAudio" | "flush" | "reset" | "setOptions">;
   post: (event: AsrWorkerEvent) => void;
 };
 
@@ -50,6 +50,9 @@ export const createAsrWorkerController = ({ engine, transcriber, post }: AsrWork
         return;
       case "reset":
         transcriber.reset();
+        return;
+      case "set-chunk-ms":
+        transcriber.setOptions({ maxUtteranceMs: request.chunkMs });
         return;
       default: {
         const _exhaustive: never = request;

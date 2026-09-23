@@ -185,3 +185,28 @@ describe("WhisperCppEngine.unload", () => {
     await expect(engine.unload()).resolves.toBeUndefined();
   });
 });
+
+describe("WhisperCppEngine repeated loads", () => {
+  it("does nothing when the same model is already loaded (Stop then Start)", async () => {
+    const fakeModule = createFakeModule();
+    const engine = createEngine(fakeModule);
+    await engine.load("tiny.en");
+
+    await engine.load("tiny.en");
+
+    // A second init would mean a second whisper context for the same model.
+    expect(fakeModule.module.init).toHaveBeenCalledTimes(1);
+  });
+
+  it("frees the previous context when switching models, since the module is shared", async () => {
+    const fakeModule = createFakeModule();
+    const engine = createEngine(fakeModule);
+    await engine.load("tiny.en");
+
+    await engine.load("base.en");
+
+    expect(fakeModule.module.free).toHaveBeenCalledWith(1);
+    expect(fakeModule.module.init).toHaveBeenCalledTimes(2);
+    expect(engine.getStatus()).toEqual({ state: "ready", modelId: "base.en" });
+  });
+});

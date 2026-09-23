@@ -7,7 +7,7 @@
  * and race into `createDocument`, which throws on the loser.
  */
 
-const OFFSCREEN_DOCUMENT_PATH = "src/offscreen/index.html";
+export const OFFSCREEN_DOCUMENT_PATH = "src/offscreen/index.html";
 
 let ensurePromise: Promise<void> | null = null;
 

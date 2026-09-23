@@ -22,7 +22,7 @@ const setup = (options?: { loadError?: Error }) => {
     transcribe: vi.fn(),
     reset: vi.fn(),
   };
-  const transcriber = { pushAudio: vi.fn(), flush: vi.fn(async () => {}), reset: vi.fn() };
+  const transcriber = { pushAudio: vi.fn(), flush: vi.fn(async () => {}), reset: vi.fn(), setOptions: vi.fn() };
   const events: AsrWorkerEvent[] = [];
   const controller = createAsrWorkerController({ engine, transcriber, post: (e) => events.push(e) });
   return { controller, engine, transcriber, events };
@@ -77,5 +77,14 @@ describe("createAsrWorkerController", () => {
     const { controller, transcriber } = setup();
     await controller.handle({ kind: "reset" });
     expect(transcriber.reset).toHaveBeenCalled();
+  });
+
+  it("retunes the chunk length without restarting anything", async () => {
+    const { controller, transcriber } = setup();
+
+    await controller.handle({ kind: "set-chunk-ms", chunkMs: 6_000 });
+
+    expect(transcriber.setOptions).toHaveBeenCalledWith({ maxUtteranceMs: 6_000 });
+    expect(transcriber.reset).not.toHaveBeenCalled();
   });
 });

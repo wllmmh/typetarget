@@ -1,0 +1,77 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { installFakeChrome, type FakeChrome } from "../test/fake-chrome";
+import { createInitialState } from "./state";
+import { persistState, restorePersistedState } from "./persisted-state";
+import { CHUNK_MS_MAX } from "../domain/tuning";
+
+let fake: FakeChrome;
+
+beforeEach(() => {
+  fake = installFakeChrome();
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+describe("persistState / restorePersistedState", () => {
+  it("round-trips the user's picks so a reopened popup (or restarted worker) keeps them", async () => {
+    const saved = createInitialState();
+    saved.selectedModel = "tiny.en";
+    saved.pendingSourceTabId = 42;
+    saved.destination = { tabId: 7, frameId: 0, elementId: "el-1" };
+    saved.destinationLabel = 'div "Add a comment..."';
+    await persistState(saved);
+
+    const restored = createInitialState();
+    await restorePersistedState(restored);
+
+    expect(restored.selectedModel).toBe("tiny.en");
+    expect(restored.pendingSourceTabId).toBe(42);
+    expect(restored.destination).toEqual({ tabId: 7, frameId: 0, elementId: "el-1" });
+    expect(restored.destinationLabel).toBe('div "Add a comment..."');
+  });
+
+  it("keeps lasting preferences in local storage and tab-scoped bindings in session storage", async () => {
+    const state = createInitialState();
+    state.pendingSourceTabId = 3;
+    await persistState(state);
+
+    expect(Object.keys(fake.storage.local.data).sort()).toEqual(["chunkMs", "selectedModel"]);
+    expect(Object.keys(fake.storage.session.data)).toEqual(["binding"]);
+  });
+
+  it("round-trips the chunk length, clamping a value left by an older build", async () => {
+    fake.storage.local.data.chunkMs = 999_000;
+    const state = createInitialState();
+
+    await restorePersistedState(state);
+
+    expect(state.chunkMs).toBe(CHUNK_MS_MAX);
+  });
+
+  it("falls back to defaults for junk left by an older build", async () => {
+    fake.storage.local.data.selectedModel = "not-a-model";
+    fake.storage.session.data.binding = { pendingSourceTabId: "42", destination: { tabId: 1 } };
+    const state = createInitialState();
+
+    await restorePersistedState(state);
+
+    expect(state.selectedModel).toBe(createInitialState().selectedModel);
+    expect(state.pendingSourceTabId).toBeNull();
+    expect(state.destination).toBeNull();
+  });
+
+  it("leaves defaults in place when storage is unavailable", async () => {
+    fake.storage.session.get.mockRejectedValue(new Error("no storage"));
+    const state = createInitialState();
+
+    await expect(restorePersistedState(state)).resolves.toBeUndefined();
+    expect(state.pendingSourceTabId).toBeNull();
+  });
+
+  it("does not reject when a write fails", async () => {
+    fake.storage.local.set.mockRejectedValue(new Error("quota"));
+    await expect(persistState(createInitialState())).resolves.toBeUndefined();
+  });
+});
