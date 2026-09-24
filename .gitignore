@@ -16,3 +16,9 @@ dist-ssr
 # see docs/whisper-wasm-provenance.md)
 third_party/whisper-wasm/*.js
 third_party/whisper-wasm/*.wasm
+
+# Experimental threaded wasm build for bench/whisper-bench.html (Lever 1) — same reason
+# as above: large binary, built out of repo, see HANDOFF.md "Lever 1".
+bench/libmain-threaded.js
+
+.env*

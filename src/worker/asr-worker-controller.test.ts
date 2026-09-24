@@ -3,7 +3,7 @@ import type { EngineStatus, TranscriptionEngine } from "../domain/models";
 import { createAsrWorkerController } from "./asr-worker-controller";
 import type { AsrWorkerEvent } from "./worker-protocol";
 
-const setup = (options?: { loadError?: Error }) => {
+const setup = (options?: { loadError?: Error; onSetApiKey?: ReturnType<typeof vi.fn> }) => {
   let status: EngineStatus = { state: "unloaded" };
   const engine: TranscriptionEngine = {
     getStatus: () => status,
@@ -24,7 +24,12 @@ const setup = (options?: { loadError?: Error }) => {
   };
   const transcriber = { pushAudio: vi.fn(), flush: vi.fn(async () => {}), reset: vi.fn(), setOptions: vi.fn() };
   const events: AsrWorkerEvent[] = [];
-  const controller = createAsrWorkerController({ engine, transcriber, post: (e) => events.push(e) });
+  const controller = createAsrWorkerController({
+    engine,
+    transcriber,
+    post: (e) => events.push(e),
+    onSetApiKey: options?.onSetApiKey,
+  });
   return { controller, engine, transcriber, events };
 };
 
@@ -86,5 +91,19 @@ describe("createAsrWorkerController", () => {
 
     expect(transcriber.setOptions).toHaveBeenCalledWith({ maxUtteranceMs: 6_000 });
     expect(transcriber.reset).not.toHaveBeenCalled();
+  });
+
+  it("forwards a set-api-key request to the onSetApiKey callback", async () => {
+    const onSetApiKey = vi.fn();
+    const { controller } = setup({ onSetApiKey });
+
+    await controller.handle({ kind: "set-api-key", provider: "gemini-live", apiKey: "test-key" });
+
+    expect(onSetApiKey).toHaveBeenCalledWith("gemini-live", "test-key");
+  });
+
+  it("does not throw when set-api-key arrives with no onSetApiKey callback wired", async () => {
+    const { controller } = setup();
+    await expect(controller.handle({ kind: "set-api-key", provider: "gemini-live", apiKey: "test-key" })).resolves.toBeUndefined();
   });
 });

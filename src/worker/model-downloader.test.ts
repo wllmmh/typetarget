@@ -3,7 +3,11 @@ import { IDBFactory } from "fake-indexeddb";
 import { ensureModelDownloaded } from "./model-downloader";
 import { isModelCached } from "./model-cache";
 
-const MODEL_URLS = { "tiny.en": "https://example.com/tiny.en.bin", "base.en": "https://example.com/base.en.bin" };
+const MODEL_URLS = {
+  "tiny.en": "https://example.com/tiny.en.bin",
+  "tiny.en-q5_1": "https://example.com/tiny.en-q5_1.bin",
+  "base.en": "https://example.com/base.en.bin",
+};
 
 /** Builds a fetch Response whose body streams the given chunks. */
 const streamingResponse = (chunks: Uint8Array[], contentLength?: number): Response => {

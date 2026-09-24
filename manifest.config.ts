@@ -8,19 +8,25 @@ import pkg from "./package.json";
 //   content script into whatever tab the user is looking at when they click "Select destination".
 // - scripting: inject/remove the destination content script programmatically (activeTab-scoped),
 //   instead of declaring a persistent <all_urls> content_scripts entry.
-// - storage: persist small bits of state (selected model id, destination binding) — not history,
-//   not audio, not transcripts (see README "Privacy").
+// - storage: persist small bits of state (selected model id, destination binding, and — since
+//   the Gemini engine — API keys the user pastes in) — not history, not audio, not transcripts
+//   (see README "Privacy"). Keys are stored locally only and read solely to authenticate
+//   requests to the provider they belong to.
 // - offscreen: run the long-lived Web Audio + ASR pipeline outside the non-persistent service worker.
 //
-// No host_permissions are declared. Destination injection relies on activeTab (granted only after
-// the user clicks the extension action / a popup control) plus chrome.scripting.executeScript,
-// scoped to the single tab the user is actively selecting a destination in.
+// host_permissions is scoped to exactly one origin: Google's Gemini API, needed for the
+// optional Gemini Live transcription engine (src/worker/gemini-live-engine.ts) to open a
+// WebSocket/make requests to it from the offscreen document's worker. This is a real,
+// user-visible permission grant that did not exist before that engine — everything else
+// keeps relying on activeTab (granted only after the user clicks the extension action / a
+// popup control) plus chrome.scripting.executeScript, scoped to the single tab the user is
+// actively selecting a destination in.
 export default defineManifest({
   manifest_version: 3,
   name: "WaveType — Local Live Transcriber",
   version: pkg.version,
   description:
-    "Captures a browser tab's audio and transcribes it locally with Whisper, streaming finalized text into a text field you choose. Nothing is uploaded.",
+    "Captures a browser tab's audio and transcribes it — locally with Whisper by default, or optionally via Google's Gemini API using your own key. Local mode uploads nothing.",
   icons: {
     16: "public/icons/icon16.png",
     48: "public/icons/icon48.png",
@@ -45,6 +51,7 @@ export default defineManifest({
     "storage",
     "offscreen"
   ],
+  host_permissions: ["https://generativelanguage.googleapis.com/*"],
   // The destination content script (src/content/main.ts) is only ever injected
   // dynamically via chrome.scripting.executeScript, never declared in
   // content_scripts, so it needs no host_permissions grant; @crxjs/vite-plugin still

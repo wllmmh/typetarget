@@ -6,7 +6,7 @@ module.exports = {
   parser: "@typescript-eslint/parser",
   parserOptions: { ecmaVersion: "latest", sourceType: "module" },
   plugins: ["react-hooks", "react-refresh"],
-  ignorePatterns: ["dist", "*.cjs", "third_party"],
+  ignorePatterns: ["dist", "*.cjs", "third_party", "bench"],
   rules: {
     ...require("eslint-plugin-react-hooks").configs.recommended.rules,
     "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],

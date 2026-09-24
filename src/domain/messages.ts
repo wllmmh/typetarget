@@ -7,6 +7,7 @@
 
 import type { ModelId } from "./models";
 import type { EngineStatus } from "./models";
+import type { ApiKeyProvider } from "./api-key";
 import type { InferenceStats } from "../worker/instrumented-engine";
 import type { TranscriptEvent, TranscriptionStatus } from "./transcript";
 
@@ -40,6 +41,10 @@ export type PublicAppState = {
   chunkMs: number;
   isSelectingDestination: boolean;
   lastError: { code: string; message: string } | null;
+  /** Which network providers currently have a stored API key — never the keys
+   * themselves (see domain/api-key.ts). Drives the API Keys dialog's "•••• saved"
+   * placeholders. */
+  apiKeyProviders: ApiKeyProvider[];
 };
 
 /** Popup -> background */
@@ -59,7 +64,9 @@ export type PopupRequest =
   | { kind: "set-model"; modelId: ModelId }
   | { kind: "set-chunk-ms"; chunkMs: number }
   | { kind: "load-model" }
-  | { kind: "download-model" };
+  | { kind: "download-model" }
+  /** Sets or clears (empty apiKey) the stored key for a network provider. */
+  | { kind: "set-api-key"; provider: ApiKeyProvider; apiKey: string };
 
 /** Background -> popup (response to PopupRequest, or a broadcast state change) */
 export type BackgroundResponse =
@@ -101,7 +108,8 @@ export type BackgroundToOffscreen =
   | { kind: "resume" }
   | { kind: "load-model"; modelId: ModelId }
   | { kind: "unload-model" }
-  | { kind: "set-chunk-ms"; chunkMs: number };
+  | { kind: "set-chunk-ms"; chunkMs: number }
+  | { kind: "set-api-key"; provider: ApiKeyProvider; apiKey: string };
 
 /** Offscreen document -> background, as a direct reply to a BackgroundToOffscreen message. */
 export type OffscreenReply =

@@ -7,15 +7,22 @@
  * abstraction": "The rest of the application must not depend directly on
  * whisper.cpp internals."
  */
-import type { EngineStatus, ModelId, TranscriptionEngine, TranscriptionOptions, TranscriptionResult } from "../domain/models";
+import type { EngineStatus, ModelId, TranscriptionEngine, TranscriptionOptions, TranscriptionResult, WhisperModelId } from "../domain/models";
+import { MODEL_CATALOG } from "../domain/models";
 import type { WhisperModule, WhisperModuleFactory } from "./whisper-module";
 import { parseWhisperOutput } from "./whisper-line-parser";
 import { ensureModelDownloaded, type ModelSource } from "./model-downloader";
 
-const MODEL_FILENAME_IN_FS: Record<ModelId, string> = {
+const MODEL_FILENAME_IN_FS: Record<WhisperModelId, string> = {
   "tiny.en": "ggml-tiny.en.bin",
+  "tiny.en-q5_1": "ggml-tiny.en-q5_1.bin",
   "base.en": "ggml-base.en.bin",
 };
+
+/** EngineRouter only ever loads this engine for whisper-cpp-provider models, but
+ * TranscriptionEngine.load() must accept any ModelId (it's the cross-provider
+ * interface) — this narrows before touching anything whisper-specific. */
+const isWhisperModelId = (id: ModelId): id is WhisperModelId => MODEL_CATALOG[id].provider === "whisper-cpp";
 
 /** Emscripten FS `ErrnoError.errno` for "no such file" (musl's ENOENT). */
 const ENOENT = 44;
@@ -56,6 +63,11 @@ export class WhisperCppEngine implements TranscriptionEngine {
   constructor(private readonly config: WhisperCppEngineConfig) {}
 
   async load(modelId: ModelId): Promise<void> {
+    if (!isWhisperModelId(modelId)) {
+      this.status = { state: "error", message: `WhisperCppEngine cannot load non-whisper model "${modelId}".` };
+      throw new Error(this.status.message);
+    }
+
     // Stop/Start sends load-model again; re-initialising an already-loaded model would
     // re-read it from the cache and leak the previous whisper context for no gain.
     if (this.status.state === "ready" && this.status.modelId === modelId) return;

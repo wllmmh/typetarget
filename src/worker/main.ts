@@ -11,6 +11,8 @@ import { WhisperCppEngine } from "./whisper-cpp-engine";
 import { loadWhisperModuleFactory } from "./whisper-module";
 import { createAsrWorkerController } from "./asr-worker-controller";
 import { createInstrumentedEngine } from "./instrumented-engine";
+import { EngineRouter } from "./engine-router";
+import { createGeminiLiveConnect, GeminiLiveEngine } from "./gemini-live-engine";
 import { MODEL_URLS } from "./model-urls";
 import { createDownloadProgressReporter } from "./download-progress-reporter";
 import type { ModelId } from "../domain/models";
@@ -48,7 +50,31 @@ if (self.name === "em-pthread") {
     stabilizer: new TranscriptStabilizer(),
     onEvent: (event) => post({ kind: "transcript-event", event }),
   });
-  const controller = createAsrWorkerController({ engine: instrumented, transcriber, post });
+
+  // Read by GeminiLiveEngine each time it connects, not captured once — a key entered
+  // (or changed) after the worker started must take effect on the next load(), not
+  // require a worker restart. Set via the "set-api-key" case below.
+  let geminiApiKey: string | null = null;
+  const geminiEngine = new GeminiLiveEngine({ connect: createGeminiLiveConnect(), getApiKey: () => geminiApiKey }, (event) =>
+    post({ kind: "transcript-event", event }),
+  );
+
+  const router = new EngineRouter({
+    providers: {
+      "whisper-cpp": { engine: instrumented, transcriber },
+      "gemini-live": { engine: geminiEngine, transcriber: geminiEngine },
+    },
+  });
+  const controller = createAsrWorkerController({
+    engine: router,
+    transcriber: router,
+    post,
+    onSetApiKey: (provider, apiKey) => {
+      if (provider === "gemini-live") geminiApiKey = apiKey || null;
+      // "groq" is accepted by the message type (domain/api-key.ts's broader
+      // ApiKeyProvider) but has no engine to route to yet — see HANDOFF.md "Groq".
+    },
+  });
 
   self.onmessage = (message: MessageEvent<AsrWorkerRequest>) => {
     controller.handle(message.data).catch((err: unknown) => {

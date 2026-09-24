@@ -16,6 +16,7 @@ import {
 import { isFromExtensionPage } from "../domain/sender";
 import type { ModelId } from "../domain/models";
 import { clampChunkMs } from "../domain/tuning";
+import { isPlausibleApiKey, API_KEY_PROVIDER_NAMES, type ApiKeyProvider } from "../domain/api-key";
 import { createInitialState, toPublicState } from "./state";
 import { pruneKnownTabs, recordKnownTab, removeKnownTab } from "./known-tabs";
 import { persistState, restorePersistedState } from "./persisted-state";
@@ -131,7 +132,7 @@ const startCapture = async (sourceTabId: number): Promise<BackgroundResponse> =>
   state.inference = null;
   commitState();
   try {
-    await captureController.start(sourceTabId, state.selectedModel);
+    await captureController.start(sourceTabId, state.selectedModel, state.apiKeys);
     void captureController.setChunkMs(state.chunkMs).catch(() => {});
     state.status = "capturing";
     state.sourceTabId = sourceTabId;
@@ -194,6 +195,29 @@ const setChunkMs = async (chunkMs: number): Promise<BackgroundResponse> => {
   if (state.status !== "idle" && state.status !== "error") {
     // Best effort: if the offscreen document has gone, the next start sends the value anyway.
     await captureController.setChunkMs(state.chunkMs).catch(() => {});
+  }
+  return { kind: "ok" };
+};
+
+/**
+ * Unlike the model choice, an API key can be entered or changed at any time — see
+ * domain/api-key.ts — and, like chunk length, is forwarded to a running session
+ * instead of requiring a restart. An empty key clears whatever was stored.
+ */
+const setApiKey = async (provider: ApiKeyProvider, apiKey: string): Promise<BackgroundResponse> => {
+  const trimmed = apiKey.trim();
+  if (trimmed !== "" && !isPlausibleApiKey(trimmed)) {
+    return {
+      kind: "error",
+      code: "invalid-api-key",
+      message: `That ${API_KEY_PROVIDER_NAMES[provider]} API key looks too short.`,
+    };
+  }
+  if (trimmed === "") delete state.apiKeys[provider];
+  else state.apiKeys[provider] = trimmed;
+  commitState();
+  if (state.status !== "idle" && state.status !== "error") {
+    await captureController.setApiKey(provider, trimmed).catch(() => {});
   }
   return { kind: "ok" };
 };
@@ -270,6 +294,8 @@ const handlePopupRequest = async (req: PopupRequest): Promise<BackgroundResponse
       return setModel(req.modelId);
     case "set-chunk-ms":
       return setChunkMs(req.chunkMs);
+    case "set-api-key":
+      return setApiKey(req.provider, req.apiKey);
     case "set-source-tab":
       return setSourceTab(req.sourceTabId);
     case "load-model":

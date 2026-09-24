@@ -91,6 +91,27 @@ describe("CaptureController.start", () => {
     ]);
   });
 
+  it("hands saved API keys to the offscreen document before loading the model", async () => {
+    // Regression: keys saved while idle never reached a freshly created offscreen
+    // document, so the Gemini engine loaded with no key and failed.
+    fake.tabs.get.mockResolvedValue({ id: 42 });
+    stubStreamId("stream-1");
+    const sent: string[] = [];
+    fake.runtime.sendMessage.mockImplementation(async (msg: unknown) => {
+      if (isEnvelope<BackgroundToOffscreen>(msg)) sent.push(JSON.stringify(msg.payload));
+      return envelope({ kind: "ok" });
+    });
+    const controller = new CaptureController({ onSourceTabClosed: vi.fn() });
+
+    await controller.start(42, "gemini-3.5-transcribe-live", { "gemini-live": "AIza-test-key-123456" });
+
+    expect(sent).toEqual([
+      JSON.stringify({ kind: "start-capture", streamId: "stream-1" }),
+      JSON.stringify({ kind: "set-api-key", provider: "gemini-live", apiKey: "AIza-test-key-123456" }),
+      JSON.stringify({ kind: "load-model", modelId: "gemini-3.5-transcribe-live" }),
+    ]);
+  });
+
   it("keeps capturing when the model is still loading, so audio isn't missed during a long download", async () => {
     fake.tabs.get.mockResolvedValue({ id: 42 });
     stubStreamId("stream-1");

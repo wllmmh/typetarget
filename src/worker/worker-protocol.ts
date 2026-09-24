@@ -1,4 +1,5 @@
 /** Message contract between the offscreen document and the ASR worker (src/worker/main.ts). */
+import type { ApiKeyProvider } from "../domain/api-key";
 import type { EngineStatus, ModelId } from "../domain/models";
 import type { TranscriptEvent } from "../domain/transcript";
 import type { InferenceStats } from "./instrumented-engine";
@@ -12,7 +13,9 @@ export type AsrWorkerRequest =
   | { kind: "flush" }
   | { kind: "reset" }
   /** Retunes the running pipeline (see domain/tuning.ts). */
-  | { kind: "set-chunk-ms"; chunkMs: number };
+  | { kind: "set-chunk-ms"; chunkMs: number }
+  /** Sets or clears (empty apiKey) the stored key for a network provider (see domain/api-key.ts). */
+  | { kind: "set-api-key"; provider: ApiKeyProvider; apiKey: string };
 
 export type AsrWorkerEvent =
   | { kind: "engine-status"; status: EngineStatus }

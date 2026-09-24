@@ -2,6 +2,7 @@ import type { ModelId } from "../domain/models";
 import type { CapturableTab, DestinationRef, PublicAppState } from "../domain/messages";
 import { DEFAULT_MODEL, type EngineStatus } from "../domain/models";
 import { CHUNK_MS_DEFAULT } from "../domain/tuning";
+import type { ApiKeyProvider } from "../domain/api-key";
 import type { InferenceStats } from "../worker/instrumented-engine";
 import type { TranscriptionStatus } from "../domain/transcript";
 
@@ -28,6 +29,8 @@ export type AppState = {
   chunkMs: number;
   isSelectingDestination: boolean;
   lastError: { code: string; message: string } | null;
+  /** Never sent to the popup as-is (see toPublicState) — only which providers have one. */
+  apiKeys: Partial<Record<ApiKeyProvider, string>>;
 };
 
 export const createInitialState = (): AppState => ({
@@ -46,6 +49,7 @@ export const createInitialState = (): AppState => ({
   chunkMs: CHUNK_MS_DEFAULT,
   isSelectingDestination: false,
   lastError: null,
+  apiKeys: {},
 });
 
 /** Strips fields the popup doesn't need (e.g. the raw DestinationRef) before sending. */
@@ -63,4 +67,5 @@ export const toPublicState = (state: AppState): PublicAppState => ({
   chunkMs: state.chunkMs,
   isSelectingDestination: state.isSelectingDestination,
   lastError: state.lastError,
+  apiKeyProviders: (Object.keys(state.apiKeys) as ApiKeyProvider[]).filter((provider) => state.apiKeys[provider]),
 });

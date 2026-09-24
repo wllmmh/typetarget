@@ -4,12 +4,12 @@
  * network with progress" and "persist bytes locally" are different concerns (one
  * network-shaped, one storage-shaped) — AGENTS.md "Separate these concerns."
  */
-import type { ModelId } from "../domain/models";
+import type { WhisperModelId } from "../domain/models";
 import { getCachedModel, putCachedModel, isModelCached } from "./model-cache";
 
 export type DownloadProgress = { receivedBytes: number; totalBytes: number };
 
-export type ModelSource = Record<ModelId, string>;
+export type ModelSource = Record<WhisperModelId, string>;
 
 /**
  * Fetches and caches a model if not already cached, reporting progress via
@@ -17,7 +17,7 @@ export type ModelSource = Record<ModelId, string>;
  * downloaded), so callers don't need to branch on cache state themselves.
  */
 export const ensureModelDownloaded = async (
-  modelId: ModelId,
+  modelId: WhisperModelId,
   modelUrls: ModelSource,
   onProgress?: (progress: DownloadProgress) => void,
 ): Promise<ArrayBuffer> => {

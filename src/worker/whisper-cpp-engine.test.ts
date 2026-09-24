@@ -2,7 +2,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WhisperCppEngine } from "./whisper-cpp-engine";
 import type { WhisperModule, WhisperModuleFactory, WhisperModuleOverrides } from "./whisper-module";
 
-const MODEL_URLS = { "tiny.en": "https://example.com/tiny.en.bin", "base.en": "https://example.com/base.en.bin" };
+const MODEL_URLS = {
+  "tiny.en": "https://example.com/tiny.en.bin",
+  "tiny.en-q5_1": "https://example.com/tiny.en-q5_1.bin",
+  "base.en": "https://example.com/base.en.bin",
+};
 
 /** Builds a fake WhisperModule plus the factory that loads it. Like the real build,
  * the fake only sees print/printErr via the overrides passed at load time (Emscripten

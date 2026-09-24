@@ -101,12 +101,39 @@ and forces `params.n_threads = 1`. This is transparent to callers: the
 | pthreads, 4 threads, `audio_ctx` 1500 | ~3.3 s |
 | single-threaded, `audio_ctx` 1500 | ~13.5 s |
 | single-threaded + `-msimd128`, `audio_ctx` 1500 | ~12.8-14.1 s |
-| single-threaded + `-msimd128`, `audio_ctx` 768 | ~7.1 s first call, then **hangs** |
+| single-threaded + `-msimd128`, `audio_ctx` 768 | ~7.1 s first call, then **hangs** (see correction below) |
+
+**Re-measured 2026-09-23** (same machine class: Ryzen 5 3600, 6C/12T; headless Chrome 153;
+`bench/whisper-bench.html` driven via Playwright; real speech — slices of whisper.cpp's
+`samples/jfk.wav` — plus the harness's 3 s silence; every number is steady-state over ≥2
+repeated calls on one context):
+
+| build / model | 11 s clip | 5 s clip |
+| --- | --- | --- |
+| single-threaded (shipping), `tiny.en` | ~13.4 s | — |
+| single-threaded, `tiny.en-q5_1` | ~10.4 s | ~9.5 s |
+| single-threaded, `tiny.en-q5_1`, fitted `audio_ctx` (288) | — | **~1.9 s** |
+| pthreads ×4, `tiny.en` | ~3.6 s | — |
+| pthreads ×6, `tiny.en` (×8 is no faster: 6 physical cores) | ~2.4 s | ~2.3 s |
+| pthreads ×6, `tiny.en-q5_1` | ~1.8 s | ~2.0 s |
+| pthreads ×6, `tiny.en-q5_1`, fitted `audio_ctx` | — | **~0.4 s** |
+
+Transcripts were identical across builds/models at full context.
 
 Two things that look like levers and are not:
 
-- **`-msimd128` bought nothing measurable** (~13 s either way), so ggml's wasm kernels here
-  are not the bottleneck SIMD would help with. The flag is still set (it does no harm).
+- **`-msimd128` bought nothing measurable** (~13 s either way) — **because it was already
+  on in both rows, not because SIMD doesn't help.** `ggml/src/ggml-cpu/CMakeLists.txt`
+  unconditionally sets `COMPILE_FLAGS "-msimd128"` on the CPU backend target whenever
+  `EMSCRIPTEN` is set (confirmed at the exact pinned commit below), so the vendored build
+  already compiles with WASM SIMD regardless of any flag added elsewhere. The
+  `-msimd128` that was added and measured here went into
+  `examples/whisper.wasm/CMakeLists.txt`'s `LINK_FLAGS`, which only affects the link
+  step and cannot change how `ggml-cpu`'s object files were already compiled — a no-op
+  by construction. There is no disabled SIMD path to find; see HANDOFF.md "Lever 4" for
+  the full trace (source-level only — this sandbox had no `wasm-objdump`/`emsdk` to
+  confirm against the compiled `.wasm` directly; re-verify against the binary if that
+  tooling is available).
 - **`audio_ctx` is not usable here, and is deliberately NOT in the patch.** Shrinking the
   encoder context is the obvious fix for the 30 s-window cost and it does work — once. Two
   variants were measured: sized per request with a 256 floor (first call 2.5 s) and a fixed
@@ -116,10 +143,26 @@ Two things that look like levers and are not:
   next call. Anyone retrying this must test **repeated** inferences on one context, not a
   single call.
 
-Remaining untried speed levers, in order of risk: a quantized model
-(`ggml-tiny.en-q5_1.bin` from the same Hugging Face repo — a pure model swap, no C++ change),
-then getting threads back by replacing `tabCapture` with `chrome.desktopCapture`, whose stream
-ids are origin-verified rather than process-verified (adds a picker and a permission).
+  **Correction (2026-09-23): it was not a hang.** Re-tested with a rebuilt binding that
+  takes `audio_ctx` per call (`bench/single-thread-full-opts.patch`), on both the
+  single-threaded and pthreads builds: repeated calls on one context — including changing
+  `audio_ctx` between calls — work indefinitely. What happens instead is that when the
+  reduced window fits the audio badly, the decoder degenerates (repetition / garbage) and
+  whisper's temperature fallback re-decodes up to 5 times at up to ~224 tokens each:
+  **64–103 s per call single-threaded** — indistinguishable from a hang, and past the
+  engine's 30 s timeout. Short utterances (≤~4 s) are where this happens, and the old
+  per-request variant's 256 floor put every short utterance there. With the window sized to
+  the audio + ~0.5 s it is correct and 4–5× faster for utterances ≥~4.5 s; below that no
+  margin was reliably correct (dropped speech, repetition). `max_tokens` + no fallback bounds
+  the worst case to ~1–2 s but does not fix those transcripts. Still not in the shipping
+  patch — see HANDOFF.md "Lever 2".
+
+A quantized model (`ggml-tiny.en-q5_1.bin` from the same Hugging Face repo — a pure model
+swap, no C++ change) is now wired in as a selectable model (`src/domain/models.ts`,
+`src/worker/model-urls.ts`) but **not benchmarked** — see HANDOFF.md "Lever 3" and
+`bench/whisper-bench.html`. Remaining untried lever: getting threads back by replacing
+`tabCapture` with `chrome.desktopCapture`, whose stream ids are origin-verified rather
+than process-verified (adds a picker and a permission) — see HANDOFF.md "Lever 1".
 
 If a future build ever wants threads back, it must solve the process split first — re-adding
 the manifest keys alone will silently break capture again.
@@ -169,13 +212,14 @@ https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-<model>.bin
 ```
 
 confirmed from whisper.cpp's own `models/download-ggml-model.sh`. This project uses
-`tiny.en` and `base.en` — i.e.:
+`tiny.en`, `tiny.en-q5_1`, and `base.en` — i.e.:
 
 - `https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.en.bin` (77,704,715 bytes, verified 2026-09-18)
+- `https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.en-q5_1.bin` (32,166,155 bytes, verified 2026-09-22 — see HANDOFF.md "Lever 3")
 - `https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin`
 
-Only the `tiny.en` size has been verified (above). `base.en` is commonly cited as
-~142MB — unverified; check the live Hugging Face listing before hardcoding it in UI copy.
+`base.en`'s size has not been independently verified; it is commonly cited as ~142MB —
+check the live Hugging Face listing before hardcoding it in UI copy.
 
 ## Verified API shape (do not re-derive from memory — check against the actual
 ## vendored files' version once available)

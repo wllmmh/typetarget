@@ -37,8 +37,28 @@ describe("persistState / restorePersistedState", () => {
     state.pendingSourceTabId = 3;
     await persistState(state);
 
-    expect(Object.keys(fake.storage.local.data).sort()).toEqual(["chunkMs", "selectedModel"]);
+    expect(Object.keys(fake.storage.local.data).sort()).toEqual(["apiKeys", "chunkMs", "selectedModel"]);
     expect(Object.keys(fake.storage.session.data)).toEqual(["binding"]);
+  });
+
+  it("round-trips a stored API key", async () => {
+    const saved = createInitialState();
+    saved.apiKeys["gemini-live"] = "test-gemini-key";
+    await persistState(saved);
+
+    const restored = createInitialState();
+    await restorePersistedState(restored);
+
+    expect(restored.apiKeys).toEqual({ "gemini-live": "test-gemini-key" });
+  });
+
+  it("drops junk API key entries left by an older build (unknown provider, non-string value, empty key)", async () => {
+    fake.storage.local.data.apiKeys = { "gemini-live": "", groq: 12345, "not-a-provider": "some-key" };
+    const state = createInitialState();
+
+    await restorePersistedState(state);
+
+    expect(state.apiKeys).toEqual({});
   });
 
   it("round-trips the chunk length, clamping a value left by an older build", async () => {

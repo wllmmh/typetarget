@@ -7,6 +7,7 @@ import {
 } from "../domain/messages";
 import { isFromServiceWorker } from "../domain/sender";
 import type { ModelId } from "../domain/models";
+import type { ApiKeyProvider } from "../domain/api-key";
 import type { AsrWorkerEvent } from "../worker/worker-protocol";
 import { createAsrWorkerClient, type AsrWorkerClient } from "./asr-worker-client";
 import { startTabCapture, type StartCaptureResult } from "./capture";
@@ -39,6 +40,9 @@ let engineReady = false;
 // needs it until a model is requested.
 let asrWorker: AsrWorkerClient | null = null;
 let chunkMs: number | null = null;
+/** Same reason as chunkMs: the worker may not exist yet when a key is set, and is
+ * re-supplied on creation so a key entered before capture starts is not lost. */
+let apiKeys: Partial<Record<ApiKeyProvider, string>> = {};
 const asrEventListeners = new Set<(event: AsrWorkerEvent) => void>();
 
 const sendToBackground = (message: OffscreenToBackground) => {
@@ -51,6 +55,9 @@ const getAsrWorker = (): AsrWorkerClient => {
   if (asrWorker) return asrWorker;
   asrWorker = createWorker();
   if (chunkMs !== null) asrWorker.send({ kind: "set-chunk-ms", chunkMs });
+  for (const [provider, apiKey] of Object.entries(apiKeys) as [ApiKeyProvider, string][]) {
+    asrWorker.send({ kind: "set-api-key", provider, apiKey });
+  }
   return asrWorker;
 };
 
@@ -151,6 +158,11 @@ const handleMessage = async (msg: BackgroundToOffscreen): Promise<OffscreenReply
       // creation so a setting changed before capture starts is not lost.
       chunkMs = msg.chunkMs;
       asrWorker?.send({ kind: "set-chunk-ms", chunkMs });
+      return { kind: "ok" };
+    }
+    case "set-api-key": {
+      apiKeys = { ...apiKeys, [msg.provider]: msg.apiKey };
+      asrWorker?.send({ kind: "set-api-key", provider: msg.provider, apiKey: msg.apiKey });
       return { kind: "ok" };
     }
     case "pause": {

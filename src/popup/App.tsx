@@ -3,6 +3,7 @@ import { sendToBackground } from "./background-client";
 import { useBackgroundState } from "./use-background-state";
 import type { CapturableTab, PublicAppState } from "../domain/messages";
 import { MODEL_CATALOG, type ModelId } from "../domain/models";
+import { API_KEY_PROVIDER_NAMES, type ApiKeyProvider } from "../domain/api-key";
 import { CHUNK_MS_MAX, CHUNK_MS_MIN, CHUNK_MS_STEP } from "../domain/tuning";
 import "./popup.css";
 
@@ -70,6 +71,8 @@ export const App = () => {
   /** Local while dragging so the readout tracks the thumb; null means "follow the background". */
   const [draggedChunkMs, setDraggedChunkMs] = useState<number | null>(null);
   const chunkCommitTimer = useRef<number | null>(null);
+  const apiKeyDialogRef = useRef<HTMLDialogElement>(null);
+  const [apiKeyError, setApiKeyError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -97,6 +100,7 @@ export const App = () => {
     state.status === "paused";
 
   const chunkMs = draggedChunkMs ?? state.chunkMs;
+  const selectedModelInfo = MODEL_CATALOG[state.selectedModel];
 
   /**
    * Debounced: a drag fires a change per step, and each one persists to storage and retunes
@@ -133,6 +137,24 @@ export const App = () => {
   const handleModelChange = async (modelId: ModelId) => {
     const res = await sendToBackground({ kind: "set-model", modelId });
     if (res.kind === "error") setLoadError(res.message);
+  };
+
+  /**
+   * Commits on blur, not the chunk slider's per-keystroke debounce — a debounce
+   * mid-paste makes no sense for a discrete secret. Clears the field on success so it
+   * reverts to the "•••• saved" placeholder rather than leaving the raw key visible-if-
+   * unmasked in the DOM longer than it has to be.
+   */
+  const handleApiKeyBlur = async (provider: ApiKeyProvider, input: HTMLInputElement) => {
+    const apiKey = input.value;
+    if (apiKey === "") return; // nothing typed; leave whatever was already stored alone
+    const res = await sendToBackground({ kind: "set-api-key", provider, apiKey });
+    if (res.kind === "error") {
+      setApiKeyError(res.message);
+      return;
+    }
+    setApiKeyError(null);
+    input.value = "";
   };
 
   const handleTogglePause = async () => {
@@ -199,11 +221,39 @@ export const App = () => {
         >
           {Object.values(MODEL_CATALOG).map((model) => (
             <option key={model.id} value={model.id}>
-              {model.label} (~{model.approxSizeMb} MB)
+              {model.name} — {model.label}
+              {model.approxSizeMb !== undefined ? ` (~${model.approxSizeMb} MB)` : ""}
             </option>
           ))}
         </select>
+        {selectedModelInfo.network && (
+          <p className="hint">
+            Audio for this session is sent to {selectedModelInfo.name}'s API using your key — not fully local.
+          </p>
+        )}
+        <button type="button" onClick={() => apiKeyDialogRef.current?.showModal()}>
+          API Keys
+        </button>
       </section>
+
+      <dialog ref={apiKeyDialogRef} onClose={() => setApiKeyError(null)}>
+        <h2>API Keys</h2>
+        <p className="hint">Stored on this device only, used solely to authenticate requests to each provider.</p>
+        {apiKeyError && <p className="error">{apiKeyError}</p>}
+        {(Object.entries(API_KEY_PROVIDER_NAMES) as [ApiKeyProvider, string][]).map(([provider, name]) => (
+          <label key={provider}>
+            {name}
+            <input
+              type="password"
+              placeholder={state.apiKeyProviders.includes(provider) ? "•••• saved" : `Paste your ${name} API key`}
+              onBlur={(e) => handleApiKeyBlur(provider, e.currentTarget)}
+            />
+          </label>
+        ))}
+        <button type="button" onClick={() => apiKeyDialogRef.current?.close()}>
+          Done
+        </button>
+      </dialog>
 
       <section>
         <h2>Chunk length</h2>

@@ -60,3 +60,32 @@ body {
   color: #c0392b;
   font-size: 12px;
 }
+
+.popup dialog {
+  width: 260px;
+  padding: 14px 16px;
+  border: none;
+  border-radius: 6px;
+}
+
+.popup dialog h2 {
+  margin-top: 0;
+}
+
+.popup dialog label {
+  display: block;
+  font-size: 12px;
+  margin-top: 10px;
+}
+
+.popup dialog input[type="password"] {
+  display: block;
+  width: 100%;
+  margin-top: 3px;
+  padding: 4px;
+  box-sizing: border-box;
+}
+
+.popup dialog button {
+  margin-top: 14px;
+}

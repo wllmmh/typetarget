@@ -11,13 +11,29 @@
 import type { DestinationRef } from "../domain/messages";
 import { MODEL_CATALOG, type ModelId } from "../domain/models";
 import { clampChunkMs } from "../domain/tuning";
+import { API_KEY_PROVIDER_NAMES, type ApiKeyProvider } from "../domain/api-key";
 import { parseKnownTabs } from "./known-tabs";
 import type { CapturableTab } from "../domain/messages";
 import type { AppState } from "./state";
 
 const MODEL_KEY = "selectedModel";
 const CHUNK_KEY = "chunkMs";
+const API_KEYS_KEY = "apiKeys";
 const SESSION_KEY = "binding";
+
+const isApiKeyProvider = (value: unknown): value is ApiKeyProvider =>
+  typeof value === "string" && Object.prototype.hasOwnProperty.call(API_KEY_PROVIDER_NAMES, value);
+
+/** Storage is untrusted input like any other boundary: keeps only known providers and
+ * string values, rather than trusting whatever shape was written by an older build. */
+const parseApiKeys = (value: unknown): Partial<Record<ApiKeyProvider, string>> => {
+  if (typeof value !== "object" || value === null) return {};
+  const result: Partial<Record<ApiKeyProvider, string>> = {};
+  for (const [provider, key] of Object.entries(value as Record<string, unknown>)) {
+    if (isApiKeyProvider(provider) && typeof key === "string" && key !== "") result[provider] = key;
+  }
+  return result;
+};
 
 type PersistedBinding = {
   pendingSourceTabId: number | null;
@@ -50,9 +66,10 @@ const isDestinationRef = (value: unknown): value is DestinationRef => {
 /** Fills `state` in place from storage. Never throws: a failed restore means defaults, not a broken extension. */
 export const restorePersistedState = async (state: AppState): Promise<void> => {
   try {
-    const [local, chunk, session] = await Promise.all([
+    const [local, chunk, apiKeys, session] = await Promise.all([
       chrome.storage.local.get(MODEL_KEY),
       chrome.storage.local.get(CHUNK_KEY),
+      chrome.storage.local.get(API_KEYS_KEY),
       chrome.storage.session.get(SESSION_KEY),
     ]);
 
@@ -61,6 +78,8 @@ export const restorePersistedState = async (state: AppState): Promise<void> => {
 
     const storedChunk = chunk[CHUNK_KEY];
     if (typeof storedChunk === "number") state.chunkMs = clampChunkMs(storedChunk);
+
+    state.apiKeys = parseApiKeys(apiKeys[API_KEYS_KEY]);
 
     const binding = parseBinding(session[SESSION_KEY]);
     if (binding) {
@@ -83,7 +102,7 @@ export const persistState = async (state: AppState): Promise<void> => {
   };
   try {
     await Promise.all([
-      chrome.storage.local.set({ [MODEL_KEY]: state.selectedModel, [CHUNK_KEY]: state.chunkMs }),
+      chrome.storage.local.set({ [MODEL_KEY]: state.selectedModel, [CHUNK_KEY]: state.chunkMs, [API_KEYS_KEY]: state.apiKeys }),
       chrome.storage.session.set({ [SESSION_KEY]: binding }),
     ]);
   } catch {

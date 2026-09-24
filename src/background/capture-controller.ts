@@ -6,6 +6,7 @@
  */
 import { envelope, isEnvelope, type BackgroundToOffscreen, type OffscreenReply } from "../domain/messages";
 import type { ModelId } from "../domain/models";
+import type { ApiKeyProvider } from "../domain/api-key";
 import { getTabCaptureStreamId } from "./tab-capture";
 import { ensureOffscreenDocument, closeOffscreenDocument } from "./offscreen-manager";
 
@@ -54,8 +55,11 @@ export class CaptureController {
    * gesture was long gone. The model load is deliberately not awaited — capture is live
    * immediately, the offscreen document drops audio until the engine is ready, and load
    * progress/failures reach the popup through engine-status broadcasts.
+   *
+   * `apiKeys` are sent before the model load, not after: a network engine reads its key
+   * when it loads, and a fresh offscreen document has none of the keys saved while idle.
    */
-  async start(sourceTabId: number, modelId: ModelId): Promise<void> {
+  async start(sourceTabId: number, modelId: ModelId, apiKeys: Partial<Record<ApiKeyProvider, string>> = {}): Promise<void> {
     const tab = await chrome.tabs.get(sourceTabId).catch(() => null);
     if (!tab) {
       throw new CaptureError("Source tab is no longer available.", "source-tab-missing");
@@ -72,6 +76,10 @@ export class CaptureController {
       const started = await sendToOffscreen({ kind: "start-capture", streamId });
       if (started.kind === "error") {
         throw new CaptureError(started.message, started.code);
+      }
+
+      for (const [provider, apiKey] of Object.entries(apiKeys) as [ApiKeyProvider, string][]) {
+        await sendToOffscreen({ kind: "set-api-key", provider, apiKey });
       }
 
       void sendToOffscreen({ kind: "load-model", modelId }).catch(() => {
@@ -93,6 +101,15 @@ export class CaptureController {
   /** Retunes the running pipeline. Safe to call when nothing is capturing; the message just goes nowhere. */
   async setChunkMs(chunkMs: number): Promise<void> {
     const reply = await sendToOffscreen({ kind: "set-chunk-ms", chunkMs });
+    if (reply.kind === "error") {
+      throw new CaptureError(reply.message, reply.code);
+    }
+  }
+
+  /** Forwards a key entered mid-session to the running worker, so it takes effect
+   * without restarting capture. Safe to call when nothing is capturing. */
+  async setApiKey(provider: ApiKeyProvider, apiKey: string): Promise<void> {
+    const reply = await sendToOffscreen({ kind: "set-api-key", provider, apiKey });
     if (reply.kind === "error") {
       throw new CaptureError(reply.message, reply.code);
     }

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>whisper.cpp WASM inference benchmark</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 780px; margin: 2rem auto; padding: 0 1rem; }
+  fieldset { margin-bottom: 1.5rem; }
+  label { display: block; margin: 0.5rem 0 0.25rem; }
+  button { padding: 0.4rem 0.8rem; margin-right: 0.5rem; }
+  table { border-collapse: collapse; width: 100%; margin-top: 0.5rem; }
+  td, th { border: 1px solid #ccc; padding: 0.25rem 0.5rem; text-align: right; }
+  th:first-child, td:first-child { text-align: left; }
+  #log { white-space: pre-wrap; font-family: monospace; font-size: 0.85em; background: #f4f4f4; padding: 0.5rem; max-height: 200px; overflow-y: auto; }
+  .warn { color: #a00; }
+</style>
+</head>
+<body>
+<h1>whisper.cpp WASM inference benchmark</h1>
+<p>
+  Manual dev tool, not part of the extension build (Phase 7 known gap: "no benchmarking
+  harness in the repo"). Loads the vendored <code>third_party/whisper-wasm/libmain.js</code>
+  glue directly in a plain page — the same approach used to verify the real binary (see
+  <code>docs/whisper-wasm-provenance.md</code>) — and times repeated <code>full_default</code>
+  calls on synthetic silence. Inference cost is dominated by Whisper's fixed 30&nbsp;s encoder
+  window (see HANDOFF.md), so silence is representative of timing; it is not useful for
+  checking transcript correctness.
+</p>
+<p>
+  Must be served over http(s), not opened as a <code>file://</code> URL (the model fetch
+  needs a real origin). The threaded build below additionally needs
+  <code>crossOriginIsolated</code> (COOP/COEP headers) to get <code>SharedArrayBuffer</code>
+  — a plain static server does not set those, so from the repo root run
+  <code>node bench/serve.mjs</code> instead, then open
+  <code>http://localhost:8000/bench/whisper-bench.html</code>.
+</p>
+
+<fieldset>
+  <legend>0. Glue build</legend>
+  <label for="glue-url">
+    Which <code>libmain.js</code> to load. Reload the page before switching — the Emscripten
+    runtime can only be imported once per page load (see docs/whisper-wasm-provenance.md).
+  </label>
+  <select id="glue-url">
+    <option value="../third_party/whisper-wasm/libmain.js">production: single-threaded (third_party/whisper-wasm/libmain.js)</option>
+    <option value="libmain-threaded.js">experimental: pthreads, built this session for Lever 1 — needs bench/serve.mjs (bench/libmain-threaded.js)</option>
+  </select>
+  <p id="glue-warning" style="display:none;" class="warn"></p>
+</fieldset>
+
+<fieldset>
+  <legend>1. Load model</legend>
+  <label for="model-url">Model URL</label>
+  <select id="model-preset"></select>
+  <input id="model-url" type="text" style="width: 100%; margin-top: 0.25rem;" />
+  <div style="margin-top: 0.5rem;">
+    <button id="load-btn">Load model</button>
+    <span id="load-status"></span>
+  </div>
+</fieldset>
+
+<fieldset>
+  <legend>2. Run inference</legend>
+  <label for="audio-seconds">Synthetic audio length fed per call (seconds)</label>
+  <input id="audio-seconds" type="number" value="3" min="0.1" step="0.5" style="width: 6rem;" />
+  <label for="call-count">Number of calls (first call is a warm-up, excluded from the mean)</label>
+  <input id="call-count" type="number" value="4" min="1" step="1" style="width: 6rem;" />
+  <label for="nthreads">Threads (only takes effect with the threaded glue build above — the
+    production build forces 1 regardless of this value; see HANDOFF.md "Lever 1")</label>
+  <input id="nthreads" type="number" value="4" min="1" step="1" style="width: 6rem;" />
+  <div style="margin-top: 0.5rem;">
+    <button id="run-btn" disabled>Run</button>
+  </div>
+  <table id="results" style="display: none;">
+    <thead><tr><th>call</th><th>ms</th></tr></thead>
+    <tbody></tbody>
+    <tfoot></tfoot>
+  </table>
+</fieldset>
+
+<fieldset>
+  <legend>Log</legend>
+  <div id="log"></div>
+</fieldset>
+
+<script>
+  // Keep in sync with src/worker/model-urls.ts by hand — this page is a standalone dev
+  // tool, not built by Vite, so it does not import that module.
+  const MODEL_PRESETS = {
+    "tiny.en": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.en.bin",
+    "tiny.en-q5_1": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-tiny.en-q5_1.bin",
+    "base.en": "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin",
+  };
+  const SAMPLE_RATE = 16000;
+
+  const logEl = document.getElementById("log");
+  const log = (msg) => {
+    logEl.textContent += `[${new Date().toISOString().slice(11, 23)}] ${msg}\n`;
+    logEl.scrollTop = logEl.scrollHeight;
+  };
+
+  const glueSelect = document.getElementById("glue-url");
+  const glueWarning = document.getElementById("glue-warning");
+  const checkGlueChoice = () => {
+    const isThreaded = glueSelect.value.includes("threaded");
+    if (isThreaded && !window.crossOriginIsolated) {
+      glueWarning.textContent =
+        'crossOriginIsolated is false — the threaded build will fail (no SharedArrayBuffer). ' +
+        "Serve with `node bench/serve.mjs`, which sets COOP/COEP headers.";
+      glueWarning.style.display = "";
+    } else {
+      glueWarning.style.display = "none";
+    }
+  };
+  glueSelect.addEventListener("change", checkGlueChoice);
+  checkGlueChoice();
+
+  const presetSelect = document.getElementById("model-preset");
+  const urlInput = document.getElementById("model-url");
+  for (const [id, url] of Object.entries(MODEL_PRESETS)) {
+    const opt = document.createElement("option");
+    opt.value = url;
+    opt.textContent = id;
+    presetSelect.appendChild(opt);
+  }
+  presetSelect.addEventListener("change", () => { urlInput.value = presetSelect.value; });
+  urlInput.value = presetSelect.value;
+
+  let module = null;
+  let contextIndex = null;
+  let stdoutSink = () => {};
+  let stderrSink = () => {};
+
+  /** Loads (or re-loads) the whisper.cpp glue script as a classic global-`Module` build,
+   * matching src/worker/whisper-module.ts's loadWhisperModuleFactory. print/printErr are
+   * read once at startup (documented in docs/whisper-wasm-provenance.md), so they are
+   * fixed forwarders here too; only the module factory itself is reloaded per model swap,
+   * mirroring what the extension's worker does (one module per worker in production; here,
+   * one module per page load — reload the page between models if the glue script itself
+   * needs re-importing). */
+  const loadModuleFactory = () =>
+    new Promise((resolve, reject) => {
+      if (window.Module && window.__glueLoaded) {
+        resolve(window.Module);
+        return;
+      }
+      window.Module = {
+        print: (line) => stdoutSink(line),
+        printErr: (line) => stderrSink(line),
+        onRuntimeInitialized: () => {
+          window.__glueLoaded = true;
+          resolve(window.Module);
+        },
+        onAbort: (reason) => reject(new Error(`whisper.cpp WASM runtime aborted: ${reason}`)),
+      };
+      const glueUrl = glueSelect.value;
+      const script = document.createElement("script");
+      script.src = glueUrl;
+      script.onerror = () => reject(new Error(`Failed to load ${glueUrl}. Is the vendored/threaded build present (see docs/whisper-wasm-provenance.md and HANDOFF.md "Lever 1")?`));
+      document.head.appendChild(script);
+    });
+
+  const modelFilenameFor = (url) => "model-" + url.split("/").pop();
+
+  document.getElementById("load-btn").addEventListener("click", async () => {
+    const url = urlInput.value.trim();
+    const statusEl = document.getElementById("load-status");
+    document.getElementById("run-btn").disabled = true;
+    statusEl.textContent = "downloading...";
+    try {
+      const t0 = performance.now();
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`Model fetch failed: ${res.status} ${res.statusText}`);
+      const bytes = new Uint8Array(await res.arrayBuffer());
+      log(`Downloaded ${url} (${(bytes.byteLength / 1e6).toFixed(1)} MB) in ${(performance.now() - t0).toFixed(0)} ms`);
+
+      statusEl.textContent = "initializing runtime...";
+      const mod = await loadModuleFactory();
+
+      if (contextIndex !== null && module) {
+        module.free(contextIndex);
+        contextIndex = null;
+      }
+      module = mod;
+
+      const filename = modelFilenameFor(url);
+      try { module.FS_unlink(`/${filename}`); } catch (err) { if (err?.errno !== 44) throw err; }
+      module.FS_createDataFile("/", filename, bytes, true, true);
+
+      const t1 = performance.now();
+      contextIndex = module.init(filename);
+      if (contextIndex === 0) throw new Error("whisper.cpp failed to initialize a context for this model.");
+      log(`whisper_init took ${(performance.now() - t1).toFixed(0)} ms`);
+
+      statusEl.textContent = `ready (context ${contextIndex})`;
+      document.getElementById("run-btn").disabled = false;
+    } catch (err) {
+      statusEl.textContent = "error";
+      statusEl.className = "warn";
+      log(`ERROR: ${err.message ?? err}`);
+      console.error(err);
+    }
+  });
+
+  /** Runs one full_default call and resolves with its wall-clock duration, waiting for the
+   * same stderr completion marker the real engine watches for (see
+   * src/worker/whisper-cpp-engine.ts and docs/whisper-wasm-provenance.md). */
+  const runOnce = (audio, nthreads) =>
+    new Promise((resolve, reject) => {
+      let finished = false;
+      stdoutSink = () => {};
+      stderrSink = (line) => { if (line.includes("whisper_print_timings")) finished = true; };
+      const start = performance.now();
+      const code = module.full_default(contextIndex, audio, "en", nthreads, false);
+      if (code !== 0) {
+        reject(new Error(`full_default returned ${code}`));
+        return;
+      }
+      const poll = () => {
+        if (finished) {
+          resolve(performance.now() - start);
+          return;
+        }
+        setTimeout(poll, 20);
+      };
+      poll();
+    });
+
+  document.getElementById("run-btn").addEventListener("click", async () => {
+    const seconds = Number(document.getElementById("audio-seconds").value);
+    const calls = Math.max(1, Math.floor(Number(document.getElementById("call-count").value)));
+    const nthreads = Math.max(1, Math.floor(Number(document.getElementById("nthreads").value)));
+    const audio = new Float32Array(Math.round(seconds * SAMPLE_RATE)); // silence; see header note
+    const table = document.getElementById("results");
+    const tbody = table.querySelector("tbody");
+    const tfoot = table.querySelector("tfoot");
+    tbody.innerHTML = "";
+    tfoot.innerHTML = "";
+    table.style.display = "";
+
+    const durations = [];
+    for (let i = 1; i <= calls; i++) {
+      log(`Running call ${i}/${calls}...`);
+      try {
+        const ms = await runOnce(audio, nthreads);
+        durations.push(ms);
+        const row = document.createElement("tr");
+        row.innerHTML = `<td>${i}${i === 1 ? " (warm-up)" : ""}</td><td>${ms.toFixed(0)}</td>`;
+        tbody.appendChild(row);
+      } catch (err) {
+        log(`ERROR on call ${i}: ${err.message ?? err}`);
+        console.error(err);
+        break;
+      }
+    }
+
+    if (durations.length > 1) {
+      const steadyState = durations.slice(1);
+      const mean = steadyState.reduce((a, b) => a + b, 0) / steadyState.length;
+      const row = document.createElement("tr");
+      row.innerHTML = `<th>mean (excl. warm-up)</th><th>${mean.toFixed(0)}</th>`;
+      tfoot.appendChild(row);
+      log(`Mean of calls 2..${durations.length}: ${mean.toFixed(0)} ms`);
+    }
+  });
+</script>
+</body>
+</html>
