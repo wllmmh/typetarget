@@ -7,11 +7,11 @@
  * comment), so a key entered early for a not-yet-wired-up provider isn't lost.
  */
 
-export type ApiKeyProvider = "gemini-live" | "groq";
+export type ApiKeyProvider = "gemini-live";
 
 export const API_KEY_PROVIDER_NAMES: Record<ApiKeyProvider, string> = {
   "gemini-live": "Gemini",
-  groq: "Groq",
+  // groq: "Groq",
 };
 
 /** Short enough to catch an obvious mistake (a stray character, a whitespace-only

@@ -1,4 +1,4 @@
-# Handoff — WaveType
+# Handoff — TypeTarget
 
 Written for whoever (or whichever agent session) picks this up next. Read `PLAN.md` for
 phase status, `docs/whisper-wasm-provenance.md` before touching anything ASR, then this
@@ -164,7 +164,7 @@ clearly marked:
   only** — no browser here to actually run it. The `desktopCapture` manifest/capture-code
   swap itself was deliberately not started: researching it (Chrome docs + a filed
   Chromium extensions-samples issue) surfaced that the OS picker can't be pre-targeted at
-  a specific tab, so WaveType's own tab dropdown and the picker would both be in the loop
+  a specific tab, so TypeTarget's own tab dropdown and the picker would both be in the loop
   if this ships as a literal API swap — a real product decision, not just an
   implementation detail. Full findings, the rebuild recipe, and the open UX question are
   in "Lever 1" below.
@@ -175,7 +175,7 @@ clearly marked:
 
 ### Multi-provider transcription: Gemini Live added, Groq architected for
 
-WaveType went from one hardcoded engine (whisper.cpp) to a real multi-provider
+TypeTarget went from one hardcoded engine (whisper.cpp) to a real multi-provider
 architecture, plus a second, real engine: Google's Gemini 3.5 Transcribe via the Live
 API. This was scoped and approved as a plan before implementation — the plan file
 (written to `/home/will/.claude/plans/crispy-discovering-rocket.md` during the planning
@@ -403,7 +403,7 @@ extensions-samples issue, not memory) rather than assuming:
 
 - `chooseDesktopMedia` always shows an interactive OS-level picker. There is no way to
   hand it a known tab id and get a streamId back silently — the user manually re-picks a
-  tab (or window/screen) every time, even though WaveType's own popup already has a
+  tab (or window/screen) every time, even though TypeTarget's own popup already has a
   tab dropdown (`known-tabs.ts`) they just used to start capture.
 - `targetTab` does **not** pre-select or filter the picker to that tab. Per the type
   definition (`@types/chrome`) it only restricts *which tab's frames may later redeem the
@@ -414,12 +414,12 @@ extensions-samples issue, not memory) rather than assuming:
   `github.com/GoogleChrome/chrome-extensions-samples/issues/1073`, filed against exactly
   this transition). So `targetTab` is mandatory here, but — per the point above — it buys
   scoping, not UX.
-- Net effect: the existing "pick a source tab from WaveType's dropdown" popup flow and the
+- Net effect: the existing "pick a source tab from TypeTarget's dropdown" popup flow and the
   OS picker are **both** in the loop if this ships as a literal `tabCapture`→
   `desktopCapture` swap — the user picks the tab twice, once in each UI. That's not a
   minor cost; it's confusing enough to be worth a real product decision, not just an
   implementation detail. Two honest options: (a) ship the redundancy as-is and accept the
-  UX hit for the speed, or (b) drop WaveType's own tab dropdown entirely and let the OS
+  UX hit for the speed, or (b) drop TypeTarget's own tab dropdown entirely and let the OS
   picker be the only tab-selection UI, which is a bigger change to `known-tabs.ts` and the
   popup than "swap one API for another." **Not decided yet — ask the user which, with the
   above laid out plainly, before writing manifest/capture code.** (Sources array behavior
@@ -588,7 +588,7 @@ to "near-live on limited hardware", and the engine boundary
    **compiled, not tested** — no browser available in this sandbox to actually run it or the
    `desktopCapture` swap. The manifest/capture-flow code change itself was deliberately not
    started: it turned out to carry a real, unresolved UX question (the picker can't be
-   pre-targeted at a specific tab, so WaveType's own tab dropdown and the OS picker would
+   pre-targeted at a specific tab, so TypeTarget's own tab dropdown and the OS picker would
    both be in the loop — see "Lever 1" above for the full finding), which needs a product
    decision before writing that code, not just an engineering one.
 
@@ -633,13 +633,70 @@ from one 12-core desktop measured by an earlier session, or not yet measured at 
   headlessly; harnesses need a throwaway copy of `dist/` with `host_permissions` added.
   Also `page.evaluate` does not work on extension pages (their CSP forbids eval).
 
+- **Harness trick for insertion without tab capture** (2026-09-23): the service worker
+  accepts `transcript-event` only from the offscreen page's URL, so opening
+  `src/offscreen/index.html` *as a tab* in a Playwright harness can send finals through the
+  real transcript router → `DestinationController` → content script path. Used to verify
+  insertion into a tab in another window, after detaching it into a new window and moving it
+  back, for textarea and contenteditable, plus the dashed destination outline (added the same
+  day; cleared via a new `clear-destination` content message on deselect or re-pick
+  elsewhere). Tab capture itself still can't run headlessly.
+
+- **"Select output" only reaches the tab it was clicked in** (activeTab). Users naturally
+  click it on the *source* tab, then click a box in another tab — which silently did nothing
+  (popup stuck on "Click a text box…" / "None selected"). Fixed 2026-09-24 by the user's
+  choice of a right-click menu item (`contextMenus`, no install
+  warning; `contexts: ["editable"]`): choosing it grants activeTab for its tab, the SW injects
+  into just that frame (`DestinationController.pickFromContextMenu`), and the content script
+  picks `document.activeElement` (right-clicking a box focuses it — verified in Chromium).
+  **The menu is now a "TypeTarget" submenu** (`src/background/context-menu.ts`, user's final
+  spec after trying a single top-level item): Source tab ▸ (radio list of known tabs, locked
+  while capturing) and Start/Stop anywhere on a page, plus Select/Deselect output on text boxes
+  (`contexts: ["editable"]`). `buildMenuModel` is a pure view of state; `ContextMenu.apply`
+  diffs it against what was last sent, since state broadcasts every second while capturing.
+  **Start from the menu is unverified in real Chrome:** the menu click grants activeTab for
+  the tab it's in, not the source tab, so it relies on the source tab still holding the grant
+  from when the popup was opened on it (lost on navigation — maybe even YouTube's in-page
+  navigation). Failure shows the popup's usual "click the toolbar button there" error. Chrome
+  can't say which element a menu opens on, and on Linux opens it on mousedown (too early to
+  retitle), so the destination's frame reports `pointer-over-destination` on
+  pointerenter/leave of the picked element (plus `:hover` at pick time, since the pointer is
+  already inside) and the SW retitles ahead of time. The click action is decided from that
+  report *and* a tab/frame match with the destination, never from the title, so a stale title
+  can't deselect from another box. Harness note: Playwright can't click the native menu, but
+  `chrome.contextMenus.onClicked.dispatch(info, tab)` from `sw.evaluate` runs the real
+  listener.
+  Then (user's choice, over an optional all-sites permission): **selection mode follows the
+  user** — while picking, `tabs.onActivated` / `windows.onFocusChanged` call
+  `DestinationController.followTo`, which injects into the newly active tab if TypeTarget can
+  reach it (the injection attempt *is* the access check: tabs the popup was opened on keep
+  activeTab until they navigate). A pick in any selecting tab wins and exits the rest; an
+  unreachable tab sets a `selection-unreachable` popup error pointing at the right-click menu.
+  (Titles were verified by wrapping `chrome.contextMenus.update` from `sw.evaluate` to log them.)
+  Verified in Chromium with host permissions standing in for activeTab — the real
+  activeTab-retention behaviour across tab switches is untested by automation.
+
 ## Known gaps (Phase 7)
+
+- **A captured stream that goes silent is not reported.** A user run showed
+  `level 0.000` over 289 batches while "Capturing" — batches still counting with zero level
+  is what an *ended* tabCapture track looks like (the source node keeps producing silence),
+  though a paused/muted video would look the same. Nothing listens for the track's `ended`
+  event, so there is no error. Cause of that run not yet known.
 
 - **Service-worker restart mid-capture loses state.** `state` in `service-worker.ts` is
   memory-only, while the offscreen document and its MediaStream may still be alive. MV3
   workers *will* be killed on real usage timescales. Highest-value correctness gap.
-- **Insertion into a contenteditable steals focus.** Offered a fix (restore
-  `document.activeElement` afterwards); not requested yet.
+- **Contenteditable insertion now uses `document.execCommand("insertText")`** (2026-09-24),
+  falling back to the old bare-DOM insertion only if the command is refused. The DOM path was
+  silently reverted by Lexical while the popup still counted it "inserted" (ProseMirror and
+  React-controlled textareas happened to survive it) — verified with the real libraries in a
+  Playwright harness. The command needs the element focused, so focus is moved for the
+  insertion and restored to whatever had it before. Unverified in a genuinely *hidden* tab:
+  headless Chrome reports background tabs as visible.
+- **Destination outlines are drawn inset** (`outline-offset: -2px`) via one shared marker in
+  `highlight.ts`: an outside outline was clipped to a single edge by `overflow: hidden` chat
+  containers.
 - **The popup closes whenever the user clicks into the page**, which is the normal flow.
   State persistence covers the data loss, but a `chrome.sidePanel` UI would keep the
   diagnostics and controls visible while transcribing. Offered, not requested.

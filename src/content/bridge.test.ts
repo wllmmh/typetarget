@@ -44,6 +44,46 @@ describe("installContentBridge", () => {
     expect(textarea.value).toBe("hello");
   });
 
+  it("picks the focused text box when asked by the right-click menu, and reports the pick", () => {
+    installContentBridge();
+    const onPicked = vi.fn();
+    const originalOnPicked = destinationSession.onPicked;
+    destinationSession.onPicked = (d) => { onPicked(d); originalOnPicked?.(d); };
+    textarea.focus();
+    const reply = vi.fn();
+
+    for (const [listener] of fake.runtime.onMessage.addListener.mock.calls) {
+      (listener as (m: unknown, s: unknown, r: (v: unknown) => void) => void)(envelope({ kind: "pick-focused-element" }), {}, reply);
+    }
+
+    expect(reply).toHaveBeenCalledWith(envelope({ kind: "ok" }));
+    expect(onPicked).toHaveBeenCalledWith(expect.objectContaining({ label: "textarea" }));
+    expect(fake.runtime.sendMessage).toHaveBeenCalledWith(envelope(expect.objectContaining({ kind: "destination-picked" })));
+    expect(textarea.classList.contains("typetarget-destination")).toBe(true);
+  });
+
+  it("answers with an error when nothing eligible is focused", () => {
+    installContentBridge();
+    const reply = vi.fn();
+
+    for (const [listener] of fake.runtime.onMessage.addListener.mock.calls) {
+      (listener as (m: unknown, s: unknown, r: (v: unknown) => void) => void)(envelope({ kind: "pick-focused-element" }), {}, reply);
+    }
+
+    expect(reply).toHaveBeenCalledWith(envelope(expect.objectContaining({ kind: "error", code: "no-focused-text-box" })));
+  });
+
+  it("drops the destination and its outline when the background clears it", () => {
+    installContentBridge();
+    pick(textarea);
+
+    deliver({ kind: "clear-destination" });
+
+    expect(textarea.classList.contains("typetarget-destination")).toBe(false);
+    deliver({ kind: "insert-text", text: "hello", separator: " " });
+    expect(textarea.value).toBe("");
+  });
+
   // chrome.scripting.executeScript re-runs the script on every injection, and the user
   // re-enters selection mode each time they choose an output. A second set of listeners
   // meant every final was inserted twice (or once per injection).

@@ -15,7 +15,7 @@ import { isEnvelope, envelope, type BackgroundToContent, type ContentToBackgroun
 import { destinationSession } from "./destination-session";
 
 /** Exported so the test can clear it; nothing else should read it. */
-export const CONTENT_BRIDGE_FLAG = "__waveTypeContentBridgeInstalled" as const;
+export const CONTENT_BRIDGE_FLAG = "__typeTargetContentBridgeInstalled" as const;
 
 type GuardedGlobal = typeof globalThis & Record<typeof CONTENT_BRIDGE_FLAG, boolean | undefined>;
 
@@ -41,6 +41,8 @@ export const installContentBridge = (): boolean => {
     });
   };
 
+  destinationSession.onPointerOverDestination = (over) => sendToBackground({ kind: "pointer-over-destination", over });
+
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (!isEnvelope<BackgroundToContent>(message)) return undefined;
     const msg = message.payload;
@@ -62,6 +64,20 @@ export const installContentBridge = (): boolean => {
         sendResponse(envelope({ kind: "ok" } as const));
         return undefined;
       }
+      case "pick-focused-element":
+        // A successful pick reports itself through onPicked, like a click in selection mode.
+        sendResponse(
+          envelope(
+            destinationSession.pickFocused()
+              ? ({ kind: "ok" } as const)
+              : ({ kind: "error", code: "no-focused-text-box", message: "TypeTarget couldn't find that text box. Click into it, then right-click it again." } as const),
+          ),
+        );
+        return undefined;
+      case "clear-destination":
+        destinationSession.clearDestination();
+        sendResponse(envelope({ kind: "ok" } as const));
+        return undefined;
       case "check-destination-alive": {
         if (!destinationSession.isDestinationAlive()) {
           sendToBackground({ kind: "destination-unavailable", reason: "Destination element is no longer available." });

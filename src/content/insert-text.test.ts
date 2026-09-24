@@ -73,6 +73,40 @@ describe("insertTranscriptText — text fields", () => {
     expect(instanceSetter).not.toHaveBeenCalled();
   });
 
+  it("keeps the user's caret in place when they're editing before the insertion point", () => {
+    const textarea = document.createElement("textarea");
+    textarea.value = "first second";
+    textarea.setSelectionRange(3, 3);
+    const target: InsertionTarget = { kind: "text-field", element: textarea };
+
+    insertTranscriptText(target, "third", " ", textarea.value.length);
+
+    expect(textarea.value).toBe("first second third");
+    expect([textarea.selectionStart, textarea.selectionEnd]).toEqual([3, 3]);
+  });
+
+  it("shifts a selection past the insertion point by the inserted length", () => {
+    const textarea = document.createElement("textarea");
+    textarea.value = "before|after";
+    textarea.setSelectionRange(8, 10); // "ft" in "after"
+    const target: InsertionTarget = { kind: "text-field", element: textarea };
+
+    insertTranscriptText(target, "MID", "", "before".length);
+
+    expect(textarea.value.slice(textarea.selectionStart ?? 0, textarea.selectionEnd ?? 0)).toBe("ft");
+  });
+
+  it("moves a caret sitting at the insertion point to after the inserted text", () => {
+    const textarea = document.createElement("textarea");
+    textarea.value = "notes";
+    textarea.setSelectionRange(5, 5);
+    const target: InsertionTarget = { kind: "text-field", element: textarea };
+
+    const offset = insertTranscriptText(target, "more", " ", 5);
+
+    expect([textarea.selectionStart, textarea.selectionEnd]).toEqual([offset, offset]);
+  });
+
   it("clamps an out-of-range offset to the current value length", () => {
     const textarea = document.createElement("textarea");
     textarea.value = "abc";
@@ -109,6 +143,76 @@ describe("insertTranscriptText — contenteditable", () => {
 
     expect(onInput).toHaveBeenCalledTimes(1);
     div.remove();
+  });
+});
+
+describe("insertTranscriptText — contenteditable via the native editing command", () => {
+  // Rich-text editors (verified with Lexical) revert a bare DOM insertion, so the browser's own
+  // insertText command is used when available. jsdom has none, so each test defines one and removes it.
+  const stubExecCommand = (impl: (command: string, ui: boolean, value: string) => boolean) => {
+    const execCommand = vi.fn(impl);
+    Object.defineProperty(document, "execCommand", { value: execCommand, configurable: true, writable: true });
+    return { execCommand, restore: () => Reflect.deleteProperty(document, "execCommand") };
+  };
+  it("inserts through execCommand at the end, then gives focus back to what had it", () => {
+    const editor = document.createElement("div");
+    editor.setAttribute("contenteditable", "true");
+    editor.textContent = "existing";
+    const other = document.createElement("input");
+    document.body.append(editor, other);
+    other.focus();
+    const { execCommand, restore } = stubExecCommand((_command, _ui, value) => {
+      editor.append(value);
+      return true;
+    });
+
+    insertTranscriptText({ kind: "content-editable", element: editor }, "hello", " ", 8);
+
+    expect(execCommand).toHaveBeenCalledWith("insertText", false, " hello");
+    expect(editor.textContent).toBe("existing hello"); // inserted once, not again by the fallback
+    expect(document.activeElement).toBe(other);
+    editor.remove();
+    other.remove();
+    restore();
+  });
+
+  it("puts back a caret the user had in the middle of the editor", () => {
+    const editor = document.createElement("div");
+    editor.setAttribute("contenteditable", "true");
+    editor.textContent = "existing";
+    document.body.append(editor);
+    const caret = document.createRange();
+    caret.setStart(editor.firstChild ?? editor, 3);
+    caret.collapse(true);
+    window.getSelection()?.removeAllRanges();
+    window.getSelection()?.addRange(caret);
+    const { restore } = stubExecCommand((_command, _ui, value) => {
+      editor.append(value);
+      return true;
+    });
+
+    insertTranscriptText({ kind: "content-editable", element: editor }, "hello", " ", 8);
+
+    const range = window.getSelection()?.getRangeAt(0);
+    expect(editor.textContent).toBe("existing hello");
+    expect(range?.startContainer).toBe(editor.firstChild);
+    expect(range?.startOffset).toBe(3);
+    expect(range?.collapsed).toBe(true);
+    editor.remove();
+    restore();
+  });
+
+  it("falls back to a DOM insertion when the command is refused", () => {
+    const editor = document.createElement("div");
+    editor.setAttribute("contenteditable", "true");
+    document.body.append(editor);
+    const { restore } = stubExecCommand(() => false);
+
+    insertTranscriptText({ kind: "content-editable", element: editor }, "hello", " ", 0);
+
+    expect(editor.textContent).toBe("hello");
+    editor.remove();
+    restore();
   });
 });
 

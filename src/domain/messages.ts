@@ -91,14 +91,21 @@ export type CapturableTab = {
 export type ContentToBackground =
   | { kind: "destination-picked"; elementId: string; label: string }
   | { kind: "destination-selection-cancelled" }
-  | { kind: "destination-unavailable"; reason: string };
+  | { kind: "destination-unavailable"; reason: string }
+  /** The pointer entered/left the destination element, so the right-click menu can offer
+   * "Deselect output" on it (Chrome gives no way to ask which element a menu opens on). */
+  | { kind: "pointer-over-destination"; over: boolean };
 
 /** Background -> content script */
 export type BackgroundToContent =
   | { kind: "enter-selection-mode" }
   | { kind: "exit-selection-mode" }
   | { kind: "insert-text"; text: string; separator: string }
-  | { kind: "check-destination-alive" };
+  | { kind: "check-destination-alive" }
+  /** The user deselected this destination or picked another one; drop it and its outline. */
+  | { kind: "clear-destination" }
+  /** From the right-click menu: pick the text box that was right-clicked (which is focused). */
+  | { kind: "pick-focused-element" };
 
 /** Background -> offscreen document */
 export type BackgroundToOffscreen =
@@ -125,7 +132,7 @@ export type OffscreenToBackground =
   | { kind: "inference-stats"; stats: InferenceStats }
   | { kind: "engine-status"; status: EngineStatus };
 
-export const EXTENSION_MESSAGE_SOURCE = "wavetype" as const;
+export const EXTENSION_MESSAGE_SOURCE = "typetarget" as const;
 
 /** Envelope wrapping every message so unrelated extensions' broadcasts are ignored. */
 export type Envelope<T> = {

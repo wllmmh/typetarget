@@ -19,7 +19,7 @@
  */
 const explain = (chromeMessage: string): string =>
   chromeMessage.includes("has not been invoked")
-    ? "Chrome hasn't granted WaveType access to that tab. Switch to it, click the WaveType toolbar button there, then press Start."
+    ? "Chrome hasn't granted TypeTarget access to that tab. Switch to it, click the TypeTarget toolbar button there, then press Start."
     : `Chrome refused to capture that tab. (${chromeMessage})`;
 
 export const getTabCaptureStreamId = (targetTabId: number): Promise<string> =>

@@ -100,7 +100,6 @@ export const App = () => {
     state.status === "paused";
 
   const chunkMs = draggedChunkMs ?? state.chunkMs;
-  const selectedModelInfo = MODEL_CATALOG[state.selectedModel];
 
   /**
    * Debounced: a drag fires a change per step, and each one persists to storage and retunes
@@ -190,27 +189,8 @@ export const App = () => {
 
   return (
     <main className="popup">
-      <h1>WaveType</h1>
+      <h1>TypeTarget</h1>
     
-
-      <section>
-        <h2>Source tab</h2>
-        {loadError && <p className="error">{loadError}</p>}
-        <select
-          disabled={tabs.length === 0 || isCapturing}
-          value={state.pendingSourceTabId ?? ""}
-          onChange={(e) => handleSourceTabChange(e.target.value ? Number(e.target.value) : null)}
-        >
-          <option value="" disabled>
-            {tabs.length === 0 ? "Open WaveType on a tab to capture it" : "Select a tab…"}
-          </option>
-          {tabs.map((tab) => (
-            <option key={tab.tabId} value={tab.tabId}>
-              {tab.title}
-            </option>
-          ))}
-        </select>
-      </section>
 
       <section>
         <h2>Model</h2>
@@ -226,14 +206,43 @@ export const App = () => {
             </option>
           ))}
         </select>
-        {selectedModelInfo.network && (
-          <p className="hint">
-            Audio for this session is sent to {selectedModelInfo.name}'s API using your key — not fully local.
-          </p>
-        )}
-        <button type="button" onClick={() => apiKeyDialogRef.current?.showModal()}>
+        <button type="button" className="model-api-keys-btn" onClick={() => apiKeyDialogRef.current?.showModal()}>
           API Keys
         </button>
+      </section>
+
+      <section>
+        <h2 className="chunk-length-heading">
+          Chunk length
+          <span className="hint chunk-length-hint">{(chunkMs / 1000).toFixed(0)}s max</span>
+        </h2>
+        <input
+          type="range"
+          min={CHUNK_MS_MIN}
+          max={CHUNK_MS_MAX}
+          step={CHUNK_MS_STEP}
+          value={chunkMs}
+          onChange={(e) => handleChunkChange(Number(e.target.value))}
+        />
+      </section>
+
+      <section>
+        <h2>Source tab</h2>
+        {loadError && <p className="error">{loadError}</p>}
+        <select
+          disabled={tabs.length === 0 || isCapturing}
+          value={state.pendingSourceTabId ?? ""}
+          onChange={(e) => handleSourceTabChange(e.target.value ? Number(e.target.value) : null)}
+        >
+          <option value="" disabled>
+            {tabs.length === 0 ? "Open TypeTarget on a tab to capture it" : "Select a tab…"}
+          </option>
+          {tabs.map((tab) => (
+            <option key={tab.tabId} value={tab.tabId}>
+              {tab.title}
+            </option>
+          ))}
+        </select>
       </section>
 
       <dialog ref={apiKeyDialogRef} onClose={() => setApiKeyError(null)}>
@@ -255,30 +264,14 @@ export const App = () => {
         </button>
       </dialog>
 
-      <section>
-        <h2>Chunk length</h2>
-        <input
-          type="range"
-          min={CHUNK_MS_MIN}
-          max={CHUNK_MS_MAX}
-          step={CHUNK_MS_STEP}
-          value={chunkMs}
-          onChange={(e) => handleChunkChange(Number(e.target.value))}
-        />
-        <p className="hint">
-          {(chunkMs / 1000).toFixed(0)}s at most per chunk — text is also sent at each pause in
-          speech. Shorter gets text sooner; longer keeps up better.
-        </p>
-      </section>
-
       <section className="controls">
         {isCapturing ? (
           <button type="button" disabled={busy} onClick={handleStop}>
-            <StopIcon /> Stop
+            <StopIcon /> Stop listening
           </button>
         ) : (
           <button type="button" disabled={busy || state.pendingSourceTabId === null} onClick={handleStart}>
-            <PlayIcon /> Start
+            <PlayIcon /> Start listening
           </button>
         )}
         <button
@@ -288,15 +281,18 @@ export const App = () => {
         >
           <PauseIcon /> {state.status === "paused" ? "Resume" : "Pause"}
         </button>
-        <button type="button" disabled={busy} onClick={handleToggleOutput}>
-          {hasOutput ? "Deselect output" : "Select output"}
-        </button>
       </section>
 
       <section>
-        <h2>Destination</h2>
-        {state.isSelectingDestination && <p>Click a text box in the page to send transcribed text there.</p>}
-        <p>{state.destinationLabel ?? "None selected"}</p>
+        <h2>Output</h2>
+        {state.isSelectingDestination && (
+          <p>Click a text box to send transcribed text there — in this tab, or another tab you've opened TypeTarget on.</p>
+        )}
+        {state.destinationLabel !== null && <p>{state.destinationLabel}</p>}
+        {/* With nothing picked, this button is the section's empty state. */}
+        <button type="button" disabled={busy} onClick={handleToggleOutput}>
+          {hasOutput ? "Deselect output" : "Select output"}
+        </button>
       </section>
 
       <section>
@@ -327,11 +323,7 @@ export const App = () => {
             {state.inference.lastMs !== null && `, last ${(state.inference.lastMs / 1000).toFixed(1)}s`}
           </p>
         )}
-      </section>
-
-      <section>
-        <h2>Status</h2>
-        <p>{statusText(state)}</p>
+        <p>Status: {statusText(state)}</p>
         {state.modelDownload && state.modelDownload.totalBytes > 0 && (
           <progress value={state.modelDownload.receivedBytes} max={state.modelDownload.totalBytes} />
         )}

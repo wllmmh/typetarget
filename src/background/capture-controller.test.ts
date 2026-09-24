@@ -221,7 +221,7 @@ describe("CaptureController.pause / resume", () => {
 });
 
 describe("CaptureController.stop", () => {
-  it("stops capture, closes the offscreen document, and unregisters the listener", async () => {
+  it("stops capture and unregisters the listener, without closing the offscreen document", async () => {
     fake.tabs.get.mockResolvedValue({ id: 42 });
     stubStreamId("stream-1");
     stubOffscreenOk();
@@ -234,7 +234,9 @@ describe("CaptureController.stop", () => {
 
     expect(controller.currentSourceTabId).toBeNull();
     expect(fake.tabs.onRemoved.removeListener).toHaveBeenCalled();
-    expect(fake.offscreen.closeDocument).toHaveBeenCalledTimes(1);
+    // Closing it would unload the loaded model, forcing a full reload on the next Start
+    // even when the model hasn't changed — see CaptureController.stop's comment.
+    expect(fake.offscreen.closeDocument).not.toHaveBeenCalled();
   });
 
   it("is safe to call even when the offscreen document is already gone", async () => {

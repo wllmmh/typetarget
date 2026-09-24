@@ -26,7 +26,7 @@ describe("recordKnownTab", () => {
   });
 
   it("ignores non-web tabs, including the extension's own pages", () => {
-    expect(recordKnownTab([], tab(1, "chrome-extension://abc/src/popup/index.html", "WaveType"))).toEqual([]);
+    expect(recordKnownTab([], tab(1, "chrome-extension://abc/src/popup/index.html", "TypeTarget"))).toEqual([]);
     expect(recordKnownTab([], tab(2, "chrome://settings", "Settings"))).toEqual([]);
   });
 

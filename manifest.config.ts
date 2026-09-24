@@ -13,6 +13,8 @@ import pkg from "./package.json";
 //   (see README "Privacy"). Keys are stored locally only and read solely to authenticate
 //   requests to the provider they belong to.
 // - offscreen: run the long-lived Web Audio + ASR pipeline outside the non-persistent service worker.
+// - contextMenus: the "Send TypeTarget text here" item on editable fields, so an output box in any
+//   tab can be picked (choosing the item grants activeTab for that tab). No install warning.
 //
 // host_permissions is scoped to exactly one origin: Google's Gemini API, needed for the
 // optional Gemini Live transcription engine (src/worker/gemini-live-engine.ts) to open a
@@ -23,7 +25,7 @@ import pkg from "./package.json";
 // actively selecting a destination in.
 export default defineManifest({
   manifest_version: 3,
-  name: "WaveType — Local Live Transcriber",
+  name: "TypeTarget — Directed Transcriber",
   version: pkg.version,
   description:
     "Captures a browser tab's audio and transcribes it — locally with Whisper by default, or optionally via Google's Gemini API using your own key. Local mode uploads nothing.",
@@ -49,7 +51,8 @@ export default defineManifest({
     "activeTab",
     "scripting",
     "storage",
-    "offscreen"
+    "offscreen",
+    "contextMenus"
   ],
   host_permissions: ["https://generativelanguage.googleapis.com/*"],
   // The destination content script (src/content/main.ts) is only ever injected

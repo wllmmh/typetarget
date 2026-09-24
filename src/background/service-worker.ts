@@ -24,6 +24,7 @@ import { CaptureController, CaptureError } from "./capture-controller";
 import { DestinationController, DestinationError } from "./destination-controller";
 import { OFFSCREEN_DOCUMENT_PATH } from "./offscreen-manager";
 import { createTranscriptRouter } from "./transcript-router";
+import { buildMenuModel, ContextMenu, isCapturing, MENU_OUTPUT_ID, MENU_START_STOP_ID, sourceTabIdOf } from "./context-menu";
 
 // MV3 service workers are non-persistent: this module-level state is rebuilt from
 // scratch whenever Chrome wakes the worker, so it must never be the sole record of
@@ -38,10 +39,28 @@ const state = createInitialState();
 // any request is answered (see persisted-state.ts).
 const stateRestored = restorePersistedState(state);
 
+/**
+ * The pointer is over the destination element, per the destination's own frame
+ * ("pointer-over-destination"). Chrome can't say which element a right-click menu opens on,
+ * and on Linux opens it on mousedown — too early to retitle it then — so this report, which
+ * arrives well before any right-click, is what lets the menu offer "Deselect output".
+ */
+let pointerOverDestination = false;
+
+/** The right-click "TypeTarget" submenu; see context-menu.ts. */
+const contextMenu = new ContextMenu();
+
+const syncContextMenu = () => {
+  if (!state.destination) pointerOverDestination = false;
+  void contextMenu.apply(buildMenuModel(state, pointerOverDestination));
+};
+
+/** Every state change the popup sees is broadcast, so this also keeps the right-click menu in step. */
 const broadcastState = () => {
   void chrome.runtime.sendMessage(envelope<BackgroundResponse>({ kind: "state", state: toPublicState(state) }))
     // No popup may be open to receive this; that's expected, not an error.
     .catch(() => {});
+  syncContextMenu();
 };
 
 /** Broadcasts *and* persists: use after changing a field persisted-state.ts stores. */
@@ -61,6 +80,12 @@ const captureController = new CaptureController({
 
 const destinationController = new DestinationController({
   onPicked: (ref, label) => {
+    // A pick in the same frame replaces its own outline; one elsewhere (another tab, window
+    // or frame) must be told to drop the old outline.
+    const previous = state.destination;
+    if (previous && (previous.tabId !== ref.tabId || previous.frameId !== ref.frameId)) {
+      void destinationController.release(previous);
+    }
     state.destination = ref;
     state.destinationLabel = label;
     state.isSelectingDestination = false;
@@ -237,6 +262,106 @@ const beginDestinationSelection = async (): Promise<BackgroundResponse> => {
   }
 };
 
+void stateRestored.then(syncContextMenu);
+
+/** The pointer can't still be over the destination once the user is in another tab or window. */
+const forgetPointerOverDestination = () => {
+  if (!pointerOverDestination) return;
+  pointerOverDestination = false;
+  syncContextMenu();
+};
+chrome.tabs.onActivated.addListener(forgetPointerOverDestination);
+chrome.windows.onFocusChanged.addListener(forgetPointerOverDestination);
+
+const pickFromContextMenu = async (tabId: number, frameId: number): Promise<void> => {
+  try {
+    await destinationController.pickFromContextMenu(tabId, frameId);
+    state.isSelectingDestination = false;
+    state.lastError = null;
+    broadcastState();
+  } catch (err) {
+    const destErr = err instanceof DestinationError ? err : new DestinationError("Could not use that text box.", "unknown");
+    state.isSelectingDestination = false;
+    state.lastError = { code: destErr.code, message: destErr.message };
+    broadcastState();
+  }
+};
+
+/**
+ * Each item does what the matching popup control does. Choosing any menu item grants
+ * activeTab for the tab it's in, which is what lets "Select output" pick there — and,
+ * same as registerActiveTab for the popup, is what first makes this tab labellable and
+ * capturable at all. Recording it here means the first right-click that starts capture
+ * doesn't also require a separate popup visit just to make the tab "known".
+ */
+const handleMenuClick = async (info: chrome.contextMenus.OnClickData, tab: chrome.tabs.Tab | undefined): Promise<void> => {
+  await stateRestored;
+  if (tab) {
+    const knownTabs = recordKnownTab(state.knownTabs, tab);
+    if (knownTabs.length !== state.knownTabs.length || knownTabs[0]?.tabId !== state.knownTabs[0]?.tabId) {
+      state.knownTabs = knownTabs;
+      state.pendingSourceTabId ??= knownTabs[0]?.tabId ?? null;
+      commitState();
+    }
+  }
+  const sourceTabId = sourceTabIdOf(info.menuItemId);
+  if (sourceTabId !== null) {
+    const result = setSourceTab(sourceTabId);
+    if (result.kind === "error") {
+      state.lastError = { code: result.code, message: result.message };
+      broadcastState();
+    }
+    return;
+  }
+  if (info.menuItemId === MENU_START_STOP_ID) {
+    if (isCapturing(state.status)) await stopCapture();
+    else if (state.pendingSourceTabId !== null) await startCapture(state.pendingSourceTabId);
+    return;
+  }
+  if (info.menuItemId !== MENU_OUTPUT_ID || tab?.id === undefined) return;
+  const frameId = info.frameId ?? 0;
+  // Decided from the destination's own report, not the title, and only for a click in its
+  // frame — so a title that's out of date can never deselect from some other box.
+  const { destination } = state;
+  const onDestination = pointerOverDestination && destination?.tabId === tab.id && destination.frameId === frameId;
+  if (onDestination) clearDestination();
+  else await pickFromContextMenu(tab.id, frameId);
+};
+
+chrome.contextMenus.onClicked.addListener((info, tab) => void handleMenuClick(info, tab));
+
+/**
+ * "Select output" can only start picking in the tab it was clicked in, but users click it on
+ * the source tab and then go to the tab they want to type into. While picking, follow them
+ * into each tab they switch to (or window they focus) that TypeTarget can reach; for one it
+ * can't, say how to pick there instead of leaving clicks to silently do nothing.
+ */
+const UNREACHABLE_TAB_ERROR = "selection-unreachable";
+
+const followSelectionTo = async (tabId: number): Promise<void> => {
+  await stateRestored;
+  if (!destinationController.isSelecting) return;
+  const reached = await destinationController.followTo(tabId);
+  if (reached) {
+    if (state.lastError?.code !== UNREACHABLE_TAB_ERROR) return;
+    state.lastError = null;
+  } else {
+    state.lastError = {
+      code: UNREACHABLE_TAB_ERROR,
+      message: 'TypeTarget can\'t pick in that tab yet. Right-click the text box and choose TypeTarget → "Type here", or open TypeTarget on that tab and click "Select output" there.',
+    };
+  }
+  broadcastState();
+};
+
+chrome.tabs.onActivated.addListener(({ tabId }) => void followSelectionTo(tabId));
+chrome.windows.onFocusChanged.addListener((windowId) => {
+  if (windowId === chrome.windows.WINDOW_ID_NONE) return;
+  void chrome.tabs.query({ active: true, windowId }).then(([tab]) => {
+    if (tab?.id !== undefined) void followSelectionTo(tab.id);
+  });
+});
+
 const cancelDestinationSelection = async (): Promise<BackgroundResponse> => {
   await destinationController.cancelSelection();
   state.isSelectingDestination = false;
@@ -245,6 +370,7 @@ const cancelDestinationSelection = async (): Promise<BackgroundResponse> => {
 };
 
 const clearDestination = (): BackgroundResponse => {
+  if (state.destination) void destinationController.release(state.destination);
   state.destination = null;
   state.destinationLabel = null;
   commitState();
@@ -315,6 +441,7 @@ const handlePopupRequest = async (req: PopupRequest): Promise<BackgroundResponse
 
 const CONTENT_MESSAGE_KINDS = new Set<ContentToBackground["kind"]>([
   "destination-picked",
+  "pointer-over-destination",
   "destination-selection-cancelled",
   "destination-unavailable",
 ]);
@@ -325,13 +452,24 @@ const handleContentMessage = (msg: ContentToBackground, sender: chrome.runtime.M
   switch (msg.kind) {
     case "destination-picked":
       if (typeof tabId === "number" && typeof frameId === "number") {
-        destinationController.handlePicked(tabId, frameId, msg.elementId, msg.label);
+        // Prefixed with the tab's title so the popup says which tab the box is in. Picking always
+        // follows a user action that grants activeTab for this tab, so Chrome includes the title.
+        const tabTitle = sender.tab?.title?.trim();
+        const label = tabTitle ? `${tabTitle} — ${msg.label}` : msg.label;
+        destinationController.handlePicked(tabId, frameId, msg.elementId, label);
       }
       return;
     case "destination-selection-cancelled":
       state.isSelectingDestination = false;
       broadcastState();
       return;
+    case "pointer-over-destination": {
+      const { destination } = state;
+      if (!destination || destination.tabId !== tabId || destination.frameId !== frameId) return; // not the destination's frame
+      pointerOverDestination = msg.over;
+      syncContextMenu();
+      return;
+    }
     case "destination-unavailable":
       state.destination = null;
       state.destinationLabel = null;

@@ -1,5 +1,5 @@
 /**
- * The set of tabs WaveType may capture: those the popup has been opened on.
+ * The set of tabs TypeTarget may capture: those the popup has been opened on.
  *
  * Two Chrome constraints force this. Without the `tabs` permission,
  * `chrome.tabs.query` returns only `{id, audible}` — no titles to show. And

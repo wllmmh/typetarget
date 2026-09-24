@@ -28,7 +28,7 @@ describe("getTabCaptureStreamId", () => {
     });
 
     // The one failure people actually hit: Chrome's own wording says nothing about the fix.
-    await expect(getTabCaptureStreamId(7)).rejects.toThrow(/click the WaveType toolbar button there/);
+    await expect(getTabCaptureStreamId(7)).rejects.toThrow(/click the TypeTarget toolbar button there/);
   });
 
   it("passes any other Chrome error through, so unexpected causes stay diagnosable", async () => {

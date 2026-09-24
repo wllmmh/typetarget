@@ -74,6 +74,57 @@ describe("destinationSession", () => {
     expect(destinationSession.insert("text", " ")).toBe(false);
   });
 
+  it("outlines the picked element until the destination is cleared", () => {
+    destinationSession.startSelecting();
+    textarea.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+
+    expect(textarea.classList.contains("typetarget-destination")).toBe(true);
+    expect(document.getElementById("typetarget-destination-style")?.textContent).toContain("dashed");
+
+    destinationSession.clearDestination();
+
+    expect(textarea.classList.contains("typetarget-destination")).toBe(false);
+    expect(document.getElementById("typetarget-destination-style")).toBeNull();
+  });
+
+  it("moves the outline when a different element is picked", () => {
+    const other = document.createElement("textarea");
+    document.body.append(other);
+    destinationSession.startSelecting();
+    textarea.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    destinationSession.startSelecting();
+    other.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+
+    expect(textarea.classList.contains("typetarget-destination")).toBe(false);
+    expect(other.classList.contains("typetarget-destination")).toBe(true);
+  });
+
+  it("keeps the destination outline when selection mode ends", () => {
+    destinationSession.startSelecting();
+    textarea.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true })); // ends selection mode
+    destinationSession.startSelecting();
+    destinationSession.stopSelecting();
+
+    expect(textarea.classList.contains("typetarget-destination")).toBe(true);
+    expect(document.getElementById("typetarget-destination-style")).not.toBeNull();
+  });
+
+  it("reports the pointer entering and leaving the picked element, until it's cleared", () => {
+    const onPointerOverDestination = vi.fn();
+    destinationSession.onPointerOverDestination = onPointerOverDestination;
+    destinationSession.startSelecting();
+    textarea.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+
+    textarea.dispatchEvent(new Event("pointerenter"));
+    textarea.dispatchEvent(new Event("pointerleave"));
+    expect(onPointerOverDestination.mock.calls).toEqual([[true], [false]]);
+
+    destinationSession.clearDestination();
+    textarea.dispatchEvent(new Event("pointerenter"));
+    expect(onPointerOverDestination).toHaveBeenCalledTimes(2);
+    destinationSession.onPointerOverDestination = null;
+  });
+
   it("stopSelecting removes listeners so subsequent clicks are ignored", () => {
     const onPicked = vi.fn();
     destinationSession.onPicked = onPicked;

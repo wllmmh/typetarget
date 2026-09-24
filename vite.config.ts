@@ -8,7 +8,7 @@ import manifest from "./manifest.config";
 // dist/whisper/libmain.js, the fixed path src/worker/main.ts loads it from. The file is
 // gitignored, so a fresh clone still builds — with a warning, and ASR fails at runtime.
 const whisperGlue = (): Plugin => ({
-  name: "wavetype-whisper-glue",
+  name: "typetarget-whisper-glue",
   apply: "build",
   generateBundle() {
     const source = "third_party/whisper-wasm/libmain.js";

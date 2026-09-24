@@ -131,6 +131,14 @@ export class CaptureController {
     }
   }
 
+  /**
+   * Stops capture and playback but deliberately leaves the offscreen document (and its
+   * loaded model) running: closing it would unload the model, forcing the ~40-80s model
+   * load to happen again on the next Start even when the model hasn't changed. Only a
+   * model change (which requires being idle first, see service-worker.ts's setModel)
+   * should pay that cost, and EngineRouter already scopes the unload/reload to just that
+   * case — see AGENTS.md "Model abstraction".
+   */
   async stop(): Promise<void> {
     chrome.tabs.onRemoved.removeListener(this.onTabRemoved);
     this.sourceTabId = null;
@@ -138,6 +146,5 @@ export class CaptureController {
       // Offscreen document may already be gone (e.g. closed independently); stopping
       // is still a success from the caller's perspective since nothing is capturing.
     });
-    await closeOffscreenDocument();
   }
 }

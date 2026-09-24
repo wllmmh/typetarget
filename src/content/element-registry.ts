@@ -8,7 +8,7 @@
  */
 
 let counter = 0;
-const nextElementId = (): string => `wavetype-el-${++counter}-${Date.now()}`;
+const nextElementId = (): string => `typetarget-el-${++counter}-${Date.now()}`;
 
 const registry = new Map<string, Element>();
 

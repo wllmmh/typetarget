@@ -30,6 +30,24 @@ body {
   padding: 4px;
 }
 
+.model-api-keys-btn {
+  margin-top: 8px;
+}
+
+.chunk-length-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.chunk-length-hint {
+  text-transform: none;
+  letter-spacing: normal;
+  margin: 0;
+  white-space: nowrap;
+}
+
 .controls {
   display: flex;
   gap: 8px;

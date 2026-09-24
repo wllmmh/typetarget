@@ -44,6 +44,74 @@ describe("DestinationController.beginSelection", () => {
   });
 });
 
+describe("DestinationController.pickFromContextMenu", () => {
+  it("injects into only the right-clicked frame, asks it to pick, and accepts the pick from another tab", async () => {
+    fake.tabs.query.mockResolvedValue([{ id: 5 }]);
+    const onPicked = vi.fn();
+    const controller = new DestinationController({ onPicked, onUnavailable: vi.fn() });
+    await controller.beginSelection(); // "Select output" was clicked in tab 5 (the source)
+
+    await controller.pickFromContextMenu(9, 2);
+
+    expect(fake.tabs.sendMessage).toHaveBeenCalledWith(5, envelope({ kind: "exit-selection-mode" }));
+    expect(fake.scripting.executeScript).toHaveBeenLastCalledWith(expect.objectContaining({ target: { tabId: 9, frameIds: [2] } }));
+    expect(fake.tabs.sendMessage).toHaveBeenLastCalledWith(9, envelope({ kind: "pick-focused-element" }), { frameId: 2 });
+    controller.handlePicked(9, 2, "el-1", "div");
+    expect(onPicked).toHaveBeenCalledWith({ tabId: 9, frameId: 2, elementId: "el-1" }, "div");
+  });
+
+  it("throws the page's reason when no text box is focused there", async () => {
+    fake.tabs.sendMessage.mockResolvedValue(envelope({ kind: "error", code: "no-focused-text-box", message: "couldn't find it" }));
+    const controller = new DestinationController({ onPicked: vi.fn(), onUnavailable: vi.fn() });
+
+    await expect(controller.pickFromContextMenu(9, 0)).rejects.toMatchObject({ code: "no-focused-text-box", message: "couldn't find it" });
+    expect(controller.isSelecting).toBe(false);
+  });
+
+  it("throws when the page can't be injected into", async () => {
+    fake.scripting.executeScript.mockRejectedValue(new Error("Cannot access contents of the page"));
+    const controller = new DestinationController({ onPicked: vi.fn(), onUnavailable: vi.fn() });
+
+    await expect(controller.pickFromContextMenu(9, 0)).rejects.toMatchObject({ code: "injection-failed" });
+  });
+});
+
+describe("DestinationController.followTo", () => {
+  it("extends selection mode into a tab the user switches to, and a pick there wins", async () => {
+    fake.tabs.query.mockResolvedValue([{ id: 5 }]);
+    const onPicked = vi.fn();
+    const controller = new DestinationController({ onPicked, onUnavailable: vi.fn() });
+    await controller.beginSelection(); // clicked "Select output" on the source tab (5)
+
+    await expect(controller.followTo(9)).resolves.toBe(true);
+    expect(fake.scripting.executeScript).toHaveBeenLastCalledWith(expect.objectContaining({ target: { tabId: 9, allFrames: true } }));
+    expect(fake.tabs.sendMessage).toHaveBeenLastCalledWith(9, envelope({ kind: "enter-selection-mode" }));
+
+    controller.handlePicked(9, 0, "el-1", "textarea");
+
+    expect(onPicked).toHaveBeenCalledWith({ tabId: 9, frameId: 0, elementId: "el-1" }, "textarea");
+    expect(fake.tabs.sendMessage).toHaveBeenCalledWith(5, envelope({ kind: "exit-selection-mode" }));
+    expect(controller.isSelecting).toBe(false);
+  });
+
+  it("reports a tab TypeTarget can't reach, and keeps selecting where it already was", async () => {
+    fake.tabs.query.mockResolvedValue([{ id: 5 }]);
+    const controller = new DestinationController({ onPicked: vi.fn(), onUnavailable: vi.fn() });
+    await controller.beginSelection();
+    fake.scripting.executeScript.mockRejectedValueOnce(new Error("Cannot access contents of the page."));
+
+    await expect(controller.followTo(9)).resolves.toBe(false);
+    expect(controller.isSelecting).toBe(true);
+  });
+
+  it("does nothing when no selection is in progress", async () => {
+    const controller = new DestinationController({ onPicked: vi.fn(), onUnavailable: vi.fn() });
+
+    await expect(controller.followTo(9)).resolves.toBe(true);
+    expect(fake.scripting.executeScript).not.toHaveBeenCalled();
+  });
+});
+
 describe("DestinationController.handlePicked", () => {
   it("invokes onPicked and exits selecting state for the tab that was being selected in", async () => {
     fake.tabs.query.mockResolvedValue([{ id: 5 }]);
@@ -99,6 +167,18 @@ describe("DestinationController.insertText / checkAlive", () => {
     expect(fake.tabs.sendMessage).toHaveBeenNthCalledWith(2, 5, envelope({ kind: "check-destination-alive" }), {
       frameId: 3,
     });
+  });
+
+  it("releases a destination by messaging only its own frame, ignoring a tab that is gone", async () => {
+    const onUnavailable = vi.fn();
+    const controller = new DestinationController({ onPicked: vi.fn(), onUnavailable });
+
+    await controller.release({ tabId: 5, frameId: 3, elementId: "el-1" });
+    expect(fake.tabs.sendMessage).toHaveBeenCalledWith(5, envelope({ kind: "clear-destination" }), { frameId: 3 });
+
+    fake.tabs.sendMessage.mockRejectedValueOnce(new Error("No tab with id: 5"));
+    await expect(controller.release({ tabId: 5, frameId: 3, elementId: "el-1" })).resolves.toBeUndefined();
+    expect(onUnavailable).not.toHaveBeenCalled();
   });
 
   it("does not report unavailable when insertion succeeds", async () => {

@@ -1,4 +1,4 @@
-# WaveType — Local Live Transcriber
+# TypeTarget — Directed Transcriber
 
 Captures a browser tab's audio and streams transcribed text into a text field you
 choose in another tab. Transcription runs locally by default (Whisper, compiled to
@@ -21,7 +21,7 @@ anywhere unless you've explicitly picked a network model.
 
 ## API keys
 
-Network models need an API key, which you provide yourself — WaveType does not ship
+Network models need an API key, which you provide yourself — TypeTarget does not ship
 with or share any key. Click **API Keys** in the popup to open a dialog with one field
 per provider. A key is:
 
@@ -43,18 +43,21 @@ per provider. A key is:
   any API keys you enter. Never history, audio, or transcripts.
 - **offscreen** — run the long-lived audio + transcription pipeline outside the
   service worker, which Chrome can otherwise kill at any time.
+- **contextMenus** — adds a "TypeTarget" submenu to the page's right-click menu, with the
+  source tab, Start/Stop, and — on a text box — "Select output" (or "Deselect output" on
+  the current output box), so you can drive TypeTarget from the tab you're typing into.
+  Choosing an item gives TypeTarget the same one-tab access as opening the popup there.
 - **host_permissions** (`generativelanguage.googleapis.com`) — lets the optional Gemini
   engine reach Google's API. Only used when you've selected a Gemini model; not
   contacted otherwise.
 
 No other host permissions are declared. Destination selection works on any page via
 `activeTab` + `chrome.scripting`, scoped to the one tab you're actively picking a
-destination in.
+destination in — either the tab "Select output" was clicked in, or the tab where you
+right-clicked a text box and chose TypeTarget → "Select output".
 
 ## Privacy
 
-- **Local by default.** The Whisper models never send audio anywhere; everything runs
-  in this browser.
 - **Gemini is opt-in.** Selecting a Gemini model is a deliberate choice, shown with an
   inline warning in the popup — captured audio is streamed to Google using your API
   key for as long as that model stays selected.
