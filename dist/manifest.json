@@ -1,0 +1,50 @@
+{
+  "manifest_version": 3,
+  "name": "TypeTarget — Directed Transcriber",
+  "version": "0.1.0",
+  "description": "Captures a browser tab's audio and transcribes it — locally with Whisper by default, or optionally via Google's Gemini API using your own key. Local mode uploads nothing.",
+  "icons": {
+    "16": "public/icons/icon16.png",
+    "48": "public/icons/icon48.png",
+    "128": "public/icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "src/popup/index.html",
+    "default_icon": {
+      "16": "public/icons/icon16.png",
+      "48": "public/icons/icon48.png",
+      "128": "public/icons/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "service-worker-loader.js",
+    "type": "module"
+  },
+  "permissions": [
+    "tabCapture",
+    "activeTab",
+    "scripting",
+    "storage",
+    "offscreen",
+    "contextMenus"
+  ],
+  "host_permissions": [
+    "https://generativelanguage.googleapis.com/*"
+  ],
+  "web_accessible_resources": [
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "resources": [
+        "src/content/main.js"
+      ],
+      "use_dynamic_url": false
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
+  },
+  "minimum_chrome_version": "116"
+}
