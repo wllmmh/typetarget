@@ -686,8 +686,9 @@ from one 12-core desktop measured by an earlier session, or not yet measured at 
   into just that frame (`DestinationController.pickFromContextMenu`), and the content script
   picks `document.activeElement` (right-clicking a box focuses it — verified in Chromium).
   **The menu is now a "TypeTarget" submenu** (`src/background/context-menu.ts`, user's final
-  spec after trying a single top-level item): Source tab ▸ (radio list of known tabs, locked
-  while capturing) and Start/Stop anywhere on a page, plus Select/Deselect output on text boxes
+  spec after trying a single top-level item): Start listening ▸ (one item per known tab; choosing
+  one starts capturing it; replaced by Stop listening while capturing — there is no separate
+  "Source tab" picker) anywhere on a page, plus Select/Deselect output on text boxes
   (`contexts: ["editable"]`). `buildMenuModel` is a pure view of state; `ContextMenu.apply`
   diffs it against what was last sent, since state broadcasts every second while capturing.
   **Start from the menu is unverified in real Chrome:** the menu click grants activeTab for

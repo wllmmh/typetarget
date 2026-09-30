@@ -55,8 +55,8 @@ per provider. A key is:
   any API keys you enter. Never history, audio, or transcripts.
 - **offscreen** — run the long-lived audio + transcription pipeline outside the
   service worker, which Chrome can otherwise kill at any time.
-- **contextMenus** — adds a "TypeTarget" submenu to the page's right-click menu, with the
-  source tab, Start/Stop, and — on a text box — "Select output" (or "Deselect output" on
+- **contextMenus** — adds a "TypeTarget" submenu to the page's right-click menu, with
+  Start listening (a submenu of the tabs to capture), Stop listening, and — on a text box — "Select output" (or "Deselect output" on
   the current output box), so you can drive TypeTarget from the tab you're typing into.
   Choosing an item gives TypeTarget the same one-tab access as opening the popup there.
 - **host_permissions** (`generativelanguage.googleapis.com`, `api.groq.com`) — lets the

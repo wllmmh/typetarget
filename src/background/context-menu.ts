@@ -1,7 +1,8 @@
 /**
- * The page right-click menu: a "TypeTarget" submenu, available anywhere on a page, holding the
- * source tab (a radio list), Start listening/Stop listening, and — only when right-clicking a
- * text box — Type here/Stop typing here. It mirrors the popup's equivalent controls (worded
+ * The page right-click menu: a "TypeTarget" submenu, available anywhere on a page, holding
+ * Start listening (a submenu with one item per eligible tab; choosing one starts capturing it),
+ * Stop listening (shown instead of Start while capturing) and — only when right-clicking a text
+ * box — Type here/Stop typing here. It mirrors the popup's equivalent controls (worded
  * differently there) so they can be used from the tab the user is typing into, without opening
  * the popup.
  *
@@ -11,20 +12,20 @@
 import type { AppState } from "./state";
 
 export const MENU_ROOT_ID = "typetarget";
-export const MENU_SOURCE_TAB_ID = "typetarget-source-tab";
-export const MENU_START_STOP_ID = "typetarget-start-stop";
+export const MENU_START_ID = "typetarget-start";
+export const MENU_STOP_ID = "typetarget-stop";
 export const MENU_OUTPUT_ID = "typetarget-output";
 const SOURCE_ITEM_PREFIX = "typetarget-source:";
 const NO_SOURCES_ID = "typetarget-source-none";
 /** Tab titles can be very long; the menu is not the place to read them in full. */
 const MAX_SOURCE_TITLE_LENGTH = 60;
 
-type SourceItem = { id: string; title: string; checked: boolean };
+type SourceItem = { id: string; title: string };
 
 export type MenuModel = {
-  startStop: { title: "Start listening" | "Stop listening"; enabled: boolean };
-  /** Changing the source is refused while capturing, as in the popup. */
-  sourcesEnabled: boolean;
+  /** While capturing, Stop listening is shown in place of the Start listening submenu. */
+  capturing: boolean;
+  /** The Start listening submenu's items: each known tab is one to start capturing. */
   sources: SourceItem[];
   output: "Type here" | "Stop typing here";
 };
@@ -41,22 +42,14 @@ const truncate = (title: string): string =>
  * knows to offer "Stop typing here".
  */
 export const buildMenuModel = (state: AppState, pointerOverDestination: boolean): MenuModel => {
-  const capturing = isCapturing(state.status);
   return {
-    startStop: capturing
-      ? { title: "Stop listening", enabled: true }
-      : { title: "Start listening", enabled: state.pendingSourceTabId !== null },
-    sourcesEnabled: !capturing,
-    sources: state.knownTabs.map((tab) => ({
-      id: `${SOURCE_ITEM_PREFIX}${tab.tabId}`,
-      title: truncate(tab.title),
-      checked: tab.tabId === state.pendingSourceTabId,
-    })),
+    capturing: isCapturing(state.status),
+    sources: state.knownTabs.map((tab) => ({ id: `${SOURCE_ITEM_PREFIX}${tab.tabId}`, title: truncate(tab.title) })),
     output: pointerOverDestination && state.destination ? "Stop typing here" : "Type here",
   };
 };
 
-/** The tab a source radio item stands for, or null if `menuItemId` isn't one. */
+/** The tab a Start listening item stands for, or null if `menuItemId` isn't one. */
 export const sourceTabIdOf = (menuItemId: string | number): number | null => {
   if (typeof menuItemId !== "string" || !menuItemId.startsWith(SOURCE_ITEM_PREFIX)) return null;
   const tabId = Number(menuItemId.slice(SOURCE_ITEM_PREFIX.length));
@@ -82,9 +75,9 @@ export class ContextMenu {
     this.created = new Promise((resolve) => {
       chrome.contextMenus.removeAll(() => {
         chrome.contextMenus.create({ id: MENU_ROOT_ID, title: "TypeTarget", contexts: ["all"] }, warnIfFailed);
-        chrome.contextMenus.create({ id: MENU_SOURCE_TAB_ID, parentId: MENU_ROOT_ID, title: "Source tab", contexts: ["all"] }, warnIfFailed);
+        chrome.contextMenus.create({ id: MENU_START_ID, parentId: MENU_ROOT_ID, title: "Start listening", contexts: ["all"] }, warnIfFailed);
         chrome.contextMenus.create(
-          { id: MENU_START_STOP_ID, parentId: MENU_ROOT_ID, title: "Start listening", contexts: ["all"] },
+          { id: MENU_STOP_ID, parentId: MENU_ROOT_ID, title: "Stop listening", visible: false, contexts: ["all"] },
           warnIfFailed,
         );
         chrome.contextMenus.create(
@@ -103,21 +96,16 @@ export class ContextMenu {
     const previous = this.applied;
     this.applied = model;
 
-    if (previous?.startStop.title !== model.startStop.title || previous.startStop.enabled !== model.startStop.enabled) {
-      chrome.contextMenus.update(MENU_START_STOP_ID, { ...model.startStop }, warnIfFailed);
+    if (previous?.capturing !== model.capturing) {
+      chrome.contextMenus.update(MENU_START_ID, { visible: !model.capturing }, warnIfFailed);
+      chrome.contextMenus.update(MENU_STOP_ID, { visible: model.capturing }, warnIfFailed);
     }
     if (previous?.output !== model.output) {
       chrome.contextMenus.update(MENU_OUTPUT_ID, { title: model.output }, warnIfFailed);
     }
     if (!previous || sourceListKey(previous) !== sourceListKey(model)) {
       this.replaceSources(previous?.sources ?? [], model);
-      return;
     }
-    model.sources.forEach((item, i) => {
-      if (item.checked !== previous.sources[i]?.checked || model.sourcesEnabled !== previous.sourcesEnabled) {
-        chrome.contextMenus.update(item.id, { checked: item.checked, enabled: model.sourcesEnabled }, warnIfFailed);
-      }
-    });
   }
 
   private replaceSources(previous: SourceItem[], model: MenuModel): void {
@@ -127,14 +115,14 @@ export class ContextMenu {
     }
     if (model.sources.length === 0) {
       chrome.contextMenus.create(
-        { id: NO_SOURCES_ID, parentId: MENU_SOURCE_TAB_ID, title: "Open TypeTarget on a tab to capture it", enabled: false, contexts: ["all"] },
+        { id: NO_SOURCES_ID, parentId: MENU_START_ID, title: "Open TypeTarget on a tab to capture it", enabled: false, contexts: ["all"] },
         warnIfFailed,
       );
       return;
     }
     for (const item of model.sources) {
       chrome.contextMenus.create(
-        { ...item, parentId: MENU_SOURCE_TAB_ID, type: "radio", enabled: model.sourcesEnabled, contexts: ["all"] },
+        { ...item, parentId: MENU_START_ID, contexts: ["all"] },
         warnIfFailed,
       );
     }
