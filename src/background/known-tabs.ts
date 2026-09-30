@@ -31,6 +31,31 @@ export const recordKnownTab = (known: readonly CapturableTab[], tab: chrome.tabs
   return [entry, ...known.filter((t) => t.tabId !== id)].slice(0, MAX_KNOWN_TABS);
 };
 
+/**
+ * Applies a `chrome.tabs.onUpdated` change to a known tab, so its label follows the page
+ * (a YouTube tab's title changes with each video). Chrome includes `title`/`url` in the
+ * change only while TypeTarget can read the tab (activeTab not yet revoked), so an absent
+ * field keeps the last known value. Returns `known` itself when nothing changed, so
+ * callers can skip a broadcast by identity.
+ */
+export const updateKnownTab = (
+  known: CapturableTab[],
+  tabId: number,
+  change: Pick<chrome.tabs.TabChangeInfo, "title" | "url" | "favIconUrl">,
+): CapturableTab[] => {
+  const current = known.find((t) => t.tabId === tabId);
+  if (!current) return known;
+  const url = change.url && isCapturableUrl(change.url) ? change.url : current.url;
+  const title = change.title === undefined ? current.title : change.title.trim() || url;
+  const favIconUrl = change.favIconUrl ?? current.favIconUrl;
+  if (title === current.title && url === current.url && favIconUrl === current.favIconUrl) return known;
+  return known.map((t) => (t.tabId === tabId ? { ...t, title, url, favIconUrl } : t));
+};
+
+/** Whether two lists would render identically (order, ids, and labels). */
+export const sameKnownTabs = (a: readonly CapturableTab[], b: readonly CapturableTab[]): boolean =>
+  JSON.stringify(a) === JSON.stringify(b);
+
 export const removeKnownTab = (known: readonly CapturableTab[], tabId: number): CapturableTab[] =>
   known.filter((t) => t.tabId !== tabId);
 

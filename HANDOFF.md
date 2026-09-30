@@ -5,26 +5,65 @@ phase status, `docs/whisper-wasm-provenance.md` before touching anything ASR, th
 file for what is fragile, what was learned the hard way, and where the performance work
 has to go.
 
-Last updated 2026-09-23.
+Last updated 2026-09-29.
 
 ## Where the project actually is
 
 - Phases 1–6 are implemented; Phase 7 (hardening) is in progress (perf work, see below,
-  plus a second transcription engine added 2026-09-22 — see "Multi-provider
-  transcription"). `npm test` is **31 files / 224 tests** passing; `npx tsc -b --noEmit`,
-  `npx eslint .` and `npx vite build` are clean.
+  plus two network transcription engines: Gemini Live, added 2026-09-22, and Groq, added
+  2026-09-29 — see "Multi-provider transcription"). `npm test` is **35 files / 301 tests**
+  passing; `npx tsc -b --noEmit`, `npx eslint .` and `npx vite build` are clean.
+- **The user reports the MVP as functional (2026-09-29).**
 - **It works end to end in a real browser**: tab audio is captured, transcribed locally,
   and finalized text is typed into a user-picked field. That was confirmed by hand on
   2026-09-22 — indirectly, via the bug report that text was arriving *three times*,
   which it cannot do unless the whole chain works.
-- Everything since commit `4188ad7` ("phase 5") is **uncommitted** in the working tree.
-  Nothing in this session was committed (the user commits manually — see
-  `~/.claude/CLAUDE.md`).
+- The user commits manually (see `~/.claude/CLAUDE.md`); agents never commit. `dist/` is
+  tracked (commit `651109a`), so a build shows up as changes there.
 - It is **not usable for live transcription yet**, and that is a performance problem, not
   a wiring problem. See "Performance: the actual blocker" below — that is the section
   that matters most.
 
 ## What this session did
+
+### 2026-09-29: Groq engine built
+
+`GROQ.md` (a snapshot of Groq's speech-to-text docs, in the repo root) supplied the missing
+endpoint and model ids, so the "architected for, not built" Groq provider below is now built,
+exactly along the planned shape:
+
+- `src/worker/groq-engine.ts` — a plain `TranscriptionEngine`: one multipart POST per
+  utterance to `https://api.groq.com/openai/v1/audio/transcriptions` (16 kHz mono 16-bit
+  WAV, `language=en`, `response_format=json`, `temperature=0`, `Authorization: Bearer`).
+  The key is read per request (a mid-session key change applies to the next utterance);
+  `load()` fails fast on a missing key; 401 gets a "check your key" message, other
+  failures surface Groq's own `error.message`; the response body is narrowed from
+  `unknown`, not trusted.
+- `src/worker/main.ts` — Groq gets its **own** `StreamingTranscriber` (own `EnergyVad` /
+  `TranscriptStabilizer`) over an instrumented engine, so the chunk slider, VAD, and the
+  popup's inference stats all apply unchanged. No router or controller changes beyond the
+  new `groq` entry.
+- `src/domain/models.ts` — `EngineProvider` gains `"groq"`; two catalog entries,
+  `groq-whisper-large-v3-turbo` and `groq-whisper-large-v3` (prefixed so they can't be
+  confused with local Whisper models; mapped to Groq's ids inside the engine).
+- `src/domain/api-key.ts` — `ApiKeyProvider` gains `"groq"` (it did **not** already include
+  it, contrary to what the section below used to say), so the dialog now shows a Groq field.
+- `src/worker/pcm16-encode.ts` — `float32ToWav` added next to the base64 encoder, sharing
+  the int16 conversion.
+- `manifest.config.ts` — `host_permissions` gains `https://api.groq.com/*` (a new
+  permission prompt on update) and the description names Groq.
+- `src/popup/App.tsx` — the session caption about Gemini's 10-minute connection limit was
+  shown for *any* network model; now only for Gemini.
+- README: Groq, the new permission, and a "Chunk length" section. It also dropped a claim
+  that the popup shows an inline notice when a network model is selected. No such notice
+  exists in `App.tsx`; see Known gaps.
+
+**Not verified: any real Groq request.** No Groq key was available. The request shape is
+taken from `GROQ.md` and unit-tested against a fake `fetch` only. The first real test should
+check that a key saved in the dialog transcribes, and what a 429 (rate limit) looks like in
+the popup. Note Groq bills each request as **at least 10 s** of audio, so short VAD
+utterances are billed well above their length; a longer chunk setting does not help when
+pauses finalize early.
 
 ### 2026-09-23: first real-hardware benchmarks (a browser is available now)
 
@@ -223,16 +262,9 @@ direction — not the inline-field-that-appears-when-selected design originally 
 with one masked field per provider, including Groq's, even though no engine exists yet
 to use a Groq key — so a key pasted in early isn't lost once Groq ships.
 
-**Groq — architected for, not built.** `EngineProvider` deliberately does *not* have a
-`"groq"` member yet (an unreachable union member just invites a dead `case` or false
-confidence); adding it later is one literal in `domain/models.ts`, one new
-`src/worker/groq-engine.ts` implementing plain `TranscriptionEngine` (Groq's API is
-POST-per-chunk, the same discrete shape whisper.cpp already uses — no engine-router or
-controller changes needed, unlike Gemini), one new `MODEL_CATALOG` entry, and one new
-`EngineRouter` case. The API key plumbing already supports it (`ApiKeyProvider` includes
-`"groq"` today; the popup dialog already has the field). Not implemented because there's
-no confirmed Groq transcription model id/endpoint to build against yet — same
-verify-before-building bar as everything else here.
+**Groq — built 2026-09-29** (see the top of "What this session did"). It went in along
+the shape planned here: a plain `TranscriptionEngine` behind its own
+`StreamingTranscriber`, with no engine-router or controller redesign.
 
 **Bug found in first hand test (2026-09-23), fixed:** a key saved while idle (the normal
 flow) never reached the engine — the service worker only forwarded keys to a *running*
@@ -567,6 +599,10 @@ to "near-live on limited hardware", and the engine boundary
 
 ### Recommended order
 
+(As of 2026-09-29 the fastest route to usable speed on weak hardware is simply picking a
+Groq model: it avoids local inference entirely, at the cost of sending audio off-device.
+The levers below still matter for the local, private default.)
+
 1. ~~**Lever 4** (why no SIMD)~~ — resolved 2026-09-22, no code change: SIMD was already
    on, the earlier "no gain" reading was a no-op flag placement. Nothing to build.
 2. **Lever 3** (quantized model) — measured 2026-09-23: ~1.3× faster, identical transcript.
@@ -676,6 +712,17 @@ from one 12-core desktop measured by an earlier session, or not yet measured at 
   Verified in Chromium with host permissions standing in for activeTab — the real
   activeTab-retention behaviour across tab switches is untested by automation.
 
+- **Source-tab titles follow the page** (2026-09-29). They used to be frozen at the moment the
+  tab was recorded, so the popup, context menu and destination badge kept showing the first
+  YouTube video's title. Now `chrome.tabs.onUpdated` → `updateKnownTab` (`known-tabs.ts`)
+  keeps them current, reopening the popup on a tab refreshes its title (the old check only
+  compared list order), and the popup renders the list from broadcast state
+  (`PublicAppState.knownTabs`) so an open popup updates live. **Limit:** without the `tabs`
+  permission, Chrome sends the new title only while TypeTarget still has access to the tab
+  (activeTab, lost on a full navigation). After that the last title seen stays until the
+  popup is opened on the tab again. Verified in Chromium using host permissions in place of
+  activeTab (the open popup's dropdown updated). The real activeTab case is untested.
+
 ## Known gaps (Phase 7)
 
 - **A captured stream that goes silent is not reported.** A user run showed
@@ -707,4 +754,7 @@ from one 12-core desktop measured by an earlier session, or not yet measured at 
 - **`whisper-cpp-engine.ts`'s 30 s inference timeout cannot fire** with the synchronous
   build (noted in a comment there). Revisit if inference ever returns to a thread.
 - No privacy audit pass.
+- **No in-popup notice when a network model is selected.** README used to claim one; it
+  was never built. The dropdown label names the provider (Gemini/Groq) and the README
+  covers it, but a one-line notice under the model picker would be cheap and worth adding.
 - ~~Benchmarking harness never run~~ — run 2026-09-23 in real Chrome; it works (see top).

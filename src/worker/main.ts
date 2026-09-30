@@ -13,6 +13,7 @@ import { createAsrWorkerController } from "./asr-worker-controller";
 import { createInstrumentedEngine } from "./instrumented-engine";
 import { EngineRouter } from "./engine-router";
 import { createGeminiLiveConnect, GeminiLiveEngine } from "./gemini-live-engine";
+import { GroqEngine } from "./groq-engine";
 import { MODEL_URLS } from "./model-urls";
 import { createDownloadProgressReporter } from "./download-progress-reporter";
 import type { ModelId } from "../domain/models";
@@ -64,10 +65,24 @@ if (self.name === "em-pthread") {
     (event) => post({ kind: "transcript-event", event }),
   );
 
+  // Groq is discrete like whisper-cpp, so it gets its own StreamingTranscriber (and VAD /
+  // stabilizer state) over the same instrumentation, keeping the popup's inference stats.
+  let groqApiKey: string | null = null;
+  const groqEngine = createInstrumentedEngine(new GroqEngine({ getApiKey: () => groqApiKey }), (stats) =>
+    post({ kind: "inference-stats", stats }),
+  );
+  const groqTranscriber = new StreamingTranscriber({
+    engine: groqEngine,
+    vad: new EnergyVad(),
+    stabilizer: new TranscriptStabilizer(),
+    onEvent: (event) => post({ kind: "transcript-event", event }),
+  });
+
   const router = new EngineRouter({
     providers: {
       "whisper-cpp": { engine: instrumented, transcriber },
       "gemini-live": { engine: geminiEngine, transcriber: geminiEngine },
+      groq: { engine: groqEngine, transcriber: groqTranscriber },
     },
   });
   const controller = createAsrWorkerController({
@@ -76,8 +91,7 @@ if (self.name === "em-pthread") {
     post,
     onSetApiKey: (provider, apiKey) => {
       if (provider === "gemini-live") geminiApiKey = apiKey || null;
-      // "groq" is accepted by the message type (domain/api-key.ts's broader
-      // ApiKeyProvider) but has no engine to route to yet — see HANDOFF.md "Groq".
+      if (provider === "groq") groqApiKey = apiKey || null;
     },
   });
 

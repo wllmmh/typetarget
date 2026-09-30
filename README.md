@@ -10,14 +10,26 @@ network model and supply your own API key.
 The popup's Model dropdown lists every supported model, grouped by provider:
 
 - **Whisper** (`tiny.en`, `tiny.en-q5_1`, `base.en`) — runs fully local in a Worker,
-  no network access, nothing to configure. The default.
+  no network access, nothing to configure. The default. The first use of each model
+  downloads it once (31–142 MB) and caches it.
 - **Gemini** (`3.5 Transcribe (Live)`) — Google's Gemini Live API, a persistent
   streaming connection. Optional; requires your own Gemini API key (see "API keys"
   below) and sends captured audio to Google.
+- **Groq** (`Whisper Large v3 Turbo`, `Whisper Large v3`) — Groq's hosted Whisper. Each
+  finished utterance is uploaded to Groq as a short WAV file and the text comes back in
+  one request. Optional; requires your own Groq API key and sends captured audio to
+  Groq. Groq bills every request as at least 10 seconds of audio, so a longer chunk
+  length (see below) costs less per minute of speech.
 
-Selecting a network model shows an inline notice in the popup naming which provider
-your audio goes to. Only one model is active per capture session; nothing is sent
-anywhere unless you've explicitly picked a network model.
+Only one model is active per capture session, and nothing is sent anywhere unless
+you've explicitly picked a Gemini or Groq model.
+
+## Chunk length
+
+The slider caps how long one utterance can grow (3–25 s) before it is transcribed
+anyway; a pause in speech finalizes it sooner. With the local Whisper models, each
+transcription costs about the same regardless of length, so a longer chunk keeps up
+better on slow hardware. It also sets how often Gemini and Groq receive a finished utterance.
 
 ## API keys
 
@@ -47,9 +59,9 @@ per provider. A key is:
   source tab, Start/Stop, and — on a text box — "Select output" (or "Deselect output" on
   the current output box), so you can drive TypeTarget from the tab you're typing into.
   Choosing an item gives TypeTarget the same one-tab access as opening the popup there.
-- **host_permissions** (`generativelanguage.googleapis.com`) — lets the optional Gemini
-  engine reach Google's API. Only used when you've selected a Gemini model; not
-  contacted otherwise.
+- **host_permissions** (`generativelanguage.googleapis.com`, `api.groq.com`) — lets the
+  optional Gemini and Groq engines reach their providers' APIs. Each is only contacted
+  while one of its models is selected and capturing.
 
 No other host permissions are declared. Destination selection works on any page via
 `activeTab` + `chrome.scripting`, scoped to the one tab you're actively picking a
@@ -58,8 +70,8 @@ right-clicked a text box and chose TypeTarget → "Select output".
 
 ## Privacy
 
-- **Gemini is opt-in.** Selecting a Gemini model is a deliberate choice, shown with an
-  inline warning in the popup — captured audio is streamed to Google using your API
-  key for as long as that model stays selected.
+- **Network models are opt-in.** Selecting a Gemini or Groq model is a deliberate
+  choice. While capturing, a Gemini model streams captured audio to Google, and a Groq
+  model uploads each finished utterance to Groq, using your API key.
 - **Nothing is logged or telemetered.** No audio, transcript, or API key leaves this
   device except audio sent to a network model you've explicitly selected.

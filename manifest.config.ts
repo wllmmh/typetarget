@@ -16,10 +16,11 @@ import pkg from "./package.json";
 // - contextMenus: the "Send TypeTarget text here" item on editable fields, so an output box in any
 //   tab can be picked (choosing the item grants activeTab for that tab). No install warning.
 //
-// host_permissions is scoped to exactly one origin: Google's Gemini API, needed for the
+// host_permissions is scoped to exactly two origins: Google's Gemini API, needed for the
 // optional Gemini Live transcription engine (src/worker/gemini-live-engine.ts) to open a
-// WebSocket/make requests to it from the offscreen document's worker. This is a real,
-// user-visible permission grant that did not exist before that engine — everything else
+// WebSocket/make requests to it from the offscreen document's worker, and Groq's API for the
+// optional Groq engine (src/worker/groq-engine.ts). These are real, user-visible permission
+// grants that did not exist before those engines — everything else
 // keeps relying on activeTab (granted only after the user clicks the extension action / a
 // popup control) plus chrome.scripting.executeScript, scoped to the single tab the user is
 // actively selecting a destination in.
@@ -28,7 +29,7 @@ export default defineManifest({
   name: "TypeTarget — Directed Transcriber",
   version: pkg.version,
   description:
-    "Captures a browser tab's audio and transcribes it — locally with Whisper by default, or optionally via Google's Gemini API using your own key. Local mode uploads nothing.",
+    "Captures a browser tab's audio and transcribes it — locally with Whisper by default, or optionally via Google's Gemini or Groq's API using your own key. Local mode uploads nothing.",
   icons: {
     16: "public/icons/icon16.png",
     48: "public/icons/icon48.png",
@@ -54,7 +55,7 @@ export default defineManifest({
     "offscreen",
     "contextMenus"
   ],
-  host_permissions: ["https://generativelanguage.googleapis.com/*"],
+  host_permissions: ["https://generativelanguage.googleapis.com/*", "https://api.groq.com/*"],
   // The destination content script (src/content/main.ts) is only ever injected
   // dynamically via chrome.scripting.executeScript, never declared in
   // content_scripts, so it needs no host_permissions grant; @crxjs/vite-plugin still

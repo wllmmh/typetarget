@@ -5,12 +5,10 @@
  * persistent network stream with its own server-side turn detection — engine-router.ts
  * routes each provider through the matching integration shape.
  *
- * "groq" is deliberately not a member yet: it would be a second discrete-shaped
- * provider (POST-per-chunk, same shape as whisper-cpp, just over the network), but no
- * implementation exists to route to — see HANDOFF.md "Groq" for the planned shape.
- * Adding it later is one literal here plus a new engine file, not a redesign.
+ * "groq" is discrete like whisper-cpp (one POST per utterance to Groq's hosted Whisper),
+ * so it reuses StreamingTranscriber's scheduling rather than needing its own streaming shape.
  */
-export type EngineProvider = "whisper-cpp" | "gemini-live";
+export type EngineProvider = "whisper-cpp" | "gemini-live" | "groq";
 
 /** Whisper.cpp's own model identifiers — split out from ModelId so the download/cache
  * machinery (model-urls.ts, model-downloader.ts, whisper-cpp-engine.ts) that's keyed by
@@ -19,7 +17,7 @@ export type EngineProvider = "whisper-cpp" | "gemini-live";
 export type WhisperModelId = "tiny.en" | "tiny.en-q5_1" | "base.en";
 
 /** Model identifiers across all providers. */
-export type ModelId = WhisperModelId | "gemini-3.5-transcribe-live";
+export type ModelId = WhisperModelId | "gemini-3.5-transcribe-live" | "groq-whisper-large-v3-turbo" | "groq-whisper-large-v3";
 
 /**
  * tiny.en, not base.en: a cold first run must download the model before anything can be
@@ -69,6 +67,24 @@ export const MODEL_CATALOG: Record<ModelId, ModelInfo> = {
     provider: "gemini-live",
     name: "Gemini",
     label: "3.5 Transcribe (Live)",
+    network: true,
+    requiresApiKey: true,
+  },
+  // Groq's hosted Whisper (see GROQ.md). Multilingual models, pinned to English like the
+  // rest of the app. Sends each finalized utterance to Groq using the user's own key.
+  "groq-whisper-large-v3-turbo": {
+    id: "groq-whisper-large-v3-turbo",
+    provider: "groq",
+    name: "Groq",
+    label: "Whisper Large v3 Turbo",
+    network: true,
+    requiresApiKey: true,
+  },
+  "groq-whisper-large-v3": {
+    id: "groq-whisper-large-v3",
+    provider: "groq",
+    name: "Groq",
+    label: "Whisper Large v3",
     network: true,
     requiresApiKey: true,
   },

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CapturableTab } from "../domain/messages";
-import { parseKnownTabs, pruneKnownTabs, recordKnownTab, removeKnownTab } from "./known-tabs";
+import { parseKnownTabs, pruneKnownTabs, recordKnownTab, removeKnownTab, sameKnownTabs, updateKnownTab } from "./known-tabs";
 
 const tab = (id: number, url: string, title?: string): chrome.tabs.Tab =>
   ({ id, url, title }) as chrome.tabs.Tab;
@@ -73,5 +73,53 @@ describe("parseKnownTabs", () => {
 
   it("returns an empty list for a non-array", () => {
     expect(parseKnownTabs("nope")).toEqual([]);
+  });
+});
+
+describe("updateKnownTab", () => {
+  const known = (): CapturableTab[] => [
+    { tabId: 1, title: "Old video - YouTube", url: "https://youtube.com/watch?v=a" },
+    { tabId: 2, title: "Docs", url: "https://docs.test" },
+  ];
+
+  it("takes a known tab's new title", () => {
+    const result = updateKnownTab(known(), 1, { title: "New video - YouTube" });
+
+    expect(result[0]).toEqual({ tabId: 1, title: "New video - YouTube", url: "https://youtube.com/watch?v=a" });
+    expect(result[1]).toEqual(known()[1]);
+  });
+
+  it("keeps the last known title when the change carries none (activeTab revoked)", () => {
+    const list = known();
+
+    expect(updateKnownTab(list, 1, { url: undefined, title: undefined })).toBe(list);
+  });
+
+  it("falls back to the url for a blank title, as when the tab was recorded", () => {
+    expect(updateKnownTab(known(), 1, { title: "   ", url: "https://youtube.com/watch?v=b" })[0]).toMatchObject({
+      title: "https://youtube.com/watch?v=b",
+      url: "https://youtube.com/watch?v=b",
+    });
+  });
+
+  it("returns the same list for tabs it doesn't know or unchanged titles, so callers can skip broadcasting", () => {
+    const list = known();
+
+    expect(updateKnownTab(list, 99, { title: "Something" })).toBe(list);
+    expect(updateKnownTab(list, 2, { title: "Docs" })).toBe(list);
+  });
+
+  it("ignores a navigation to a non-web url", () => {
+    expect(updateKnownTab(known(), 2, { url: "chrome://settings" })[1]?.url).toBe("https://docs.test");
+  });
+});
+
+describe("sameKnownTabs", () => {
+  it("treats a changed title as a different list, even with the same order", () => {
+    const a = recordKnownTab([], tab(1, "https://a.test", "A"));
+    const b = recordKnownTab(a, tab(1, "https://a.test", "A, retitled"));
+
+    expect(sameKnownTabs(a, recordKnownTab(a, tab(1, "https://a.test", "A")))).toBe(true);
+    expect(sameKnownTabs(a, b)).toBe(false);
   });
 });

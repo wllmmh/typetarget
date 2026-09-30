@@ -1,17 +1,13 @@
 /**
  * API keys for network transcription providers, shared so the popup's "API Keys" dialog
  * and the service worker's validation cannot drift apart (same reason as tuning.ts).
- *
- * Deliberately broader than EngineProvider (models.ts): the popup's dialog offers a
- * field for Groq before any engine exists to route to it (see models.ts's EngineProvider
- * comment), so a key entered early for a not-yet-wired-up provider isn't lost.
  */
 
-export type ApiKeyProvider = "gemini-live";
+export type ApiKeyProvider = "gemini-live" | "groq";
 
 export const API_KEY_PROVIDER_NAMES: Record<ApiKeyProvider, string> = {
   "gemini-live": "Gemini",
-  // groq: "Groq",
+  groq: "Groq",
 };
 
 /** Short enough to catch an obvious mistake (a stray character, a whitespace-only

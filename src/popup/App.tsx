@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { sendToBackground } from "./background-client";
 import { useBackgroundState } from "./use-background-state";
-import type { CapturableTab, PublicAppState } from "../domain/messages";
+import type { PublicAppState } from "../domain/messages";
 import { MODEL_CATALOG, type ModelId } from "../domain/models";
 import { API_KEY_PROVIDER_NAMES, type ApiKeyProvider } from "../domain/api-key";
 import { CHUNK_MS_MAX, CHUNK_MS_MIN, CHUNK_MS_STEP } from "../domain/tuning";
@@ -60,7 +60,8 @@ const sessionCaption = (state: PublicAppState): string => {
   if (!session) return "";
   if (session.reconnecting) return `Reconnecting (attempt ${session.reconnecting.attempt})… ${session.reconnecting.reason}`;
   const paused = state.status === "paused" ? "Paused · " : "";
-  if (!MODEL_CATALOG[state.selectedModel].network) return `${paused}listening`;
+  // Only Gemini holds a long-lived connection; Groq is a request per utterance.
+  if (MODEL_CATALOG[state.selectedModel].provider !== "gemini-live") return `${paused}listening`;
   const reconnects = session.reconnects > 0 ? ` · reconnected ${session.reconnects}×` : "";
   return `${paused}this connection${reconnects}. Renewed automatically before Gemini's 10-minute limit, and after drops.`;
 };
@@ -88,7 +89,6 @@ const PauseIcon = () => (
 
 export const App = () => {
   const state = useBackgroundState();
-  const [tabs, setTabs] = useState<CapturableTab[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   /** Local while dragging so the readout tracks the thumb; null means "follow the background". */
@@ -106,9 +106,9 @@ export const App = () => {
       .then(() => sendToBackground({ kind: "list-capturable-tabs" }))
       .then((res) => {
         if (cancelled) return;
-        if (res.kind === "capturable-tabs") {
-          setTabs(res.tabs);
-        } else if (res.kind === "error") {
+        // The list itself arrives in the broadcast state (so titles stay current while the
+        // popup is open); this request only prunes closed tabs from it.
+        if (res.kind === "error") {
           setLoadError(res.message);
         }
       });
@@ -124,6 +124,7 @@ export const App = () => {
     state.status === "paused";
 
   const chunkMs = draggedChunkMs ?? state.chunkMs;
+  const tabs = state.knownTabs;
 
   /**
    * Debounced: a drag fires a change per step, and each one persists to storage and retunes

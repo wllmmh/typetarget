@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { float32ToPcm16Base64 } from "./pcm16-encode";
+import { float32ToPcm16Base64, float32ToWav } from "./pcm16-encode";
 
 /** Decodes back to the int16 values actually encoded, so tests assert on numbers
  * rather than hand-computed base64 strings. */
@@ -33,5 +33,27 @@ describe("float32ToPcm16Base64", () => {
 
   it("returns an empty string for empty input", () => {
     expect(float32ToPcm16Base64(new Float32Array(0))).toBe("");
+  });
+});
+
+describe("float32ToWav", () => {
+  it("writes a mono 16-bit PCM RIFF header followed by the samples", () => {
+    const wav = float32ToWav(new Float32Array([1, -1, 0]), 16_000);
+    const view = new DataView(wav.buffer);
+    const ascii = (offset: number) => String.fromCharCode(...wav.slice(offset, offset + 4));
+
+    expect(wav.length).toBe(44 + 3 * 2);
+    expect(ascii(0)).toBe("RIFF");
+    expect(view.getUint32(4, true)).toBe(36 + 6);
+    expect(ascii(8)).toBe("WAVE");
+    expect(ascii(12)).toBe("fmt ");
+    expect(view.getUint16(20, true)).toBe(1); // PCM
+    expect(view.getUint16(22, true)).toBe(1); // mono
+    expect(view.getUint32(24, true)).toBe(16_000);
+    expect(view.getUint32(28, true)).toBe(32_000);
+    expect(view.getUint16(34, true)).toBe(16);
+    expect(ascii(36)).toBe("data");
+    expect(view.getUint32(40, true)).toBe(6);
+    expect([view.getInt16(44, true), view.getInt16(46, true), view.getInt16(48, true)]).toEqual([32767, -32768, 0]);
   });
 });

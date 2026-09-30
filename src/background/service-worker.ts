@@ -20,7 +20,7 @@ import type { ModelId } from "../domain/models";
 import { clampChunkMs } from "../domain/tuning";
 import { isPlausibleApiKey, API_KEY_PROVIDER_NAMES, type ApiKeyProvider } from "../domain/api-key";
 import { createInitialState, toPublicState } from "./state";
-import { pruneKnownTabs, recordKnownTab, removeKnownTab } from "./known-tabs";
+import { pruneKnownTabs, recordKnownTab, removeKnownTab, sameKnownTabs, updateKnownTab } from "./known-tabs";
 import { persistState, restorePersistedState } from "./persisted-state";
 import { CaptureController, CaptureError } from "./capture-controller";
 import { DestinationController, DestinationError } from "./destination-controller";
@@ -156,6 +156,15 @@ chrome.tabs.onRemoved.addListener((tabId) => {
   commitState();
 });
 
+/** Keeps each known tab's label current — the popup, context menu, and destination badge
+ * all show the source tab's title, which pages like YouTube change on every video. */
+chrome.tabs.onUpdated.addListener((tabId, change) => {
+  const knownTabs = updateKnownTab(state.knownTabs, tabId, change);
+  if (knownTabs === state.knownTabs) return;
+  state.knownTabs = knownTabs;
+  commitState();
+});
+
 const listCapturableTabs = async (): Promise<CapturableTab[]> => {
   const openTabIds = (await chrome.tabs.query({}))
     .map((t) => t.id)
@@ -163,7 +172,7 @@ const listCapturableTabs = async (): Promise<CapturableTab[]> => {
   const pruned = pruneKnownTabs(state.knownTabs, openTabIds);
   if (pruned.length !== state.knownTabs.length) {
     state.knownTabs = pruned;
-    void persistState(state);
+    commitState();
   }
   return state.knownTabs;
 };
@@ -177,9 +186,9 @@ const registerActiveTab = async (): Promise<BackgroundResponse> => {
   if (!activeTab) return { kind: "ok" };
 
   const knownTabs = recordKnownTab(state.knownTabs, activeTab);
-  if (knownTabs.length === state.knownTabs.length && knownTabs[0]?.tabId === state.knownTabs[0]?.tabId) {
-    return { kind: "ok" };
-  }
+  // Compares labels too, not just order: reopening the popup on a tab whose title changed
+  // since it was recorded must refresh that title.
+  if (sameKnownTabs(knownTabs, state.knownTabs)) return { kind: "ok" };
   state.knownTabs = knownTabs;
   // Default the source to the tab the user just came from, so the common case needs no pick.
   state.pendingSourceTabId ??= knownTabs[0]?.tabId ?? null;
@@ -345,7 +354,7 @@ const handleMenuClick = async (info: chrome.contextMenus.OnClickData, tab: chrom
   await stateRestored;
   if (tab) {
     const knownTabs = recordKnownTab(state.knownTabs, tab);
-    if (knownTabs.length !== state.knownTabs.length || knownTabs[0]?.tabId !== state.knownTabs[0]?.tabId) {
+    if (!sameKnownTabs(knownTabs, state.knownTabs)) {
       state.knownTabs = knownTabs;
       state.pendingSourceTabId ??= knownTabs[0]?.tabId ?? null;
       commitState();

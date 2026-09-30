@@ -48,6 +48,8 @@ export type SessionIndicator = {
 export type PublicAppState = {
   status: TranscriptionStatus;
   sourceTabId: number | null;
+  /** Tabs offered as a source (see background/known-tabs.ts), with their current titles. */
+  knownTabs: CapturableTab[];
   /** Tab the user has picked in the popup but not started capturing yet. */
   pendingSourceTabId: number | null;
   /** Non-null only while a model is downloading, so the popup can show progress. */

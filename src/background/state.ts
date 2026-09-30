@@ -59,6 +59,7 @@ export const createInitialState = (): AppState => ({
 export const toPublicState = (state: AppState): PublicAppState => ({
   status: state.status,
   sourceTabId: state.sourceTabId,
+  knownTabs: state.knownTabs,
   pendingSourceTabId: state.pendingSourceTabId,
   modelDownload: state.modelDownload,
   engineState: state.engineState,
