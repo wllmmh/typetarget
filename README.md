@@ -34,8 +34,7 @@ better on slow hardware. It also sets how often Gemini and Groq receive a finish
 ## API keys
 
 Network models need an API key, which you provide yourself — TypeTarget does not ship
-with or share any key. Click **API Keys** in the popup to open a dialog with one field
-per provider. A key is:
+with or share any key. Click the key icon next to the model picker to open a dialog with the field for that model's provider. A key is:
 
 - Stored only in this browser's local extension storage (`chrome.storage.local`), never
   synced or sent anywhere except as authentication to the provider it belongs to.
@@ -48,7 +47,7 @@ per provider. A key is:
 - **tabCapture** — capture audio from the source tab you select. Core to the feature.
 - **activeTab** — lets the popup act on the current tab without a persistent host
   permission, and grants the scripting access needed to inject the destination picker
-  into whatever tab you're looking at when you click "Select output".
+  into whatever tab you're looking at when you click "Select field".
 - **scripting** — inject/remove the destination content script programmatically
   (activeTab-scoped), instead of a persistent `<all_urls>` content script.
 - **storage** — persist small bits of state: selected model, destination binding, and
@@ -68,8 +67,8 @@ per provider. A key is:
 
 No other host permissions are declared. Destination selection works on any page via
 `activeTab` + `chrome.scripting`, scoped to the one tab you're actively picking a
-destination in — either the tab "Select output" was clicked in, or the tab where you
-right-clicked a text box and chose TypeTarget → "Select output".
+destination in — either the tab "Select field" was clicked in, or the tab where you
+right-clicked a text box and chose TypeTarget → "Select field".
 
 ## Privacy
 

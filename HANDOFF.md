@@ -135,11 +135,11 @@ The user reported finalized text being typed two or three times, and text from a
 fixed, all worth remembering because each is an easy mistake to make again:
 
 1. **`chrome.scripting.executeScript` re-runs the file on every call.** `beginSelection()`
-   injects on every "Select output" click, and each run created a *fresh module scope*:
+   injects on every "Select field" click, and each run created a *fresh module scope*:
    its own `destinationSession`, its own `chrome.runtime.onMessage` listener, all of them
    still live. One `insert-text` message was therefore handled by every copy, and every
    copy still holding a live element inserted the text — once per time the user had ever
-   clicked "Select output" on that page. Each copy tracked its own `insertionOffset`,
+   clicked "Select field" on that page. Each copy tracked its own `insertionOffset`,
    which is why the repeats landed at odd positions instead of cleanly end to end.
    **Fixed**: the wiring moved to `src/content/bridge.ts` behind a flag on the isolated
    world's global object (shared across injections in a frame), so re-injection is a
@@ -678,7 +678,7 @@ from one 12-core desktop measured by an earlier session, or not yet measured at 
   day; cleared via a new `clear-destination` content message on deselect or re-pick
   elsewhere). Tab capture itself still can't run headlessly.
 
-- **"Select output" only reaches the tab it was clicked in** (activeTab). Users naturally
+- **"Select field" only reaches the tab it was clicked in** (activeTab). Users naturally
   click it on the *source* tab, then click a box in another tab — which silently did nothing
   (popup stuck on "Click a text box…" / "None selected"). Fixed 2026-09-24 by the user's
   choice of a right-click menu item (`contextMenus`, no install

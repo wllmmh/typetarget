@@ -58,7 +58,7 @@ export type DestinationCallbacks = {
 
 export class DestinationController {
   /**
-   * Tabs currently in selection mode. Usually one — the tab "Select output" was clicked in —
+   * Tabs currently in selection mode. Usually one — the tab "Select field" was clicked in —
    * plus any the user switches to while picking that TypeTarget can reach (see followTo).
    */
   private selectingTabIds = new Set<number>();
@@ -104,9 +104,9 @@ export class DestinationController {
   }
 
   /**
-   * Picks the text box the user right-clicked, via the right-click menu's TypeTarget → "Select output".
+   * Picks the text box the user right-clicked, via the right-click menu's TypeTarget → "Select field".
    * Choosing a menu item grants activeTab for its tab — the same grant opening the popup
-   * gives — so this works in any tab or window, not just the one "Select output" was
+   * gives — so this works in any tab or window, not just the one "Select field" was
    * clicked in. Injected into only the clicked frame; the pick then arrives through
    * handlePicked like any other.
    */

@@ -49,7 +49,7 @@ describe("DestinationController.pickFromContextMenu", () => {
     fake.tabs.query.mockResolvedValue([{ id: 5 }]);
     const onPicked = vi.fn();
     const controller = new DestinationController({ onPicked, onUnavailable: vi.fn() });
-    await controller.beginSelection(); // "Select output" was clicked in tab 5 (the source)
+    await controller.beginSelection(); // "Select field" was clicked in tab 5 (the source)
 
     await controller.pickFromContextMenu(9, 2);
 
@@ -81,7 +81,7 @@ describe("DestinationController.followTo", () => {
     fake.tabs.query.mockResolvedValue([{ id: 5 }]);
     const onPicked = vi.fn();
     const controller = new DestinationController({ onPicked, onUnavailable: vi.fn() });
-    await controller.beginSelection(); // clicked "Select output" on the source tab (5)
+    await controller.beginSelection(); // clicked "Select field" on the source tab (5)
 
     await expect(controller.followTo(9)).resolves.toBe(true);
     expect(fake.scripting.executeScript).toHaveBeenLastCalledWith(expect.objectContaining({ target: { tabId: 9, allFrames: true } }));

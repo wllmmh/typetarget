@@ -353,7 +353,7 @@ const pickFromContextMenu = async (tabId: number, frameId: number): Promise<void
 
 /**
  * Each item does what the matching popup control does. Choosing any menu item grants
- * activeTab for the tab it's in, which is what lets "Select output" pick there — and,
+ * activeTab for the tab it's in, which is what lets "Select field" pick there — and,
  * same as registerActiveTab for the popup, is what first makes this tab labellable and
  * capturable at all. Recording it here means the first right-click that starts capture
  * doesn't also require a separate popup visit just to make the tab "known".
@@ -403,7 +403,7 @@ const handleMenuClick = async (info: chrome.contextMenus.OnClickData, tab: chrom
 chrome.contextMenus.onClicked.addListener((info, tab) => void handleMenuClick(info, tab));
 
 /**
- * "Select output" can only start picking in the tab it was clicked in, but users click it on
+ * "Select field" can only start picking in the tab it was clicked in, but users click it on
  * the source tab and then go to the tab they want to type into. While picking, follow them
  * into each tab they switch to (or window they focus) that TypeTarget can reach; for one it
  * can't, say how to pick there instead of leaving clicks to silently do nothing.
@@ -420,7 +420,7 @@ const followSelectionTo = async (tabId: number): Promise<void> => {
   } else {
     state.lastError = {
       code: UNREACHABLE_TAB_ERROR,
-      message: 'TypeTarget can\'t pick in that tab yet. Right-click the text box and choose TypeTarget → "Type to this field", or open TypeTarget on that tab and click "Select output" there.',
+      message: 'TypeTarget can\'t pick in that tab yet. Right-click the text box and choose TypeTarget → "Type to this field", or open TypeTarget on that tab and click "Select field" there.',
     };
   }
   broadcastState();

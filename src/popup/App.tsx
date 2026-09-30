@@ -88,6 +88,19 @@ const PauseIcon = () => (
   </svg>
 );
 
+const TargetIcon = () => (
+  <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
+    <circle cx="6" cy="6" r="4.2" fill="none" stroke="currentColor" strokeWidth="1.4" />
+    <circle cx="6" cy="6" r="1.4" fill="currentColor" />
+  </svg>
+);
+const KeyIcon = () => (
+  <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+    <circle cx="5" cy="8" r="3" fill="none" stroke="currentColor" strokeWidth="1.6" />
+    <path d="M8 8 H14.5 M12 8 V11 M14.5 8 V10.5" fill="none" stroke="currentColor" strokeWidth="1.6" />
+  </svg>
+);
+
 export const App = () => {
   const state = useBackgroundState();
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -187,22 +200,19 @@ export const App = () => {
     setBusy(false);
   };
 
+  /** The selected model's key provider; null for local models, whose dialog says no key is needed. */
+  const { provider: modelProvider, requiresApiKey } = MODEL_CATALOG[state.selectedModel];
+  const keyProvider = requiresApiKey && modelProvider !== "whisper-cpp" ? modelProvider : null;
+  const keySaved = keyProvider !== null && state.apiKeyProviders.includes(keyProvider);
+
+  const keyName = keyProvider ? `${API_KEY_PROVIDER_NAMES[keyProvider]} API key` : "API key";
+  const keyLabel = keyProvider ? `${keyName}${keySaved ? " (saved)" : " (not set)"}` : "API key (none required)";
+
   const hasOutput = state.isSelectingDestination || state.destinationLabel !== null;
 
-  /**
-   * One toggle covers all three prior actions (begin selection / cancel selection /
-   * clear a bound destination), matching the Start<->Stop toggle below: "Select output"
-   * when there is none, "Stop typing" once there is — whether that's a pick in
-   * progress or one already bound.
-   */
-  const handleToggleOutput = async () => {
+  const handleOutputAction = async (kind: "begin-destination-selection" | "cancel-destination-selection" | "clear-destination") => {
     setBusy(true);
     setLoadError(null);
-    const kind = state.isSelectingDestination
-      ? "cancel-destination-selection"
-      : state.destinationLabel !== null
-        ? "clear-destination"
-        : "begin-destination-selection";
     const res = await sendToBackground({ kind });
     if (res.kind === "error") setLoadError(res.message);
     setBusy(false);
@@ -218,21 +228,29 @@ export const App = () => {
 
       <section>
         <h2>Model</h2>
-        <select
-          value={state.selectedModel}
-          disabled={isCapturing}
-          onChange={(e) => handleModelChange(e.target.value as ModelId)}
-        >
-          {Object.values(MODEL_CATALOG).map((model) => (
-            <option key={model.id} value={model.id}>
-              {model.name} — {model.label}
-              {model.approxSizeMb !== undefined ? ` (~${model.approxSizeMb} MB)` : ""}
-            </option>
-          ))}
-        </select>
-        <button type="button" className="model-api-keys-btn" onClick={() => apiKeyDialogRef.current?.showModal()}>
-          API Keys
-        </button>
+        <div className="model-row">
+          <select
+            value={state.selectedModel}
+            disabled={isCapturing}
+            onChange={(e) => handleModelChange(e.target.value as ModelId)}
+          >
+            {Object.values(MODEL_CATALOG).map((model) => (
+              <option key={model.id} value={model.id}>
+                {model.name} — {model.label}
+                {model.approxSizeMb !== undefined ? ` (~${model.approxSizeMb} MB)` : ""}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            className={keyProvider && !keySaved ? "model-api-key-btn key-missing" : "model-api-key-btn"}
+            aria-label={keyLabel}
+            title={keyLabel}
+            onClick={() => apiKeyDialogRef.current?.showModal()}
+          >
+            <KeyIcon />
+          </button>
+        </div>
       </section>
 
       <section>
@@ -251,19 +269,23 @@ export const App = () => {
       </section>
 
       <dialog ref={apiKeyDialogRef} onClose={() => setApiKeyError(null)}>
-        <h2>API Keys</h2>
-        <p className="hint">Stored on this device only, used solely to authenticate requests to each provider.</p>
+        <h2>{keyName}</h2>
+        {keyProvider ? (
+          <p className="hint">Stored on this device only, used solely to authenticate requests to the provider.</p>
+        ) : (
+          <p className="hint">No API key required</p>
+        )}
         {apiKeyError && <p className="error">{apiKeyError}</p>}
-        {(Object.entries(API_KEY_PROVIDER_NAMES) as [ApiKeyProvider, string][]).map(([provider, name]) => (
-          <label key={provider}>
-            {name}
-            <input
-              type="password"
-              placeholder={state.apiKeyProviders.includes(provider) ? "•••• saved" : `Paste your ${name} API key`}
-              onBlur={(e) => handleApiKeyBlur(provider, e.currentTarget)}
-            />
-          </label>
-        ))}
+        {keyProvider && (
+          // Keyed by provider so a half-typed key never carries over into another provider's field.
+          <input
+            key={keyProvider}
+            type="password"
+            aria-label={`${API_KEY_PROVIDER_NAMES[keyProvider]} API key`}
+            placeholder={keySaved ? "•••• saved" : `Paste your ${API_KEY_PROVIDER_NAMES[keyProvider]} API key`}
+            onBlur={(e) => handleApiKeyBlur(keyProvider, e.currentTarget)}
+          />
+        )}
         <button type="button" onClick={() => apiKeyDialogRef.current?.close()}>
           Done
         </button>
@@ -303,13 +325,24 @@ export const App = () => {
       <section>
         <h2>Typing to</h2>
         {state.isSelectingDestination && (
-          <p>Click a text box to send transcribed text there — in this tab, or another tab you've opened TypeTarget on.</p>
+          <p>Click any text field to send transcribed text there.</p>
         )}
-        {state.destinationLabel !== null && <p>{state.destinationLabel}</p>}
-        {/* With nothing picked, this button is the section's empty state. */}
-        <button type="button" disabled={busy} onClick={handleToggleOutput}>
-          {hasOutput ? "Stop typing" : "Select output"}
-        </button>
+        <p className="target-name" title={state.destinationLabel ?? undefined}>
+          {state.destinationLabel ?? "No field selected"}
+        </p>
+        <div className="controls">
+          {/* While a pick is in progress this cancels it; once bound, it clears the output. */}
+          <button
+            type="button"
+            disabled={busy || !hasOutput}
+            onClick={() => handleOutputAction(state.isSelectingDestination ? "cancel-destination-selection" : "clear-destination")}
+          >
+            <StopIcon /> Stop typing
+          </button>
+          <button type="button" disabled={busy || state.isSelectingDestination} onClick={() => handleOutputAction("begin-destination-selection")}>
+            <TargetIcon /> Select field
+          </button>
+        </div>
       </section>
 
       <section>

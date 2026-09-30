@@ -45,8 +45,33 @@ body {
   padding: 4px;
 }
 
-.model-api-keys-btn {
-  margin-top: 8px;
+.model-row {
+  display: flex;
+  gap: 6px;
+}
+
+.model-row select {
+  flex: 1;
+  min-width: 0;
+}
+
+/* The key icon shows whether the selected model's key is saved: a dot while it is missing. */
+.model-api-key-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 7px;
+}
+
+.model-api-key-btn.key-missing::after {
+  content: "";
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e0a100;
 }
 
 .chunk-length-heading {
@@ -71,7 +96,8 @@ body {
 }
 
 .controls button {
-  flex: 1 1 auto;
+  flex: 1 1 0; /* equal widths, in every row */
+  min-width: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -128,12 +154,6 @@ body {
 
 .popup dialog h2 {
   margin-top: 0;
-}
-
-.popup dialog label {
-  display: block;
-  font-size: 12px;
-  margin-top: 10px;
 }
 
 .popup dialog input[type="password"] {
