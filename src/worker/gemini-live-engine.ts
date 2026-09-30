@@ -20,9 +20,18 @@
  * the next `activityStart` only once the server acknowledges the end — an `activityStart`
  * sent before that is silently dropped. Audio keeps streaming throughout; all-input
  * coverage folds the audio sent while waiting for the acknowledgement into the next turn.
+ *
+ * Connections don't last: the free tier ends each one after ~10 minutes, and networks
+ * drop. The engine stays "ready" across a lost connection and reconnects by itself —
+ * with backoff, up to MAX_CONSECUTIVE_FAILURES — holding the audio the server never
+ * finished with (the open utterance, plus one ended but not yet acknowledged) and
+ * replaying it on the new connection, so a reconnect loses no speech. Before the time
+ * limit is reached (or when the server warns with `goAway`) it replaces the connection at
+ * the next utterance boundary instead of waiting to be cut off mid-sentence. Only errors
+ * no retry can fix (a bad key, a refused request) stop it.
  */
 import { GoogleGenAI, TurnCoverage, type LiveServerMessage, type VoiceActivity } from "@google/genai";
-import type { EngineStatus, ModelId, TranscriptionEngine, TranscriptionOptions, TranscriptionResult } from "../domain/models";
+import type { ConnectionStatus, EngineStatus, ModelId, TranscriptionEngine, TranscriptionOptions, TranscriptionResult } from "../domain/models";
 import type { TranscriptEvent } from "../domain/transcript";
 import type { VoiceActivityDetector } from "../domain/vad";
 import { CHUNK_MS_DEFAULT } from "../domain/tuning";
@@ -58,10 +67,17 @@ export type LiveServerContentLike = {
   inputTranscription?: { text?: string };
 };
 
+export type LiveServerMessageLike = {
+  serverContent?: LiveServerContentLike;
+  voiceActivity?: "ACTIVITY_START" | "ACTIVITY_END";
+  /** The server will end this connection soon (the SDK's LiveServerGoAway). */
+  goAway?: { timeLeft?: string };
+};
+
 export type LiveSessionCallbacks = {
-  onmessage: (message: { serverContent?: LiveServerContentLike; voiceActivity?: "ACTIVITY_START" | "ACTIVITY_END" }) => void;
+  onmessage: (message: LiveServerMessageLike) => void;
   onerror?: (event: { message?: string }) => void;
-  onclose?: (event: { reason?: string }) => void;
+  onclose?: (event: { reason?: string; code?: number }) => void;
 };
 
 export type GeminiLiveEngineConfig = {
@@ -75,6 +91,8 @@ export type GeminiLiveEngineConfig = {
   getApiKey: () => string | null;
   /** Finds the pauses utterances are split at. Injected for tests; EnergyVad by default. */
   vad?: VoiceActivityDetector;
+  /** Told of every connection opened and every reconnect attempt, for the listening timer. */
+  onConnectionStatus?: (status: ConnectionStatus) => void;
 };
 
 /** Bound on how long flush() waits for the server to close the last utterance, so "Stop"
@@ -83,7 +101,50 @@ const FLUSH_TIMEOUT_MS = 5_000;
 /** If the server never acknowledges an activityEnd, reopen anyway rather than stop
  * transcribing for the rest of the session. The observed acknowledgement takes ~0.3-0.6 s. */
 const ACK_TIMEOUT_MS = 3_000;
+/** This many acknowledgements missed in a row means the connection has stalled: reconnect. */
+const MAX_ACK_TIMEOUTS = 2;
 const SAMPLE_RATE = 16_000;
+/** A connect that neither opens nor fails in this long is treated as failed. */
+const CONNECT_TIMEOUT_MS = 15_000;
+/** The free tier ends a connection at ~10 minutes; replace it at the first utterance
+ * boundary after this. The chunk-length cap (25 s at most) guarantees one comes in time. */
+const ROTATE_AFTER_MS = 9 * 60_000;
+const BACKOFF_BASE_MS = 1_000;
+const BACKOFF_MAX_MS = 30_000;
+/** Failed connects — or connections lost soon after opening, before the server answered
+ * anything — in a row before giving up. With the backoff above, about a minute and a half. */
+export const MAX_CONSECUTIVE_FAILURES = 8;
+/** A connection that stayed open this long worked, even if nothing was said for the server to answer. */
+const STABLE_CONNECTION_MS = 30_000;
+/** A connection lost this long after the last audio (stopped or paused) isn't reopened
+ * until audio arrives again, rather than holding an idle connection open indefinitely. */
+const IDLE_MS = 30_000;
+/** Most audio held for replay across a reconnect; the oldest is dropped past this. */
+const MAX_BUFFERED_SAMPLES = 60 * SAMPLE_RATE;
+
+const NO_API_KEY_MESSAGE = "Set a Gemini API key first (see the popup's API Keys dialog).";
+
+/**
+ * Failures a reconnect can't fix. Matched on text because that is all the server gives:
+ * a close reason, an error message. Anything else — timeouts, the time limit, rate or
+ * quota limits, server errors, network loss — is retried; a misjudged permanent error
+ * costs only the bounded retries above.
+ */
+const PERMANENT_FAILURE = /api[ _-]?key|permission|unauthori[sz]ed|unauthenticated|forbidden|billing|not found|not supported|invalid argument/i;
+
+export const isRetryableConnectionError = (reason: string): boolean => !PERMANENT_FAILURE.test(reason);
+
+/** Delay before the attempt following `failures` consecutive failures: 1 s, 2 s, 4 s, … capped at 30 s. */
+export const reconnectBackoffMs = (failures: number): number =>
+  Math.min(BACKOFF_MAX_MS, BACKOFF_BASE_MS * 2 ** Math.max(0, failures - 1));
+
+const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+const messageOf = (err: unknown, fallback: string): string => (err instanceof Error ? err.message : fallback);
+
+const sumSamples = (chunks: Float32Array[]): number => chunks.reduce((sum, chunk) => sum + chunk.length, 0);
+
+const audioInput = (samples: Float32Array) => ({ audio: { data: float32ToPcm16Base64(samples), mimeType: "audio/pcm;rate=16000" } });
 
 export class GeminiLiveEngine implements TranscriptionEngine {
   private status: EngineStatus = { state: "unloaded" };
@@ -92,14 +153,32 @@ export class GeminiLiveEngine implements TranscriptionEngine {
   private readonly vad: VoiceActivityDetector;
   private awaitingFinal: (() => void) | null = null;
   private maxUtteranceMs = CHUNK_MS_DEFAULT;
-  /** Audio sent since the last activityEnd, in samples; compared against maxUtteranceMs. */
+  /** Audio of the open utterance — sent, or, while disconnected, waiting to be. Kept until
+   * the utterance ends so a lost connection can replay it. */
+  private current: Float32Array[] = [];
+  /** Audio of the utterance ended but not yet acknowledged, whose final may never come. */
+  private closing: Float32Array[] = [];
+  /** Samples in `current`; compared against maxUtteranceMs. */
   private utteranceSamples = 0;
   private totalSamples = 0;
   /** activityEnd sent, the server's ACTIVITY_END not yet seen; no new activityStart until it is. */
   private awaitingAck = false;
   private ackTimer: ReturnType<typeof setTimeout> | null = null;
-  /** Bumped per connect and on intentional close, so callbacks from an old session are ignored. */
+  private ackTimeouts = 0;
+  /** Bumped per connect and per dropped connection, so callbacks from an old session are ignored. */
   private connectionId = 0;
+  /** Bumped by load() and unload(), so a reconnect loop from before either gives up. */
+  private lifecycle = 0;
+  private reconnecting = false;
+  private failureStreak = 0;
+  /** The current connection has answered something, i.e. it is known to work. */
+  private provenAlive = false;
+  private connectedAt = 0;
+  private hasConnected = false;
+  private reconnects = 0;
+  private rotateDue = false;
+  private rotateTimer: ReturnType<typeof setTimeout> | null = null;
+  private lastAudioAt = 0;
 
   constructor(
     private readonly config: GeminiLiveEngineConfig,
@@ -108,43 +187,37 @@ export class GeminiLiveEngine implements TranscriptionEngine {
     this.vad = config.vad ?? new EnergyVad();
   }
 
+  /** Resolves once connected — retrying transient failures first, still "loading" meanwhile. */
   async load(modelId: ModelId): Promise<void> {
-    const apiKey = this.config.getApiKey();
-    if (!apiKey) {
-      this.status = { state: "error", message: "Set a Gemini API key first (see the popup's API Keys dialog)." };
+    if (!this.config.getApiKey()) {
+      this.status = { state: "error", message: NO_API_KEY_MESSAGE };
       throw new Error(this.status.message);
     }
 
-    this.closeSession(); // Stop/Start loads again; don't leave the previous socket open
-    this.status = { state: "loading", modelId };
+    const lifecycle = ++this.lifecycle;
+    this.dropSession(); // Stop/Start loads again; don't leave the previous socket open
+    this.clearAudio();
     this.resetUtteranceState();
-    const connection = ++this.connectionId;
+    this.reconnecting = false;
+    this.failureStreak = 0;
+    this.hasConnected = false;
+    this.reconnects = 0;
+    this.lastAudioAt = 0;
+    this.status = { state: "loading", modelId };
     try {
-      const session = await this.config.connect(apiKey, {
-        onmessage: (message) => {
-          if (connection === this.connectionId) this.handleMessage(message);
-        },
-        onerror: (event) => {
-          if (connection === this.connectionId) this.fail(event.message ?? "Gemini connection error.");
-        },
-        onclose: (event) => {
-          // Previously swallowed: the status stayed "ready" while every later batch of
-          // audio was silently dropped.
-          if (connection === this.connectionId) this.fail(`Gemini closed the connection${event.reason ? `: ${event.reason}` : "."}`);
-        },
-      });
-      this.session = session;
-      session.sendRealtimeInput({ activityStart: {} });
+      await this.openWithRetry(lifecycle);
       this.status = { state: "ready", modelId };
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to connect to Gemini.";
-      this.status = { state: "error", message };
+      if (lifecycle === this.lifecycle) this.status = { state: "error", message: messageOf(err, "Failed to connect to Gemini.") };
       throw err;
     }
   }
 
   async unload(): Promise<void> {
-    this.closeSession();
+    this.lifecycle++;
+    this.dropSession();
+    this.clearAudio();
+    this.reconnecting = false;
     this.status = { state: "unloaded" };
   }
 
@@ -163,7 +236,8 @@ export class GeminiLiveEngine implements TranscriptionEngine {
    */
   async reset(): Promise<void> {
     const modelId = this.status.state === "ready" || this.status.state === "loading" ? this.status.modelId : null;
-    this.closeSession();
+    this.dropSession();
+    this.clearAudio();
     this.resetUtteranceState();
     if (modelId) await this.load(modelId);
   }
@@ -172,16 +246,24 @@ export class GeminiLiveEngine implements TranscriptionEngine {
     return this.status;
   }
 
-  /** Streams one batch of 16 kHz mono PCM directly over the open session, and ends the
-   * utterance at a pause or at the chunk-length cap. Dropped silently if not connected,
-   * matching how the controller already drops audio pushed before an engine reports
-   * "ready" (see asr-worker-controller.ts). */
+  /** Streams one batch of 16 kHz mono PCM over the open session, and ends the utterance at
+   * a pause or at the chunk-length cap. While reconnecting — or after an idle disconnect,
+   * which this reopens — the audio is held and replayed once connected. Dropped silently
+   * if not loaded, matching how the controller already drops audio pushed before an
+   * engine reports "ready" (see asr-worker-controller.ts). */
   pushAudio(samples: Float32Array): void {
-    if (!this.session) return;
-    this.session.sendRealtimeInput({ audio: { data: float32ToPcm16Base64(samples), mimeType: "audio/pcm;rate=16000" } });
+    if (this.status.state !== "ready") return;
+    this.lastAudioAt = Date.now();
+    this.current.push(samples);
     this.utteranceSamples += samples.length;
     this.totalSamples += samples.length;
+    this.trimBuffer();
     const vadEvent = this.vad.processFrame(samples, (this.totalSamples / SAMPLE_RATE) * 1000);
+    if (!this.session) {
+      if (!this.reconnecting) this.reconnect("Reconnecting to Gemini after an idle disconnect.");
+      return;
+    }
+    this.session.sendRealtimeInput(audioInput(samples));
     if (this.awaitingAck) return;
     if (vadEvent?.type === "speech-end" || (this.utteranceSamples / SAMPLE_RATE) * 1000 >= this.maxUtteranceMs) {
       this.endUtterance();
@@ -215,51 +297,210 @@ export class GeminiLiveEngine implements TranscriptionEngine {
   private endUtterance(): void {
     this.session?.sendRealtimeInput({ activityEnd: {} });
     this.awaitingAck = true;
+    this.closing = this.current;
+    this.current = [];
     this.utteranceSamples = 0;
-    this.ackTimer = setTimeout(() => this.onUtteranceClosed(), ACK_TIMEOUT_MS);
+    this.ackTimer = setTimeout(() => this.onUtteranceClosed(true), ACK_TIMEOUT_MS);
   }
 
-  /** Server acknowledged the activityEnd (or the acknowledgement timed out): open the next utterance. */
-  private onUtteranceClosed(): void {
+  /** Server acknowledged the activityEnd (or the acknowledgement timed out): open the next
+   * utterance — on a fresh connection if this one is due for replacement. */
+  private onUtteranceClosed(timedOut: boolean): void {
     if (!this.awaitingAck) return;
+    if (timedOut && ++this.ackTimeouts >= MAX_ACK_TIMEOUTS) {
+      this.onConnectionLost("Gemini stopped responding.");
+      return;
+    }
+    if (!timedOut) this.ackTimeouts = 0;
     this.awaitingAck = false;
     if (this.ackTimer) clearTimeout(this.ackTimer);
     this.ackTimer = null;
-    this.session?.sendRealtimeInput({ activityStart: {} });
+    this.closing = []; // its final, if it had one, arrived before the acknowledgement
     this.awaitingFinal?.();
+    if (this.rotateDue) {
+      this.dropSession();
+      this.reconnect("Refreshing the connection before Gemini's time limit.");
+      return;
+    }
+    this.session?.sendRealtimeInput({ activityStart: {} });
   }
 
-  private handleMessage(message: { serverContent?: LiveServerContentLike; voiceActivity?: "ACTIVITY_START" | "ACTIVITY_END" }): void {
+  private handleMessage(message: LiveServerMessageLike): void {
     const content = message.serverContent;
     const interimText = content?.interimInputTranscription?.text;
+    const finalText = content?.inputTranscription?.text;
+    if (interimText || finalText || message.voiceActivity === "ACTIVITY_END") {
+      this.provenAlive = true;
+      this.failureStreak = 0;
+    }
+    if (message.goAway) this.rotateDue = true;
+
     if (interimText) {
       const event = this.stabilizer.onHypothesis(interimText, Date.now());
       if (event) this.onEvent(event);
     }
 
-    const finalText = content?.inputTranscription?.text;
     if (finalText) {
       const event = this.stabilizer.onFinal(finalText, Date.now());
       if (event) this.onEvent(event);
     }
 
-    if (message.voiceActivity === "ACTIVITY_END") this.onUtteranceClosed();
+    if (message.voiceActivity === "ACTIVITY_END") this.onUtteranceClosed(false);
+  }
+
+  /** Opens a connection, retrying with backoff; throws once retrying is pointless or exhausted. */
+  private async openWithRetry(lifecycle: number): Promise<void> {
+    for (;;) {
+      try {
+        await this.openSession(lifecycle);
+        return;
+      } catch (err) {
+        if (lifecycle !== this.lifecycle) throw err;
+        const reason = messageOf(err, "Failed to connect to Gemini.");
+        this.failureStreak++;
+        if (!isRetryableConnectionError(reason) || this.failureStreak >= MAX_CONSECUTIVE_FAILURES) throw err;
+        this.reportConnection({ state: "reconnecting", attempt: this.failureStreak + 1, reason });
+        await wait(reconnectBackoffMs(this.failureStreak));
+        if (lifecycle !== this.lifecycle) throw new Error("Superseded by a newer load.");
+      }
+    }
+  }
+
+  private async openSession(lifecycle: number): Promise<void> {
+    const apiKey = this.config.getApiKey();
+    if (!apiKey) throw new Error(NO_API_KEY_MESSAGE);
+
+    const connection = ++this.connectionId;
+    // Only the connection currently in use may act: not one that is still opening, nor one replaced since.
+    const isCurrent = () => connection === this.connectionId && this.session !== null;
+    const opening = this.config.connect(apiKey, {
+      onmessage: (message) => {
+        if (isCurrent()) this.handleMessage(message);
+      },
+      onerror: (event) => {
+        if (isCurrent()) this.onConnectionLost(event.message ?? "Gemini connection error.");
+      },
+      onclose: (event) => {
+        if (!isCurrent()) return;
+        const code = event.code === undefined ? "" : ` (code ${event.code})`;
+        this.onConnectionLost(`Gemini closed the connection${code}${event.reason ? `: ${event.reason}` : "."}`);
+      },
+    });
+    const session = await new Promise<LiveSessionLike>((resolve, reject) => {
+      let timedOut = false;
+      const timer = setTimeout(() => {
+        timedOut = true;
+        this.connectionId++;
+        reject(new Error("Timed out connecting to Gemini."));
+      }, CONNECT_TIMEOUT_MS);
+      opening.then(
+        (opened) => {
+          clearTimeout(timer);
+          if (timedOut) opened.close();
+          else resolve(opened);
+        },
+        (err: unknown) => {
+          clearTimeout(timer);
+          reject(err);
+        },
+      );
+    });
+    if (connection !== this.connectionId || lifecycle !== this.lifecycle) {
+      session.close();
+      throw new Error("Superseded by a newer connection.");
+    }
+
+    this.session = session;
+    this.provenAlive = false;
+    this.connectedAt = Date.now();
+    this.ackTimeouts = 0;
+    session.sendRealtimeInput({ activityStart: {} });
+    // Whatever the last connection never finished with — see dropSession().
+    for (const samples of this.current) session.sendRealtimeInput(audioInput(samples));
+    if (this.hasConnected) this.reconnects++;
+    this.hasConnected = true;
+    this.rotateTimer = setTimeout(() => (this.rotateDue = true), ROTATE_AFTER_MS);
+    this.reportConnection({ state: "connected", since: this.connectedAt, reconnects: this.reconnects });
+  }
+
+  /** The connection closed or failed without being asked to: reconnect, unless retrying can't help. */
+  private onConnectionLost(reason: string): void {
+    const worked = this.provenAlive || Date.now() - this.connectedAt >= STABLE_CONNECTION_MS;
+    this.failureStreak = worked ? 0 : this.failureStreak + 1;
+    this.dropSession();
+    if (!isRetryableConnectionError(reason) || this.failureStreak >= MAX_CONSECUTIVE_FAILURES) {
+      this.fail(reason);
+      return;
+    }
+    if (Date.now() - this.lastAudioAt >= IDLE_MS) return; // reopened by the next pushAudio()
+    this.reconnect(reason);
+  }
+
+  private reconnect(reason: string): void {
+    this.reconnecting = true;
+    this.reportConnection({ state: "reconnecting", attempt: this.failureStreak + 1, reason });
+    const lifecycle = this.lifecycle;
+    void (async () => {
+      try {
+        if (this.failureStreak > 0) {
+          await wait(reconnectBackoffMs(this.failureStreak));
+          if (lifecycle !== this.lifecycle) return;
+        }
+        await this.openWithRetry(lifecycle);
+      } catch (err) {
+        if (lifecycle === this.lifecycle) this.fail(messageOf(err, "Could not reconnect to Gemini."));
+      } finally {
+        if (lifecycle === this.lifecycle) this.reconnecting = false;
+      }
+    })();
   }
 
   private fail(message: string): void {
-    this.closeSession();
+    this.dropSession();
+    this.clearAudio();
+    this.reconnecting = false;
     this.status = { state: "error", message };
     this.onEvent({ type: "error", code: "transcription-failed", message });
   }
 
-  private closeSession(): void {
+  /**
+   * Closes the current connection, if any. Audio of an utterance the server hadn't
+   * acknowledged yet moves back into `current`, ahead of what followed it, so a
+   * reconnect replays both as one utterance.
+   */
+  private dropSession(): void {
     this.connectionId++; // callbacks from the closed session, including its onclose, are now stale
     this.session?.close();
     this.session = null;
     if (this.ackTimer) clearTimeout(this.ackTimer);
     this.ackTimer = null;
+    if (this.rotateTimer) clearTimeout(this.rotateTimer);
+    this.rotateTimer = null;
+    this.rotateDue = false;
+    if (this.awaitingAck) {
+      this.current = [...this.closing, ...this.current];
+      this.utteranceSamples = sumSamples(this.current);
+      this.trimBuffer();
+    }
+    this.closing = [];
     this.awaitingAck = false;
     this.awaitingFinal?.();
+  }
+
+  private trimBuffer(): void {
+    while (this.utteranceSamples > MAX_BUFFERED_SAMPLES && this.current.length > 1) {
+      this.utteranceSamples -= this.current.shift()?.length ?? 0;
+    }
+  }
+
+  private clearAudio(): void {
+    this.current = [];
+    this.closing = [];
+    this.utteranceSamples = 0;
+  }
+
+  private reportConnection(status: ConnectionStatus): void {
+    this.config.onConnectionStatus?.(status);
   }
 
   private resetUtteranceState(): void {
@@ -306,10 +547,11 @@ export const createGeminiLiveConnect = (): GeminiLiveEngineConfig["connect"] => 
         callbacks.onmessage({
           serverContent: message.serverContent,
           voiceActivity: activity === "ACTIVITY_START" || activity === "ACTIVITY_END" ? activity : undefined,
+          goAway: message.goAway,
         });
       },
       onerror: (event) => callbacks.onerror?.({ message: event.message }),
-      onclose: (event) => callbacks.onclose?.({ reason: event.reason }),
+      onclose: (event) => callbacks.onclose?.({ reason: event.reason, code: event.code }),
     },
   });
 };

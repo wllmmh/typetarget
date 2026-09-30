@@ -1,6 +1,6 @@
 /** Message contract between the offscreen document and the ASR worker (src/worker/main.ts). */
 import type { ApiKeyProvider } from "../domain/api-key";
-import type { EngineStatus, ModelId } from "../domain/models";
+import type { ConnectionStatus, EngineStatus, ModelId } from "../domain/models";
 import type { TranscriptEvent } from "../domain/transcript";
 import type { InferenceStats } from "./instrumented-engine";
 
@@ -19,6 +19,7 @@ export type AsrWorkerRequest =
 
 export type AsrWorkerEvent =
   | { kind: "engine-status"; status: EngineStatus }
+  | { kind: "connection-status"; status: ConnectionStatus }
   | { kind: "download-progress"; modelId: ModelId; receivedBytes: number; totalBytes: number }
   | { kind: "transcript-event"; event: TranscriptEvent }
   | { kind: "inference-stats"; stats: InferenceStats }

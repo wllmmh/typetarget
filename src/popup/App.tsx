@@ -5,6 +5,7 @@ import type { CapturableTab, PublicAppState } from "../domain/messages";
 import { MODEL_CATALOG, type ModelId } from "../domain/models";
 import { API_KEY_PROVIDER_NAMES, type ApiKeyProvider } from "../domain/api-key";
 import { CHUNK_MS_MAX, CHUNK_MS_MIN, CHUNK_MS_STEP } from "../domain/tuning";
+import { formatElapsed } from "../domain/elapsed";
 import "./popup.css";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -41,6 +42,28 @@ const statusText = (state: PublicAppState): string => {
   return `Downloading model ${percent}% (${Math.round(modelDownload.receivedBytes / MB)}/${Math.round(modelDownload.totalBytes / MB)} MB)`;
 };
 
+/** Re-renders every second while `active`, for the listening timer. */
+const useNow = (active: boolean): number => {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!active) return;
+    setNow(Date.now());
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [active]);
+  return now;
+};
+
+/** What the listening timer is counting, and anything the connection is doing about it. */
+const sessionCaption = (state: PublicAppState): string => {
+  const { session } = state;
+  if (!session) return "";
+  if (session.reconnecting) return `Reconnecting (attempt ${session.reconnecting.attempt})… ${session.reconnecting.reason}`;
+  const paused = state.status === "paused" ? "Paused · " : "";
+  if (!MODEL_CATALOG[state.selectedModel].network) return `${paused}listening`;
+  const reconnects = session.reconnects > 0 ? ` · reconnected ${session.reconnects}×` : "";
+  return `${paused}this connection${reconnects}. Renewed automatically before Gemini's 10-minute limit, and after drops.`;
+};
 
 /**
  * Minimal inline icons (no asset files, no icon library — three shapes at 12x12).
@@ -73,6 +96,7 @@ export const App = () => {
   const chunkCommitTimer = useRef<number | null>(null);
   const apiKeyDialogRef = useRef<HTMLDialogElement>(null);
   const [apiKeyError, setApiKeyError] = useState<string | null>(null);
+  const now = useNow(state.session !== null);
 
   useEffect(() => {
     let cancelled = false;
@@ -189,7 +213,10 @@ export const App = () => {
 
   return (
     <main className="popup">
-      <h1>TypeTarget</h1>
+      <h1 className="popup-title">
+        <img src="/public/icons/icon48.png" alt="" width="20" height="20" />
+        TypeTarget
+      </h1>
     
 
       <section>
@@ -282,6 +309,13 @@ export const App = () => {
           <PauseIcon /> {state.status === "paused" ? "Resume" : "Pause"}
         </button>
       </section>
+
+      {state.session && (
+        <div className={`session-timer${state.session.reconnecting ? " reconnecting" : ""}`} role="timer">
+          <span className="session-timer-clock">{formatElapsed(now - state.session.since)}</span>
+          <span className="hint">{sessionCaption(state)}</span>
+        </div>
+      )}
 
       <section>
         <h2>Output</h2>

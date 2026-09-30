@@ -1,0 +1,1 @@
+const n=s=>{const t=Math.max(0,Math.floor(s/1e3)),o=Math.floor(t/3600),a=Math.floor(t%3600/60),r=String(t%60).padStart(2,"0");return o>0?`${o}:${String(a).padStart(2,"0")}:${r}`:`${a}:${r}`};export{n as f};

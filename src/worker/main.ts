@@ -55,8 +55,13 @@ if (self.name === "em-pthread") {
   // (or changed) after the worker started must take effect on the next load(), not
   // require a worker restart. Set via the "set-api-key" case below.
   let geminiApiKey: string | null = null;
-  const geminiEngine = new GeminiLiveEngine({ connect: createGeminiLiveConnect(), getApiKey: () => geminiApiKey }, (event) =>
-    post({ kind: "transcript-event", event }),
+  const geminiEngine = new GeminiLiveEngine(
+    {
+      connect: createGeminiLiveConnect(),
+      getApiKey: () => geminiApiKey,
+      onConnectionStatus: (status) => post({ kind: "connection-status", status }),
+    },
+    (event) => post({ kind: "transcript-event", event }),
   );
 
   const router = new EngineRouter({

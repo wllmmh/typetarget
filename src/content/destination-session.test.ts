@@ -79,7 +79,7 @@ describe("destinationSession", () => {
     textarea.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
 
     expect(textarea.classList.contains("typetarget-destination")).toBe(true);
-    expect(document.getElementById("typetarget-destination-style")?.textContent).toContain("dashed");
+    expect(document.getElementById("typetarget-destination-style")?.textContent).toContain("double");
 
     destinationSession.clearDestination();
 

@@ -17,6 +17,16 @@ body {
   margin: 0 0 4px;
 }
 
+.popup-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.popup-title img {
+  border-radius: 4px;
+}
+
 .popup h2 {
   font-size: 12px;
   text-transform: uppercase;
@@ -61,6 +71,27 @@ body {
   align-items: center;
   justify-content: center;
   gap: 5px;
+}
+
+.session-timer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.session-timer.reconnecting .session-timer-clock {
+  color: #6b7280;
+}
+
+.session-timer-clock {
+  font-size: 18px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.session-timer .hint {
+  margin: 0;
 }
 
 .popup input[type="range"] {

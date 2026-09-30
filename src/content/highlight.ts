@@ -1,6 +1,6 @@
 /**
  * Outlines on page elements: a solid one on the eligible element under the pointer while
- * selection mode is active, and a dashed one on the picked destination for as long as it
+ * selection mode is active, and a double one on the picked destination for as long as it
  * stays picked — however it was picked (selection mode or the right-click menu). Each only
  * ever marks one element and cleans up after itself; they use separate style elements so
  * ending selection mode can't strip the destination's.
@@ -11,10 +11,25 @@
 
 const OUTLINE_OFFSET = "-2px";
 
+/** The picked destination's outline color; the listening timer changes it with its state (see session-badge.ts). */
+export const DESTINATION_COLOR = "#e22726";
+let destinationColor = DESTINATION_COLOR;
+
 /** Returns a setter that keeps `outline` on at most one element at a time; null removes it. */
-const createMarker = (className: string, styleId: string, outline: string) => {
+const createMarker = (className: string, styleId: string, outline: () => string) => {
   let current: Element | null = null;
-  return (el: Element | null): void => {
+  const writeStyle = () => {
+    // Rewritten on every mark, not only created: a style left by an earlier injection of an
+    // older build would otherwise keep its old color until the page is reloaded.
+    let style = document.getElementById(styleId);
+    if (!style) {
+      style = document.createElement("style");
+      style.id = styleId;
+      document.head.append(style);
+    }
+    style.textContent = `.${className} { outline: ${outline()} !important; outline-offset: ${OUTLINE_OFFSET} !important; }`;
+  };
+  const set = (el: Element | null): void => {
     if (current === el) return;
     current?.classList.remove(className);
     current = el;
@@ -22,19 +37,26 @@ const createMarker = (className: string, styleId: string, outline: string) => {
       document.getElementById(styleId)?.remove();
       return;
     }
-    if (!document.getElementById(styleId)) {
-      const style = document.createElement("style");
-      style.id = styleId;
-      style.textContent = `.${className} { outline: ${outline} !important; outline-offset: ${OUTLINE_OFFSET} !important; }`;
-      document.head.append(style);
-    }
+    writeStyle();
     el.classList.add(className);
   };
+  return { set, refresh: () => current && writeStyle() };
 };
 
-export const setHighlighted = createMarker("typetarget-highlight-candidate", "typetarget-highlight-style", "2px solid #4f8ef7");
+const candidateMarker = createMarker("typetarget-highlight-candidate", "typetarget-highlight-style", () => "2px solid #4f8ef7");
+export const setHighlighted = candidateMarker.set;
 
 export const clearHighlight = (): void => setHighlighted(null);
 
-/** Dashed outline on the element transcribed text is going to; null removes it. */
-export const setDestinationMarker = createMarker("typetarget-destination", "typetarget-destination-style", "2px dashed #4f8ef7");
+const destinationMarker = createMarker("typetarget-destination", "typetarget-destination-style", () => `4px double ${destinationColor}`);
+
+/** Double outline on the element transcribed text is going to; null removes it. */
+export const setDestinationMarker = destinationMarker.set;
+
+/** Recolors the destination's outline (null restores the default), e.g. amber while reconnecting. */
+export const setDestinationColor = (color: string | null): void => {
+  const next = color ?? DESTINATION_COLOR;
+  if (next === destinationColor) return; // called every timer tick; don't rewrite the page's style for nothing
+  destinationColor = next;
+  destinationMarker.refresh();
+};

@@ -5,7 +5,7 @@
  * script is injected on demand via chrome.scripting, scoped to activeTab (the tab the
  * user is looking at when they click "Select destination").
  */
-import { envelope, isEnvelope, type BackgroundToContent, type BackgroundResponse, type DestinationRef } from "../domain/messages";
+import { envelope, isEnvelope, type BackgroundToContent, type BackgroundResponse, type DestinationRef, type SessionIndicator } from "../domain/messages";
 // `?script&iife` is @crxjs/vite-plugin's mechanism for content scripts that are only
 // ever injected dynamically (via chrome.scripting.executeScript) rather than declared
 // in manifest.content_scripts, which is the only place crxjs's own build-file
@@ -149,6 +149,11 @@ export class DestinationController {
    * outline). Best effort: if the tab or frame is gone, so is the outline. */
   async release(destination: DestinationRef): Promise<void> {
     await sendToDestinationFrame(destination, { kind: "clear-destination" }).catch(() => {});
+  }
+
+  /** Shows the listening timer above the destination (null removes it). Best effort, like release(). */
+  async showSessionIndicator(destination: DestinationRef, indicator: SessionIndicator | null): Promise<void> {
+    await sendToDestinationFrame(destination, { kind: "set-session-indicator", indicator }).catch(() => {});
   }
 
   async insertText(destination: DestinationRef, text: string, separator: string): Promise<void> {

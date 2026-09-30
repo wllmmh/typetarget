@@ -131,4 +131,34 @@ describe("createTranscriptRouter", () => {
     expect(state.transcript).toEqual({ finals: 2, inserted: 1 });
     expect(state.lastError).toEqual({ code: "insert-failed", message: "tab gone" });
   });
+
+  it("restarts the listening timer when a connection is replaced, and flags a reconnect in progress", async () => {
+    const { router, state, onStateChanged } = setup();
+    state.session = { since: 1_000, reconnects: 0, reconnecting: null };
+
+    await router.handle({ kind: "connection-status", status: { state: "reconnecting", attempt: 2, reason: "Gemini closed the connection." } });
+    expect(state.session).toEqual({ since: 1_000, reconnects: 0, reconnecting: { attempt: 2, reason: "Gemini closed the connection." } });
+
+    await router.handle({ kind: "connection-status", status: { state: "connected", since: 9_000, reconnects: 1 } });
+    expect(state.session).toEqual({ since: 9_000, reconnects: 1, reconnecting: null });
+    expect(onStateChanged).toHaveBeenCalledTimes(2);
+  });
+
+  it("ignores connection changes while not capturing", async () => {
+    const { router, state, onStateChanged } = setup();
+
+    await router.handle({ kind: "connection-status", status: { state: "connected", since: 9_000, reconnects: 0 } });
+
+    expect(state.session).toBeNull();
+    expect(onStateChanged).not.toHaveBeenCalled();
+  });
+
+  it("stops the timer when the engine fails for good", async () => {
+    const { router, state } = setup();
+    state.session = { since: 1_000, reconnects: 3, reconnecting: { attempt: 8, reason: "offline" } };
+
+    await router.handle({ kind: "engine-status", status: { state: "error", message: "Could not reconnect." } });
+
+    expect(state.session).toBeNull();
+  });
 });

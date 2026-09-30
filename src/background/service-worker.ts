@@ -10,8 +10,10 @@ import {
   type BackgroundResponse,
   type CapturableTab,
   type ContentToBackground,
+  type DestinationRef,
   type OffscreenToBackground,
   type PopupRequest,
+  type SessionIndicator,
 } from "../domain/messages";
 import { isFromExtensionPage } from "../domain/sender";
 import type { ModelId } from "../domain/models";
@@ -55,12 +57,49 @@ const syncContextMenu = () => {
   void contextMenu.apply(buildMenuModel(state, pointerOverDestination));
 };
 
-/** Every state change the popup sees is broadcast, so this also keeps the right-click menu in step. */
+/** What the destination's timer badge was last told, so only an actual change messages the page. */
+let shownIndicator: { destination: DestinationRef; indicator: SessionIndicator } | null = null;
+
+const NO_TAB_SELECTED = "No Tab Selected";
+
+const sameFrame = (a: DestinationRef, b: DestinationRef) => a.tabId === b.tabId && a.frameId === b.frameId;
+
+/**
+ * Keeps the badge above the destination's outline in step with the capture: a timer while
+ * capturing, "Stopped" whenever a destination is picked but nothing is. The page ticks the
+ * clock itself from `since`, so this only sends when the badge's inputs change.
+ * A destination replaced within the same frame re-anchors there; one in another frame is
+ * told to drop its badge.
+ */
+const syncSessionIndicator = () => {
+  const { destination, session } = state;
+  const sourceTab = state.knownTabs.find((tab) => tab.tabId === state.pendingSourceTabId);
+  const tabName = sourceTab ? sourceTab.title.trim() || sourceTab.url : NO_TAB_SELECTED;
+  const next = destination
+    ? {
+        destination,
+        indicator: (session
+          ? { tabName, since: session.since, state: session.reconnecting ? "reconnecting" : state.status === "paused" ? "paused" : "listening" }
+          : { tabName, state: "stopped" }) satisfies SessionIndicator,
+      }
+    : null;
+  if (JSON.stringify(next) === JSON.stringify(shownIndicator)) return;
+  const previous = shownIndicator;
+  shownIndicator = next;
+  if (previous && !(next && sameFrame(previous.destination, next.destination))) {
+    void destinationController.showSessionIndicator(previous.destination, null);
+  }
+  if (next) void destinationController.showSessionIndicator(next.destination, next.indicator);
+};
+
+/** Every state change the popup sees is broadcast, so this also keeps the right-click menu
+ * and the destination's timer badge in step. */
 const broadcastState = () => {
   void chrome.runtime.sendMessage(envelope<BackgroundResponse>({ kind: "state", state: toPublicState(state) }))
     // No popup may be open to receive this; that's expected, not an error.
     .catch(() => {});
   syncContextMenu();
+  syncSessionIndicator();
 };
 
 /** Broadcasts *and* persists: use after changing a field persisted-state.ts stores. */
@@ -73,6 +112,7 @@ const captureController = new CaptureController({
   onSourceTabClosed: () => {
     state.status = "error";
     state.sourceTabId = null;
+    state.session = null;
     state.lastError = { code: "source-tab-closed", message: "Source tab is no longer available." };
     broadcastState();
   },
@@ -155,11 +195,14 @@ const startCapture = async (sourceTabId: number): Promise<BackgroundResponse> =>
   state.pipeline = null;
   state.transcript = { finals: 0, inserted: 0 };
   state.inference = null;
+  state.session = null;
   commitState();
   try {
     await captureController.start(sourceTabId, state.selectedModel, state.apiKeys);
     void captureController.setChunkMs(state.chunkMs).catch(() => {});
     state.status = "capturing";
+    // A network engine restarts `since` once its connection opens (see transcript-router.ts).
+    state.session = { since: Date.now(), reconnects: 0, reconnecting: null };
     state.sourceTabId = sourceTabId;
     state.lastError = null;
     state.modelDownload = null;
@@ -179,6 +222,7 @@ const stopCapture = async (): Promise<BackgroundResponse> => {
   await captureController.stop();
   state.status = "idle";
   state.sourceTabId = null;
+  state.session = null;
   state.modelDownload = null;
   state.lastError = null;
   broadcastState();
@@ -262,7 +306,10 @@ const beginDestinationSelection = async (): Promise<BackgroundResponse> => {
   }
 };
 
-void stateRestored.then(syncContextMenu);
+void stateRestored.then(() => {
+  syncContextMenu();
+  syncSessionIndicator(); // a restored destination shows "Stopped" until capture starts
+});
 
 /** The pointer can't still be over the destination once the user is in another tab or window. */
 const forgetPointerOverDestination = () => {
@@ -489,6 +536,7 @@ const OFFSCREEN_MESSAGE_KINDS = new Set<OffscreenToBackground["kind"]>([
   "model-download-progress",
   "pipeline-stats",
   "inference-stats",
+  "connection-status",
 ]);
 
 const isOffscreenMessage = (msg: unknown): msg is OffscreenToBackground =>

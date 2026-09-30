@@ -9,6 +9,8 @@ import { findEligibleAncestor } from "./eligible-elements";
 import { setHighlighted, clearHighlight, setDestinationMarker } from "./highlight";
 import { getRegisteredElement, registerElement } from "./element-registry";
 import { insertTranscriptText, toInsertionTarget } from "./insert-text";
+import { setSessionBadge } from "./session-badge";
+import type { SessionIndicator } from "../domain/messages";
 
 export type PickedDestination = {
   elementId: string;
@@ -21,6 +23,8 @@ class DestinationSession {
   private insertionOffset = 0;
   /** The picked element, while its pointer listeners are attached. */
   private trackedElement: HTMLElement | null = null;
+  /** The listening timer shown above the destination, while capturing. */
+  private indicator: SessionIndicator | null = null;
 
   private readonly onPointerEnter = () => this.onPointerOverDestination?.(true);
   private readonly onPointerLeave = () => this.onPointerOverDestination?.(false);
@@ -42,6 +46,7 @@ class DestinationSession {
     this.pickedElementId = registerElement(el);
     this.insertionOffset = this.currentValueLength(el);
     setDestinationMarker(el);
+    setSessionBadge(el, this.indicator); // a replacement pick in this frame keeps the running timer
     this.trackPointer(el);
     this.onPicked?.({ elementId: this.pickedElementId, label: describeElement(el) });
     // Picking by click or right-click leaves the pointer already inside, so no pointerenter will
@@ -102,7 +107,15 @@ class DestinationSession {
     this.pickedElementId = null;
     this.insertionOffset = 0;
     setDestinationMarker(null);
+    this.indicator = null;
+    setSessionBadge(null, null);
     this.trackPointer(null);
+  }
+
+  /** Shows (or with null, removes) the listening timer above the destination's outline. */
+  setIndicator(indicator: SessionIndicator | null): void {
+    this.indicator = indicator;
+    setSessionBadge(this.pickedElementId ? getRegisteredElement(this.pickedElementId) : null, indicator);
   }
 
   /** Inserts finalized text at the tracked boundary. Returns false if the destination is gone. */

@@ -6,7 +6,7 @@
  */
 
 import type { ModelId } from "./models";
-import type { EngineStatus } from "./models";
+import type { ConnectionStatus, EngineStatus } from "./models";
 import type { ApiKeyProvider } from "./api-key";
 import type { InferenceStats } from "../worker/instrumented-engine";
 import type { TranscriptEvent, TranscriptionStatus } from "./transcript";
@@ -17,6 +17,28 @@ export type DestinationRef = {
   /** Opaque id the content script assigns to the picked element; meaningless outside its frame. */
   elementId: string;
 };
+
+/**
+ * The running capture's timer. `since` restarts whenever a network engine opens a new
+ * connection (Gemini's free tier ends each one after ~10 minutes, so the engine replaces
+ * it), and is simply the capture start for local engines.
+ */
+export type ListeningSession = {
+  since: number;
+  reconnects: number;
+  /** Non-null while a lost connection is being re-established. */
+  reconnecting: { attempt: number; reason: string } | null;
+};
+
+/** What the badge over the destination's outline shows (see content/session-badge.ts). */
+export type SessionIndicator = {
+  /** Title of the tab being transcribed (the source tab), or "No Tab Selected". */
+  tabName: string;
+} & (
+  | { state: "listening" | "paused" | "reconnecting"; since: number }
+  /** A destination is picked but nothing is being transcribed; the timer reads 0:00. */
+  | { state: "stopped" }
+);
 
 /**
  * Serializable view of background/state.ts's AppState, sent to the popup. Excludes
@@ -41,6 +63,8 @@ export type PublicAppState = {
   chunkMs: number;
   isSelectingDestination: boolean;
   lastError: { code: string; message: string } | null;
+  /** Non-null while capturing. */
+  session: ListeningSession | null;
   /** Which network providers currently have a stored API key — never the keys
    * themselves (see domain/api-key.ts). Drives the API Keys dialog's "•••• saved"
    * placeholders. */
@@ -105,7 +129,9 @@ export type BackgroundToContent =
   /** The user deselected this destination or picked another one; drop it and its outline. */
   | { kind: "clear-destination" }
   /** From the right-click menu: pick the text box that was right-clicked (which is focused). */
-  | { kind: "pick-focused-element" };
+  | { kind: "pick-focused-element" }
+  /** Shows (or, with null, removes) the timer badge above the destination's outline. */
+  | { kind: "set-session-indicator"; indicator: SessionIndicator | null };
 
 /** Background -> offscreen document */
 export type BackgroundToOffscreen =
@@ -130,7 +156,8 @@ export type OffscreenToBackground =
   /** Periodic capture-pipeline counters, so "nothing is happening" can be diagnosed. */
   | { kind: "pipeline-stats"; batches: number; droppedBatches: number; peakLevel: number }
   | { kind: "inference-stats"; stats: InferenceStats }
-  | { kind: "engine-status"; status: EngineStatus };
+  | { kind: "engine-status"; status: EngineStatus }
+  | { kind: "connection-status"; status: ConnectionStatus };
 
 export const EXTENSION_MESSAGE_SOURCE = "typetarget" as const;
 

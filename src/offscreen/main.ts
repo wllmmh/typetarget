@@ -68,7 +68,8 @@ const createWorker = (): AsrWorkerClient =>
     else if (event.kind === "engine-status") {
       engineReady = event.status.state === "ready";
       sendToBackground({ kind: "engine-status", status: event.status });
-    } else if (event.kind === "inference-stats") sendToBackground({ kind: "inference-stats", stats: event.stats });
+    } else if (event.kind === "connection-status") sendToBackground({ kind: "connection-status", status: event.status });
+    else if (event.kind === "inference-stats") sendToBackground({ kind: "inference-stats", stats: event.stats });
     else if (event.kind === "download-progress")
       sendToBackground({
         kind: "model-download-progress",

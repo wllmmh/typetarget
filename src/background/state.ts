@@ -1,5 +1,5 @@
 import type { ModelId } from "../domain/models";
-import type { CapturableTab, DestinationRef, PublicAppState } from "../domain/messages";
+import type { CapturableTab, DestinationRef, ListeningSession, PublicAppState } from "../domain/messages";
 import { DEFAULT_MODEL, type EngineStatus } from "../domain/models";
 import { CHUNK_MS_DEFAULT } from "../domain/tuning";
 import type { ApiKeyProvider } from "../domain/api-key";
@@ -29,6 +29,8 @@ export type AppState = {
   chunkMs: number;
   isSelectingDestination: boolean;
   lastError: { code: string; message: string } | null;
+  /** Non-null while capturing; drives the listening timer (see domain/messages.ts). */
+  session: ListeningSession | null;
   /** Never sent to the popup as-is (see toPublicState) — only which providers have one. */
   apiKeys: Partial<Record<ApiKeyProvider, string>>;
 };
@@ -49,6 +51,7 @@ export const createInitialState = (): AppState => ({
   chunkMs: CHUNK_MS_DEFAULT,
   isSelectingDestination: false,
   lastError: null,
+  session: null,
   apiKeys: {},
 });
 
@@ -67,5 +70,6 @@ export const toPublicState = (state: AppState): PublicAppState => ({
   chunkMs: state.chunkMs,
   isSelectingDestination: state.isSelectingDestination,
   lastError: state.lastError,
+  session: state.session,
   apiKeyProviders: (Object.keys(state.apiKeys) as ApiKeyProvider[]).filter((provider) => state.apiKeys[provider]),
 });

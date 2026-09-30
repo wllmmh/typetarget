@@ -86,6 +86,16 @@ export type EngineStatus =
   | { state: "ready"; modelId: ModelId }
   | { state: "error"; message: string };
 
+/**
+ * A network engine's live connection, reported alongside (not instead of) EngineStatus:
+ * the engine stays "ready" while it reconnects, buffering audio, so nothing upstream stops
+ * feeding it. `since` is when the current connection opened (epoch ms); `reconnects`
+ * counts the connections opened since the engine was loaded, after the first.
+ */
+export type ConnectionStatus =
+  | { state: "connected"; since: number; reconnects: number }
+  | { state: "reconnecting"; attempt: number; reason: string };
+
 /** Options passed per-inference call; kept minimal and backend-agnostic. */
 export type TranscriptionOptions = {
   language?: "en";

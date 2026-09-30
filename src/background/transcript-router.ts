@@ -91,9 +91,23 @@ export const createTranscriptRouter = ({ state, insertText, onStateChanged }: Tr
         state.engineState = message.status.state;
         // The download is over either way once the engine reaches a terminal state.
         if (message.status.state === "ready" || message.status.state === "error") state.modelDownload = null;
-        if (message.status.state === "error") reportError("model-load-failed", message.status.message);
-        else onStateChanged();
+        if (message.status.state === "error") {
+          // An engine error is past retrying (network engines retry internally first), so the timer stops.
+          state.session = null;
+          reportError("model-load-failed", message.status.message);
+        } else onStateChanged();
         return;
+      case "connection-status": {
+        // Only a running capture has a timer; the engine can reconnect while idle, too.
+        if (!state.session) return;
+        const { status } = message;
+        state.session =
+          status.state === "connected"
+            ? { since: status.since, reconnects: status.reconnects, reconnecting: null }
+            : { ...state.session, reconnecting: { attempt: status.attempt, reason: status.reason } };
+        onStateChanged();
+        return;
+      }
       default: {
         const _exhaustive: never = message;
         return _exhaustive;

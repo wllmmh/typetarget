@@ -78,6 +78,10 @@ export const installContentBridge = (): boolean => {
         destinationSession.clearDestination();
         sendResponse(envelope({ kind: "ok" } as const));
         return undefined;
+      case "set-session-indicator":
+        destinationSession.setIndicator(msg.indicator);
+        sendResponse(envelope({ kind: "ok" } as const));
+        return undefined;
       case "check-destination-alive": {
         if (!destinationSession.isDestinationAlive()) {
           sendToBackground({ kind: "destination-unavailable", reason: "Destination element is no longer available." });
