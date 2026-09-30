@@ -26,7 +26,7 @@ import { CaptureController, CaptureError } from "./capture-controller";
 import { DestinationController, DestinationError } from "./destination-controller";
 import { OFFSCREEN_DOCUMENT_PATH } from "./offscreen-manager";
 import { createTranscriptRouter } from "./transcript-router";
-import { buildMenuModel, ContextMenu, isCapturing, MENU_OUTPUT_ID, MENU_START_STOP_ID, sourceTabIdOf } from "./context-menu";
+import { buildMenuModel, ContextMenu, isCapturing, MENU_OUTPUT_ID, MENU_STOP_ID, sourceTabIdOf } from "./context-menu";
 
 // MV3 service workers are non-persistent: this module-level state is rebuilt from
 // scratch whenever Chrome wakes the worker, so it must never be the sole record of
@@ -362,16 +362,12 @@ const handleMenuClick = async (info: chrome.contextMenus.OnClickData, tab: chrom
   }
   const sourceTabId = sourceTabIdOf(info.menuItemId);
   if (sourceTabId !== null) {
-    const result = setSourceTab(sourceTabId);
-    if (result.kind === "error") {
-      state.lastError = { code: result.code, message: result.message };
-      broadcastState();
-    }
+    // Start listening's per-tab items; hidden while capturing, so this only guards a stale click.
+    if (!isCapturing(state.status)) await startCapture(sourceTabId);
     return;
   }
-  if (info.menuItemId === MENU_START_STOP_ID) {
+  if (info.menuItemId === MENU_STOP_ID) {
     if (isCapturing(state.status)) await stopCapture();
-    else if (state.pendingSourceTabId !== null) await startCapture(state.pendingSourceTabId);
     return;
   }
   if (info.menuItemId !== MENU_OUTPUT_ID || tab?.id === undefined) return;
