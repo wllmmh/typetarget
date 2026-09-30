@@ -686,9 +686,10 @@ from one 12-core desktop measured by an earlier session, or not yet measured at 
   into just that frame (`DestinationController.pickFromContextMenu`), and the content script
   picks `document.activeElement` (right-clicking a box focuses it — verified in Chromium).
   **The menu is now a "TypeTarget" submenu** (`src/background/context-menu.ts`, user's final
-  spec after trying a single top-level item): Start listening ▸ (one item per known tab; choosing
-  one starts capturing it; replaced by Stop listening while capturing — there is no separate
-  "Source tab" picker) anywhere on a page, plus Select/Deselect output on text boxes
+  spec after trying a single top-level item): Listen to this tab (starts capturing the tab
+  the menu was opened in; switches to it if already capturing another), Stop listening (always
+  shown, greyed out unless capturing) — there is no tab list; the popup is where a source is
+  chosen — anywhere on a page, plus Type to this field/Stop typing to this field on text boxes
   (`contexts: ["editable"]`). `buildMenuModel` is a pure view of state; `ContextMenu.apply`
   diffs it against what was last sent, since state broadcasts every second while capturing.
   **Start from the menu is unverified in real Chrome:** the menu click grants activeTab for
@@ -723,6 +724,41 @@ from one 12-core desktop measured by an earlier session, or not yet measured at 
   (activeTab, lost on a full navigation). After that the last title seen stays until the
   popup is opened on the tab again. Verified in Chromium using host permissions in place of
   activeTab (the open popup's dropdown updated). The real activeTab case is untested.
+
+- **The destination badge is re-placed every animation frame** (2026-09-30), not on
+  scroll/resize/1 s tick: chat composers grow as text is inserted and pages shift layout
+  without either event, which left the badge floating off the outline for up to a second.
+  Verified in Chromium (a 120 px layout shift, badge still 1 px above / 2 px left within 50 ms).
+  **2026-09-30, correction (twice):** the outline (`outline-offset: -2px`, 4px double) *straddles* the
+  element's edge, 2px outside and 2px inside, so `getBoundingClientRect` gaps say nothing about what is
+  painted. Under a parent with `overflow: hidden` (chat composers, Gemini) the outside half is clipped
+  and the visible line starts ~1px inside the edge. The badge now sits 1px inside the top edge and 2px
+  left of the element (see the comment in `session-badge.ts`), checked on 4x screenshots of both the
+  unclipped and the clipped case. Judge this from painted pixels, not box geometry.
+  **Empty/short fields** (Gemini): the editor is taller than its row and sticks out above a clipping
+  ancestor, so the outline is only painted from the ancestor's edge down while the element's own box
+  starts ~6px higher. The badge therefore attaches to the *visible* box, the element's rect trimmed by
+  every `overflow`-clipping ancestor (`visibleBox`/`findClippers` in `session-badge.ts`; clippers are
+  re-found on the 1s tick, their rects read each frame). Reproduced and checked with a 6px
+  stick-out on a 4x screenshot; not seen on Gemini itself.
+  The stopped badge shows no tab name (`SessionIndicator`'s stopped variant has no
+  `tabName`); while listening it names `state.sourceTabId`, the tab actually captured.
+
+- **"Listen to this tab"** (2026-09-30), the first item in the right-click menu: the click
+  grants activeTab for that tab, so it records the tab and starts capturing it in one step,
+  with no popup visit. Chrome has no event when a menu opens, so a never-used tab can't be listed
+  by name before that click. Verified in Chromium up to the capture call: the tab is recorded and
+  selected, and capture is attempted. A synthetic `onClicked.dispatch` grants no real activeTab,
+  so tabCapture refused it there. **Whether a real menu click's grant satisfies
+  `getMediaStreamId` is untested**; it should, per Chrome's activeTab docs.
+
+- **Popup has no source dropdown** (2026-09-30). Sections are now "Listening to" (the tab's title as
+  text, timer inline to its right, like the on-page label) and "Typing to" (was "Output"). The
+  source is whichever tab the popup was opened on while idle (`registerActiveTab`), or the tab
+  "Listen to this tab" was used on; Stop clears it. So a popup opened on the *chat* tab selects
+  the chat tab as the source. The `set-source-tab` message is now unused by the UI. "Type to this field"
+  no longer defaults the source to the tab it was clicked in (the old `??=` would have picked
+  the chat tab).
 
 ## Known gaps (Phase 7)
 

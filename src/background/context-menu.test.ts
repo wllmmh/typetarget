@@ -1,43 +1,32 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createInitialState, type AppState } from "./state";
-import { buildMenuModel, ContextMenu, MENU_OUTPUT_ID, MENU_START_ID, MENU_STOP_ID, sourceTabIdOf } from "./context-menu";
+import { buildMenuModel, ContextMenu, MENU_LISTEN_HERE_ID, MENU_OUTPUT_ID, MENU_OUTPUT_UNAVAILABLE_ID, MENU_STOP_ID, MENU_STOP_TYPING_ID } from "./context-menu";
 
 const tab = (tabId: number, title: string) => ({ tabId, title, url: `https://example.com/${tabId}` });
 
 const stateWith = (overrides: Partial<AppState>): AppState => ({ ...createInitialState(), ...overrides });
 
 describe("buildMenuModel", () => {
-  it("offers the Start listening submenu when idle and Stop listening while capturing, like the popup", () => {
+  it("enables Stop listening only while capturing, like the popup", () => {
     expect(buildMenuModel(stateWith({}), false).capturing).toBe(false);
     expect(buildMenuModel(stateWith({ status: "paused", pendingSourceTabId: 3, knownTabs: [tab(3, "Video")] }), false).capturing).toBe(true);
     expect(buildMenuModel(stateWith({ status: "error" }), false).capturing).toBe(false);
   });
 
-  it("lists known tabs as Start listening items, shortening long titles", () => {
-    const longTitle = "x".repeat(100);
-    const model = buildMenuModel(stateWith({ knownTabs: [tab(3, "Video"), tab(4, longTitle)] }), false);
-
-    expect(model.sources).toEqual([
-      { id: "typetarget-source:3", title: "Video" },
-      { id: "typetarget-source:4", title: `${"x".repeat(59)}…` },
-    ]);
-  });
-
-  it("offers Stop typing here only while the pointer is over an existing destination", () => {
+  it("greys out Type to this field only while the pointer is over the existing destination", () => {
     const destination = { tabId: 9, frameId: 0, elementId: "el-1" };
 
-    expect(buildMenuModel(stateWith({ destination }), true).output).toBe("Stop typing here");
-    expect(buildMenuModel(stateWith({ destination }), false).output).toBe("Type here");
-    expect(buildMenuModel(stateWith({ destination: null }), true).output).toBe("Type here");
+    expect(buildMenuModel(stateWith({ destination }), true).canPick).toBe(false);
+    expect(buildMenuModel(stateWith({ destination }), false).canPick).toBe(true);
+    expect(buildMenuModel(stateWith({ destination: null }), true).canPick).toBe(true);
   });
-});
 
-describe("sourceTabIdOf", () => {
-  it("reads the tab id back from a source item id, and ignores other items", () => {
-    expect(sourceTabIdOf("typetarget-source:42")).toBe(42);
-    expect(sourceTabIdOf("typetarget-stop")).toBeNull();
-    expect(sourceTabIdOf("typetarget-source:nope")).toBeNull();
-    expect(sourceTabIdOf(7)).toBeNull();
+  it("enables Stop typing whenever there is a destination, wherever the pointer is", () => {
+    const destination = { tabId: 9, frameId: 0, elementId: "el-1" };
+
+    expect(buildMenuModel(stateWith({ destination }), false).hasDestination).toBe(true);
+    expect(buildMenuModel(stateWith({ destination }), true).hasDestination).toBe(true);
+    expect(buildMenuModel(stateWith({ destination: null }), false).hasDestination).toBe(false);
   });
 });
 
@@ -57,17 +46,23 @@ describe("ContextMenu", () => {
     vi.unstubAllGlobals();
   });
 
-  it("builds a TypeTarget submenu whose output item appears only on text boxes", async () => {
+  it("builds a TypeTarget submenu that always shows every item, with Type to this field enabled only on text boxes", async () => {
     const menu = new ContextMenu();
     await menu.apply(buildMenuModel(stateWith({}), false));
 
     const created = menus.create.mock.calls.map(([props]) => props);
     expect(created[0]).toMatchObject({ id: "typetarget", title: "TypeTarget", contexts: ["all"] });
     expect(created.filter((p) => p.id !== "typetarget").every((p) => p.parentId !== undefined)).toBe(true);
-    expect(created.find((p) => p.id === MENU_OUTPUT_ID)).toMatchObject({ contexts: ["editable"] });
-    expect(created.find((p) => p.id === MENU_START_ID)).toMatchObject({ parentId: "typetarget", title: "Start listening", contexts: ["all"] });
-    expect(created.find((p) => p.id === MENU_STOP_ID)).toMatchObject({ title: "Stop listening", visible: false });
-    expect(created.some((p) => p.id === "typetarget-source-none" && p.parentId === MENU_START_ID && p.enabled === false)).toBe(true);
+    expect(created.find((p) => p.id === MENU_OUTPUT_ID)).toMatchObject({ title: "Type to this field", contexts: ["editable"] });
+    const unavailable = created.find((p) => p.id === MENU_OUTPUT_UNAVAILABLE_ID);
+    expect(unavailable).toMatchObject({ title: "Type to this field", enabled: false });
+    expect(unavailable.contexts).not.toContain("editable");
+    expect(unavailable.contexts).toContain("page");
+    expect(created.find((p) => p.id === MENU_STOP_TYPING_ID)).toMatchObject({ title: "Stop typing", enabled: false });
+    expect(created.find((p) => p.id === MENU_LISTEN_HERE_ID)).toMatchObject({ parentId: "typetarget", title: "Listen to this tab", contexts: ["all"] });
+    expect(created.findIndex((p) => p.id === MENU_LISTEN_HERE_ID)).toBe(1); // first item under TypeTarget
+    expect(created.find((p) => p.id === MENU_STOP_ID)).toMatchObject({ title: "Stop listening", enabled: false });
+    expect(created.map((p) => p.id)).toEqual(["typetarget", MENU_LISTEN_HERE_ID, MENU_STOP_ID, MENU_OUTPUT_ID, MENU_OUTPUT_UNAVAILABLE_ID, MENU_STOP_TYPING_ID]);
   });
 
   it("sends Chrome nothing when the state it reflects hasn't changed", async () => {
@@ -85,34 +80,35 @@ describe("ContextMenu", () => {
     expect(menus.remove).not.toHaveBeenCalled();
   });
 
-  it("swaps Start listening for Stop listening while capturing, leaving the tab items alone", async () => {
+  it("enables Stop listening while capturing, changing nothing else", async () => {
     const menu = new ContextMenu();
-    const knownTabs = [tab(3, "Video"), tab(4, "Podcast")];
-    await menu.apply(buildMenuModel(stateWith({ knownTabs }), false));
+    await menu.apply(buildMenuModel(stateWith({}), false));
     menus.update.mockClear();
     menus.create.mockClear();
     menus.remove.mockClear();
 
-    await menu.apply(buildMenuModel(stateWith({ status: "capturing", knownTabs }), false));
+    await menu.apply(buildMenuModel(stateWith({ status: "capturing", pendingSourceTabId: 3, knownTabs: [tab(3, "Video")] }), false));
 
-    expect(menus.update).toHaveBeenCalledWith(MENU_START_ID, { visible: false }, expect.any(Function));
-    expect(menus.update).toHaveBeenCalledWith(MENU_STOP_ID, { visible: true }, expect.any(Function));
+    expect(menus.update).toHaveBeenCalledTimes(1);
+    expect(menus.update).toHaveBeenCalledWith(MENU_STOP_ID, { enabled: true }, expect.any(Function));
     expect(menus.update).not.toHaveBeenCalledWith(MENU_OUTPUT_ID, expect.anything(), expect.anything());
     expect(menus.create).not.toHaveBeenCalled();
     expect(menus.remove).not.toHaveBeenCalled();
   });
 
-  it("rebuilds the source list when tabs come or go", async () => {
+  it("enables Stop typing once there is a destination and greys out Type to this field over it", async () => {
+    const destination = { tabId: 9, frameId: 0, elementId: "el-1" };
     const menu = new ContextMenu();
-    await menu.apply(buildMenuModel(stateWith({ knownTabs: [tab(3, "Video")] }), false));
-    menus.create.mockClear();
+    await menu.apply(buildMenuModel(stateWith({}), false));
+    menus.update.mockClear();
 
-    await menu.apply(buildMenuModel(stateWith({ knownTabs: [tab(3, "Video"), tab(4, "Podcast")] }), false));
+    await menu.apply(buildMenuModel(stateWith({ destination }), false));
+    expect(menus.update).toHaveBeenCalledTimes(1);
+    expect(menus.update).toHaveBeenCalledWith(MENU_STOP_TYPING_ID, { enabled: true }, expect.any(Function));
 
-    expect(menus.remove).toHaveBeenCalledWith("typetarget-source:3", expect.any(Function));
-    expect(menus.create.mock.calls.map(([props]) => props)).toEqual([
-      { id: "typetarget-source:3", title: "Video", parentId: MENU_START_ID, contexts: ["all"] },
-      { id: "typetarget-source:4", title: "Podcast", parentId: MENU_START_ID, contexts: ["all"] },
-    ]);
+    menus.update.mockClear();
+    await menu.apply(buildMenuModel(stateWith({ destination }), true));
+    expect(menus.update).toHaveBeenCalledTimes(1);
+    expect(menus.update).toHaveBeenCalledWith(MENU_OUTPUT_ID, { enabled: false }, expect.any(Function));
   });
 });

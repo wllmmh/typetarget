@@ -27,7 +27,7 @@ describe("session badge over the destination", () => {
 
     destinationSession.setIndicator({ tabName: "Meeting", since: 100_000 - 65_000, state: "listening" });
     expect(badge()?.textContent).toBe("Meeting 1:05");
-    expect(badge()?.style.left).toBe("38px");
+    expect(badge()?.style.left).toBe("40px");
     expect(badge()?.style.background).toBe("rgb(31, 157, 85)");
     expect(document.getElementById("typetarget-destination-style")?.textContent).toContain("#1f9d55");
 
@@ -35,23 +35,24 @@ describe("session badge over the destination", () => {
     expect(badge()?.textContent).toBe("Meeting 1:07");
   });
 
-  it("sits above the outline, 1px up and 2px left of the element's corner", () => {
+  it("sits with its bottom 1px inside the element's top edge and flush with its left edge (the outline is drawn inside the element)", () => {
     pickTextarea(); // laid out at (40, 100); jsdom badges have no height of their own
 
     destinationSession.setIndicator({ tabName: "Meeting", since: Date.now(), state: "listening" });
 
-    expect(badge()?.style.top).toBe("99px");
-    expect(badge()?.style.left).toBe("38px");
+    expect(badge()?.style.top).toBe("101px");
+    expect(badge()?.style.left).toBe("40px");
   });
 
-  it("shows a square and 0:00 in a red badge while a destination is picked but nothing is listening", () => {
+  it("shows a square and 0:00, with no tab name, in a red badge while a destination is picked but nothing is listening", () => {
     vi.useFakeTimers({ now: 50_000 });
     pickTextarea();
 
-    destinationSession.setIndicator({ tabName: "Meeting", state: "stopped" });
+    destinationSession.setIndicator({ tabName: "Meeting", since: 50_000, state: "listening" });
+    destinationSession.setIndicator({ state: "stopped" });
     vi.advanceTimersByTime(5_000);
 
-    expect(badge()?.textContent).toBe("Meeting 0:00");
+    expect(badge()?.textContent).toBe("0:00");
     expect(badge()?.style.background).toBe("rgb(226, 39, 38)");
     expect(document.getElementById("typetarget-destination-style")?.textContent).toContain("#e22726");
   });
@@ -66,7 +67,7 @@ describe("session badge over the destination", () => {
     destinationSession.setIndicator({ tabName: "Meeting", since: Date.now(), state: "reconnecting" });
     expect(icon()).toContain("M2.5 2.5 L9.5 9.5 M9.5 2.5 L2.5 9.5");
 
-    destinationSession.setIndicator({ tabName: "Meeting", state: "stopped" });
+    destinationSession.setIndicator({ state: "stopped" });
     expect(icon()).toMatch(/^<rect/);
 
     destinationSession.setIndicator({ tabName: "Meeting", since: Date.now(), state: "paused" });
@@ -74,14 +75,25 @@ describe("session badge over the destination", () => {
     expect(badge()?.textContent).toBe("Meeting 0:00");
   });
 
-  it("truncates a long tab name, and shows what it is told when no tab is selected", () => {
+  it("truncates a long tab name", () => {
+    vi.useFakeTimers({ now: 10_000 });
     pickTextarea();
 
-    destinationSession.setIndicator({ tabName: "A very long page title that goes on and on", state: "stopped" });
+    destinationSession.setIndicator({ tabName: "A very long page title that goes on and on", since: 10_000, state: "listening" });
     expect(badge()?.textContent).toBe("A very long page title that… 0:00");
+  });
 
-    destinationSession.setIndicator({ tabName: "No Tab Selected", state: "stopped" });
-    expect(badge()?.textContent).toBe("No Tab Selected 0:00");
+  it("stays on the outline when the element moves without a scroll or resize (e.g. a chat box growing)", async () => {
+    const textarea = pickTextarea();
+    destinationSession.setIndicator({ tabName: "Meeting", since: Date.now(), state: "listening" });
+    expect(badge()?.style.top).toBe("101px");
+
+    textarea.getBoundingClientRect = () => new DOMRect(60, 40, 200, 120);
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+
+    expect(badge()?.style.top).toBe("41px");
+    expect(badge()?.style.left).toBe("60px");
   });
 
   it("shows only an icon, the tab name and the timer when reconnecting or paused", () => {
@@ -122,6 +134,51 @@ describe("session badge over the destination", () => {
     destinationSession.setIndicator({ tabName: "Meeting", since: Date.now(), state: "listening" });
     destinationSession.clearDestination();
     expect(badge()).toBeNull();
+  });
+
+  it("attaches to the part of the element a clipping parent leaves visible", () => {
+    const row = document.createElement("div");
+    row.style.overflow = "hidden";
+    row.getBoundingClientRect = () => new DOMRect(30, 106, 300, 60); // starts 6px below the textarea's own top
+    document.body.append(row);
+    const textarea = document.createElement("textarea");
+    textarea.getBoundingClientRect = () => new DOMRect(40, 100, 200, 66);
+    row.append(textarea);
+    textarea.focus();
+    destinationSession.pickFocused();
+
+    destinationSession.setIndicator({ tabName: "Meeting", since: Date.now(), state: "listening" });
+
+    expect(badge()?.style.top).toBe("107px"); // 106 + 1, not 100 + 1
+    expect(badge()?.style.left).toBe("40px"); // the textarea still starts right of the row's left edge
+  });
+
+  it("hides when a clipping parent leaves none of the element visible", () => {
+    const row = document.createElement("div");
+    row.style.overflow = "hidden";
+    row.getBoundingClientRect = () => new DOMRect(30, 300, 300, 60);
+    document.body.append(row);
+    const textarea = document.createElement("textarea");
+    textarea.getBoundingClientRect = () => new DOMRect(40, 100, 200, 66);
+    row.append(textarea);
+    textarea.focus();
+    destinationSession.pickFocused();
+
+    destinationSession.setIndicator({ tabName: "Meeting", since: Date.now(), state: "listening" });
+
+    expect(badge()?.style.display).toBe("none");
+  });
+
+  it("replaces a badge left behind by an earlier injection instead of adding a second one", () => {
+    const stale = document.createElement("div");
+    stale.id = SESSION_BADGE_ID;
+    document.documentElement.append(stale);
+    pickTextarea();
+
+    destinationSession.setIndicator({ tabName: "Meeting", since: Date.now(), state: "listening" });
+
+    expect(document.querySelectorAll(`#${SESSION_BADGE_ID}`)).toHaveLength(1);
+    expect(stale.isConnected).toBe(false);
   });
 
   it("shows nothing when no destination is picked in this frame", () => {

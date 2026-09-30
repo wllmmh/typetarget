@@ -59,11 +59,12 @@ const sessionCaption = (state: PublicAppState): string => {
   const { session } = state;
   if (!session) return "";
   if (session.reconnecting) return `Reconnecting (attempt ${session.reconnecting.attempt})… ${session.reconnecting.reason}`;
-  const paused = state.status === "paused" ? "Paused · " : "";
-  // Only Gemini holds a long-lived connection; Groq is a request per utterance.
-  if (MODEL_CATALOG[state.selectedModel].provider !== "gemini-live") return `${paused}listening`;
-  const reconnects = session.reconnects > 0 ? ` · reconnected ${session.reconnects}×` : "";
-  return `${paused}this connection${reconnects}. Renewed automatically before Gemini's 10-minute limit, and after drops.`;
+  // Only Gemini holds a long-lived connection (and so can have reconnected); Groq is a request per utterance.
+  const reconnected =
+    MODEL_CATALOG[state.selectedModel].provider === "gemini-live" && session.reconnects > 0
+      ? `reconnected ${session.reconnects}×`
+      : "";
+  return [state.status === "paused" ? "paused" : "listening", reconnected].filter(Boolean).join(" · ");
 };
 
 /**
@@ -124,7 +125,7 @@ export const App = () => {
     state.status === "paused";
 
   const chunkMs = draggedChunkMs ?? state.chunkMs;
-  const tabs = state.knownTabs;
+  const sourceTab = state.knownTabs.find((tab) => tab.tabId === state.pendingSourceTabId);
 
   /**
    * Debounced: a drag fires a change per step, and each one persists to storage and retunes
@@ -136,11 +137,6 @@ export const App = () => {
     chunkCommitTimer.current = window.setTimeout(() => {
       void sendToBackground({ kind: "set-chunk-ms", chunkMs: nextChunkMs });
     }, 200);
-  };
-
-  const handleSourceTabChange = async (sourceTabId: number | null) => {
-    const res = await sendToBackground({ kind: "set-source-tab", sourceTabId });
-    if (res.kind === "error") setLoadError(res.message);
   };
 
   const handleStart = async () => {
@@ -196,7 +192,7 @@ export const App = () => {
   /**
    * One toggle covers all three prior actions (begin selection / cancel selection /
    * clear a bound destination), matching the Start<->Stop toggle below: "Select output"
-   * when there is none, "Deselect output" once there is — whether that's a pick in
+   * when there is none, "Stop typing" once there is — whether that's a pick in
    * progress or one already bound.
    */
   const handleToggleOutput = async () => {
@@ -254,25 +250,6 @@ export const App = () => {
         />
       </section>
 
-      <section>
-        <h2>Source tab</h2>
-        {loadError && <p className="error">{loadError}</p>}
-        <select
-          disabled={tabs.length === 0 || isCapturing}
-          value={state.pendingSourceTabId ?? ""}
-          onChange={(e) => handleSourceTabChange(e.target.value ? Number(e.target.value) : null)}
-        >
-          <option value="" disabled>
-            {tabs.length === 0 ? "Open TypeTarget on a tab to capture it" : "Select a tab…"}
-          </option>
-          {tabs.map((tab) => (
-            <option key={tab.tabId} value={tab.tabId}>
-              {tab.title}
-            </option>
-          ))}
-        </select>
-      </section>
-
       <dialog ref={apiKeyDialogRef} onClose={() => setApiKeyError(null)}>
         <h2>API Keys</h2>
         <p className="hint">Stored on this device only, used solely to authenticate requests to each provider.</p>
@@ -292,41 +269,46 @@ export const App = () => {
         </button>
       </dialog>
 
-      <section className="controls">
-        {isCapturing ? (
-          <button type="button" disabled={busy} onClick={handleStop}>
-            <StopIcon /> Stop listening
+      <section>
+        <h2>Listening to</h2>
+        {loadError && <p className="error">{loadError}</p>}
+        <p className="target-line">
+          <span className="target-name">{sourceTab ? sourceTab.title : "No tab selected"}</span>
+          {state.session && (
+            <span className={`session-timer-clock${state.session.reconnecting ? " reconnecting" : ""}`} role="timer">
+              {formatElapsed(now - state.session.since)}
+            </span>
+          )}
+        </p>
+        <div className="controls">
+          {isCapturing ? (
+            <button type="button" disabled={busy} onClick={handleStop}>
+              <StopIcon /> Stop listening
+            </button>
+          ) : (
+            <button type="button" disabled={busy || state.pendingSourceTabId === null} onClick={handleStart}>
+              <PlayIcon /> Start listening
+            </button>
+          )}
+          <button
+            type="button"
+            disabled={busy || (state.status !== "capturing" && state.status !== "paused")}
+            onClick={handleTogglePause}
+          >
+            <PauseIcon /> {state.status === "paused" ? "Resume" : "Pause"}
           </button>
-        ) : (
-          <button type="button" disabled={busy || state.pendingSourceTabId === null} onClick={handleStart}>
-            <PlayIcon /> Start listening
-          </button>
-        )}
-        <button
-          type="button"
-          disabled={busy || (state.status !== "capturing" && state.status !== "paused")}
-          onClick={handleTogglePause}
-        >
-          <PauseIcon /> {state.status === "paused" ? "Resume" : "Pause"}
-        </button>
+        </div>
       </section>
 
-      {state.session && (
-        <div className={`session-timer${state.session.reconnecting ? " reconnecting" : ""}`} role="timer">
-          <span className="session-timer-clock">{formatElapsed(now - state.session.since)}</span>
-          <span className="hint">{sessionCaption(state)}</span>
-        </div>
-      )}
-
       <section>
-        <h2>Output</h2>
+        <h2>Typing to</h2>
         {state.isSelectingDestination && (
           <p>Click a text box to send transcribed text there — in this tab, or another tab you've opened TypeTarget on.</p>
         )}
         {state.destinationLabel !== null && <p>{state.destinationLabel}</p>}
         {/* With nothing picked, this button is the section's empty state. */}
         <button type="button" disabled={busy} onClick={handleToggleOutput}>
-          {hasOutput ? "Deselect output" : "Select output"}
+          {hasOutput ? "Stop typing" : "Select output"}
         </button>
       </section>
 
@@ -359,6 +341,7 @@ export const App = () => {
           </p>
         )}
         <p>Status: {statusText(state)}</p>
+        {state.session && <p>Session: {sessionCaption(state)}</p>}
         {state.modelDownload && state.modelDownload.totalBytes > 0 && (
           <progress value={state.modelDownload.receivedBytes} max={state.modelDownload.totalBytes} />
         )}

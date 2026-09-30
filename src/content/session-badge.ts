@@ -3,8 +3,10 @@
  * outline (see highlight.ts), which takes on its color: green while listening, the app icon's
  * red when stopped, grey while paused or while a lost connection is being re-established. Fixed-positioned at the document root
  * rather than inserted beside the element, so the page's layout and `overflow: hidden`
- * containers can't move or clip it; it follows the element on scroll, resize and each
- * tick. Only ever one, for the one destination. Reads: state icon, the source tab's name, the timer.
+ * containers can't move or clip it. It is re-placed on every animation frame, not just on
+ * scroll/resize: chat boxes grow as text is typed and pages shift layout without firing
+ * either, which left it floating away from the outline until the next tick. Only ever one,
+ * for the one destination. Reads: state icon, the source tab's name (none when stopped), the timer.
  */
 import { formatElapsed } from "../domain/elapsed";
 import type { SessionIndicator } from "../domain/messages";
@@ -67,6 +69,10 @@ let badge: HTMLElement | null = null;
 let anchor: Element | null = null;
 let indicator: SessionIndicator | null = null;
 let ticker: ReturnType<typeof setInterval> | null = null;
+let frame: number | null = null;
+let clippers: Element[] = [];
+/** Last position written, so the per-frame loop touches the style only when the element moved. */
+let placed = "";
 /** The badge's icon is rebuilt only when the state changes, not on each tick. */
 let shownState: SessionIndicator["state"] | null = null;
 let labelNode: Text | null = null;
@@ -79,28 +85,96 @@ const render = (): void => {
     labelNode = document.createTextNode("");
     badge.replaceChildren(createIcon(indicator.state), labelNode);
   }
-  labelNode.data = `${truncate(indicator.tabName)} ${formatElapsed(elapsed)}`;
+  const timer = formatElapsed(elapsed);
+  labelNode.data = indicator.state === "stopped" ? timer : `${truncate(indicator.tabName)} ${timer}`;
   badge.style.background = COLOR[indicator.state];
   setDestinationColor(COLOR[indicator.state]); // the outline always matches the label's color
-  const rect = anchor.getBoundingClientRect();
-  if (!anchor.isConnected || (rect.width === 0 && rect.height === 0)) {
-    badge.style.display = "none";
+  placed = ""; // the text may have changed the badge's height
+  clippers = findClippers(anchor);
+  place();
+};
+
+/** The element's parent, stepping out of shadow roots too. */
+const parentOf = (node: Node): Element | null => {
+  if (node.parentElement) return node.parentElement;
+  const root = node.getRootNode();
+  return root instanceof ShadowRoot ? root.host : null;
+};
+
+/** Ancestors that clip their contents (any `overflow` other than visible). Found by walking
+ * computed styles, so it is refreshed on the timer tick rather than every frame. */
+const findClippers = (el: Element): Element[] => {
+  const found: Element[] = [];
+  for (let node = parentOf(el); node; node = parentOf(node)) {
+    // The root and body only clip to the viewport, which the badge (position: fixed) already respects.
+    if (node === document.documentElement || node === document.body) continue;
+    const { overflowX, overflowY } = getComputedStyle(node);
+    if (overflowX !== "visible" || overflowY !== "visible") found.push(node);
+  }
+  return found;
+};
+
+type Box = { top: number; left: number; bottom: number; right: number };
+
+/**
+ * The part of the element's box the user can see: its bounding box trimmed by every clipping
+ * ancestor's padding box. Chat composers often let the editor stick out past a clipping
+ * container (an empty field is taller than its row), and the page only paints the outline
+ * where it is not clipped, so the badge has to attach to this, not to the raw box. Null when
+ * nothing is visible.
+ */
+const visibleBox = (el: Element): Box | null => {
+  const { top, left, bottom, right } = el.getBoundingClientRect();
+  const box: Box = { top, left, bottom, right };
+  for (const clipper of clippers) {
+    const r = clipper.getBoundingClientRect();
+    const style = getComputedStyle(clipper);
+    const px = (value: string) => parseFloat(value) || 0;
+    box.top = Math.max(box.top, r.top + px(style.borderTopWidth));
+    box.left = Math.max(box.left, r.left + px(style.borderLeftWidth));
+    box.bottom = Math.min(box.bottom, r.bottom - px(style.borderBottomWidth));
+    box.right = Math.min(box.right, r.right - px(style.borderRightWidth));
+  }
+  return box.bottom > box.top && box.right > box.left ? box : null;
+};
+
+/** Keeps the badge sitting on the outline's top edge. Cheap enough to run every frame. */
+const place = (): void => {
+  if (!badge || !anchor) return;
+  const rect = anchor.isConnected ? visibleBox(anchor) : null;
+  if (!rect) {
+    if (placed !== "hidden") badge.style.display = "none";
+    placed = "hidden";
     return;
   }
-  badge.style.display = "block";
+  if (placed === "hidden" || placed === "") badge.style.display = "block";
   const { offsetHeight } = badge;
-  // Above the outline, 1px up and 2px left of it; inside its top edge when the element is at the top of the viewport.
-  const above = rect.top - offsetHeight - 1;
-  badge.style.top = `${above >= 0 ? above : rect.top}px`;
-  badge.style.left = `${Math.max(0, rect.left - 2)}px`;
+  // The outline (highlight.ts) is drawn inside the element's edge, so the badge's left edge is
+  // the element's own, and its bottom sits 1px inside the top edge so it joins the outline's
+  // outer line. Where the element is at the top of the viewport it goes inside the top edge instead.
+  const edge = rect.top + 1;
+  const above = edge - offsetHeight;
+  const top = `${above >= 0 ? above : edge}px`;
+  const left = `${Math.max(0, rect.left)}px`;
+  if (placed === `${top} ${left}`) return;
+  placed = `${top} ${left}`;
+  badge.style.top = top;
+  badge.style.left = left;
+};
+
+const follow = (): void => {
+  place();
+  frame = requestAnimationFrame(follow);
 };
 
 const remove = (): void => {
   setDestinationColor(null);
   if (ticker !== null) clearInterval(ticker);
   ticker = null;
-  window.removeEventListener("scroll", render, true);
-  window.removeEventListener("resize", render);
+  if (frame !== null) cancelAnimationFrame(frame);
+  frame = null;
+  placed = "";
+  clippers = [];
   badge?.remove();
   badge = null;
   shownState = null;
@@ -116,15 +190,17 @@ export const setSessionBadge = (el: Element | null, next: SessionIndicator | nul
     return;
   }
   if (!badge) {
+    // A badge left by an earlier injection (e.g. before the extension was reloaded) keeps its
+    // old build's placement and would sit beside this one; same reason highlight.ts rewrites
+    // its style element.
+    document.getElementById(SESSION_BADGE_ID)?.remove();
     badge = document.createElement("div");
     badge.id = SESSION_BADGE_ID;
     badge.setAttribute("style", BASE_STYLE);
     badge.setAttribute("aria-hidden", "true");
     document.documentElement.append(badge);
-    // Capture phase: scrolling any inner container moves the element too.
-    window.addEventListener("scroll", render, { capture: true, passive: true });
-    window.addEventListener("resize", render, { passive: true });
     ticker = setInterval(render, 1000);
+    frame = requestAnimationFrame(follow);
   }
   render();
 };

@@ -6,17 +6,20 @@
  * ending selection mode can't strip the destination's.
  *
  * Drawn inset (negative offset): chat composers typically sit inside `overflow: hidden`
- * rounded containers, which clipped an outside outline down to a single visible edge.
+ * rounded containers, which clipped an outside outline down to a single visible edge. The
+ * destination's 4px double outline is drawn entirely inside the element (offset -4px), so a
+ * clipping parent flush with the element can't cut off its outer line.
  */
 
-const OUTLINE_OFFSET = "-2px";
+const INSET_2PX = "-2px";
+const INSET_4PX = "-4px";
 
 /** The picked destination's outline color; the listening timer changes it with its state (see session-badge.ts). */
 export const DESTINATION_COLOR = "#e22726";
 let destinationColor = DESTINATION_COLOR;
 
 /** Returns a setter that keeps `outline` on at most one element at a time; null removes it. */
-const createMarker = (className: string, styleId: string, outline: () => string) => {
+const createMarker = (className: string, styleId: string, outline: () => string, offset: string) => {
   let current: Element | null = null;
   const writeStyle = () => {
     // Rewritten on every mark, not only created: a style left by an earlier injection of an
@@ -27,7 +30,7 @@ const createMarker = (className: string, styleId: string, outline: () => string)
       style.id = styleId;
       document.head.append(style);
     }
-    style.textContent = `.${className} { outline: ${outline()} !important; outline-offset: ${OUTLINE_OFFSET} !important; }`;
+    style.textContent = `.${className} { outline: ${outline()} !important; outline-offset: ${offset} !important; }`;
   };
   const set = (el: Element | null): void => {
     if (current === el) return;
@@ -43,12 +46,12 @@ const createMarker = (className: string, styleId: string, outline: () => string)
   return { set, refresh: () => current && writeStyle() };
 };
 
-const candidateMarker = createMarker("typetarget-highlight-candidate", "typetarget-highlight-style", () => "2px solid #4f8ef7");
+const candidateMarker = createMarker("typetarget-highlight-candidate", "typetarget-highlight-style", () => "2px solid #4f8ef7", INSET_2PX);
 export const setHighlighted = candidateMarker.set;
 
 export const clearHighlight = (): void => setHighlighted(null);
 
-const destinationMarker = createMarker("typetarget-destination", "typetarget-destination-style", () => `4px double ${destinationColor}`);
+const destinationMarker = createMarker("typetarget-destination", "typetarget-destination-style", () => `4px double ${destinationColor}`, INSET_4PX);
 
 /** Double outline on the element transcribed text is going to; null removes it. */
 export const setDestinationMarker = destinationMarker.set;

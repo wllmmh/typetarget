@@ -26,7 +26,7 @@ import { CaptureController, CaptureError } from "./capture-controller";
 import { DestinationController, DestinationError } from "./destination-controller";
 import { OFFSCREEN_DOCUMENT_PATH } from "./offscreen-manager";
 import { createTranscriptRouter } from "./transcript-router";
-import { buildMenuModel, ContextMenu, isCapturing, MENU_OUTPUT_ID, MENU_STOP_ID, sourceTabIdOf } from "./context-menu";
+import { buildMenuModel, ContextMenu, isCapturing, MENU_LISTEN_HERE_ID, MENU_OUTPUT_ID, MENU_STOP_ID, MENU_STOP_TYPING_ID } from "./context-menu";
 
 // MV3 service workers are non-persistent: this module-level state is rebuilt from
 // scratch whenever Chrome wakes the worker, so it must never be the sole record of
@@ -45,7 +45,7 @@ const stateRestored = restorePersistedState(state);
  * The pointer is over the destination element, per the destination's own frame
  * ("pointer-over-destination"). Chrome can't say which element a right-click menu opens on,
  * and on Linux opens it on mousedown — too early to retitle it then — so this report, which
- * arrives well before any right-click, is what lets the menu offer "Deselect output".
+ * arrives well before any right-click, is what lets the menu grey out "Type to this field" there.
  */
 let pointerOverDestination = false;
 
@@ -60,7 +60,8 @@ const syncContextMenu = () => {
 /** What the destination's timer badge was last told, so only an actual change messages the page. */
 let shownIndicator: { destination: DestinationRef; indicator: SessionIndicator } | null = null;
 
-const NO_TAB_SELECTED = "No Tab Selected";
+/** Only if the captured tab somehow dropped out of the known list (it is recorded before capture can start). */
+const UNKNOWN_SOURCE_TAB = "Unknown tab";
 
 const sameFrame = (a: DestinationRef, b: DestinationRef) => a.tabId === b.tabId && a.frameId === b.frameId;
 
@@ -73,14 +74,16 @@ const sameFrame = (a: DestinationRef, b: DestinationRef) => a.tabId === b.tabId 
  */
 const syncSessionIndicator = () => {
   const { destination, session } = state;
-  const sourceTab = state.knownTabs.find((tab) => tab.tabId === state.pendingSourceTabId);
-  const tabName = sourceTab ? sourceTab.title.trim() || sourceTab.url : NO_TAB_SELECTED;
+  // Named from the tab actually being captured, and only while it is: once stopped, the
+  // badge names no tab, since nothing is being listened to.
+  const sourceTab = state.knownTabs.find((tab) => tab.tabId === state.sourceTabId);
+  const tabName = sourceTab ? sourceTab.title.trim() || sourceTab.url : UNKNOWN_SOURCE_TAB;
   const next = destination
     ? {
         destination,
         indicator: (session
           ? { tabName, since: session.since, state: session.reconnecting ? "reconnecting" : state.status === "paused" ? "paused" : "listening" }
-          : { tabName, state: "stopped" }) satisfies SessionIndicator,
+          : { state: "stopped" }) satisfies SessionIndicator,
       }
     : null;
   if (JSON.stringify(next) === JSON.stringify(shownIndicator)) return;
@@ -186,12 +189,15 @@ const registerActiveTab = async (): Promise<BackgroundResponse> => {
   if (!activeTab) return { kind: "ok" };
 
   const knownTabs = recordKnownTab(state.knownTabs, activeTab);
+  // The popup has no tab picker: the tab it was opened on is the one to listen to. Skipped
+  // while capturing, and for tabs that can't be captured (recordKnownTab leaves them out).
+  const source = !isCapturing(state.status) && knownTabs.some((t) => t.tabId === activeTab.id) ? activeTab.id : undefined;
   // Compares labels too, not just order: reopening the popup on a tab whose title changed
   // since it was recorded must refresh that title.
-  if (sameKnownTabs(knownTabs, state.knownTabs)) return { kind: "ok" };
+  const sourceChanged = source !== undefined && source !== state.pendingSourceTabId;
+  if (sameKnownTabs(knownTabs, state.knownTabs) && !sourceChanged) return { kind: "ok" };
   state.knownTabs = knownTabs;
-  // Default the source to the tab the user just came from, so the common case needs no pick.
-  state.pendingSourceTabId ??= knownTabs[0]?.tabId ?? null;
+  if (source !== undefined) state.pendingSourceTabId = source;
   commitState();
   return { kind: "ok" };
 };
@@ -231,10 +237,12 @@ const stopCapture = async (): Promise<BackgroundResponse> => {
   await captureController.stop();
   state.status = "idle";
   state.sourceTabId = null;
+  // Stopping deselects the source too: the next Start picks a tab afresh (the output box stays).
+  state.pendingSourceTabId = null;
   state.session = null;
   state.modelDownload = null;
   state.lastError = null;
-  broadcastState();
+  commitState(); // pendingSourceTabId is persisted
   return { kind: "ok" };
 };
 
@@ -350,34 +358,46 @@ const pickFromContextMenu = async (tabId: number, frameId: number): Promise<void
  * capturable at all. Recording it here means the first right-click that starts capture
  * doesn't also require a separate popup visit just to make the tab "known".
  */
+/** Starts capturing `tabId` from the menu. Works mid-capture too: the tab already being
+ * captured is left alone, any other is switched to. */
+const listenTo = async (tabId: number): Promise<void> => {
+  if (isCapturing(state.status)) {
+    if (state.pendingSourceTabId === tabId) return;
+    await stopCapture();
+  }
+  await startCapture(tabId);
+};
+
 const handleMenuClick = async (info: chrome.contextMenus.OnClickData, tab: chrome.tabs.Tab | undefined): Promise<void> => {
   await stateRestored;
   if (tab) {
     const knownTabs = recordKnownTab(state.knownTabs, tab);
     if (!sameKnownTabs(knownTabs, state.knownTabs)) {
       state.knownTabs = knownTabs;
-      state.pendingSourceTabId ??= knownTabs[0]?.tabId ?? null;
       commitState();
     }
   }
-  const sourceTabId = sourceTabIdOf(info.menuItemId);
-  if (sourceTabId !== null) {
-    // Start listening's per-tab items; hidden while capturing, so this only guards a stale click.
-    if (!isCapturing(state.status)) await startCapture(sourceTabId);
+  if (info.menuItemId === MENU_LISTEN_HERE_ID) {
+    if (tab?.id === undefined) return;
+    // recordKnownTab above skips pages that can't be captured (chrome://, extension pages).
+    if (!state.knownTabs.some((known) => known.tabId === tab.id)) {
+      state.lastError = { code: "tab-not-capturable", message: "TypeTarget can only listen to web pages (http or https)." };
+      broadcastState();
+      return;
+    }
+    await listenTo(tab.id);
     return;
   }
   if (info.menuItemId === MENU_STOP_ID) {
     if (isCapturing(state.status)) await stopCapture();
     return;
   }
+  if (info.menuItemId === MENU_STOP_TYPING_ID) {
+    if (state.destination) clearDestination();
+    return;
+  }
   if (info.menuItemId !== MENU_OUTPUT_ID || tab?.id === undefined) return;
-  const frameId = info.frameId ?? 0;
-  // Decided from the destination's own report, not the title, and only for a click in its
-  // frame — so a title that's out of date can never deselect from some other box.
-  const { destination } = state;
-  const onDestination = pointerOverDestination && destination?.tabId === tab.id && destination.frameId === frameId;
-  if (onDestination) clearDestination();
-  else await pickFromContextMenu(tab.id, frameId);
+  await pickFromContextMenu(tab.id, info.frameId ?? 0);
 };
 
 chrome.contextMenus.onClicked.addListener((info, tab) => void handleMenuClick(info, tab));
@@ -400,7 +420,7 @@ const followSelectionTo = async (tabId: number): Promise<void> => {
   } else {
     state.lastError = {
       code: UNREACHABLE_TAB_ERROR,
-      message: 'TypeTarget can\'t pick in that tab yet. Right-click the text box and choose TypeTarget → "Type here", or open TypeTarget on that tab and click "Select output" there.',
+      message: 'TypeTarget can\'t pick in that tab yet. Right-click the text box and choose TypeTarget → "Type to this field", or open TypeTarget on that tab and click "Select output" there.',
     };
   }
   broadcastState();

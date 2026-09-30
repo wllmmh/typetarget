@@ -56,8 +56,11 @@ per provider. A key is:
 - **offscreen** — run the long-lived audio + transcription pipeline outside the
   service worker, which Chrome can otherwise kill at any time.
 - **contextMenus** — adds a "TypeTarget" submenu to the page's right-click menu, with
-  Start listening (a submenu of the tabs to capture), Stop listening, and — on a text box — "Select output" (or "Deselect output" on
-  the current output box), so you can drive TypeTarget from the tab you're typing into.
+  "Listen to this tab" (starts listening to the tab you right-clicked in, even one you never
+  opened the popup on; right-click a different tab while listening to switch to it), "Stop listening" (greyed out unless capturing),
+  "Type to this field" (enabled only when you right-click a text box that isn't already the output), and
+  "Stop typing" (works from anywhere while there is an output box), so you can drive
+  TypeTarget from the tab you're typing into.
   Choosing an item gives TypeTarget the same one-tab access as opening the popup there.
 - **host_permissions** (`generativelanguage.googleapis.com`, `api.groq.com`) — lets the
   optional Gemini and Groq engines reach their providers' APIs. Each is only contacted

@@ -32,7 +32,12 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   opacity: 0.65;
-  margin: 14px 0 6px;
+  margin: 10px 0 4px;
+}
+
+/* Chrome caps a popup at 600px tall and scrolls beyond that, so text blocks stay tight. */
+.popup section p {
+  margin: 2px 0;
 }
 
 .popup select {
@@ -62,7 +67,7 @@ body {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  margin-top: 12px;
+  margin-top: 8px;
 }
 
 .controls button {
@@ -73,25 +78,29 @@ body {
   gap: 5px;
 }
 
-.session-timer {
+/* "Listening to" line: the tab's title with the timer inline to its right, like the on-page label. */
+.target-line {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 10px;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
 }
 
-.session-timer.reconnecting .session-timer-clock {
-  color: #6b7280;
+.target-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .session-timer-clock {
-  font-size: 18px;
+  flex: none;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
-.session-timer .hint {
-  margin: 0;
+.session-timer-clock.reconnecting {
+  color: #6b7280;
 }
 
 .popup input[type="range"] {

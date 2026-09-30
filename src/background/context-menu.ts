@@ -1,10 +1,13 @@
 /**
  * The page right-click menu: a "TypeTarget" submenu, available anywhere on a page, holding
- * Start listening (a submenu with one item per eligible tab; choosing one starts capturing it),
- * Stop listening (shown instead of Start while capturing) and — only when right-clicking a text
- * box — Type here/Stop typing here. It mirrors the popup's equivalent controls (worded
+ * Listen to this tab (records the tab and starts capturing it in one click — the click itself
+ * grants the activeTab access both need, so a tab never opened in the popup works too),
+ * Stop listening (greyed out unless capturing), Type to this field (enabled only on a text box
+ * that isn't already the output) and Stop typing (greyed out while there is no output box; works
+ * from anywhere). Every item is always shown, so the menu keeps its shape. It mirrors the popup's equivalent controls (worded
  * differently there) so they can be used from the tab the user is typing into, without opening
- * the popup.
+ * the popup. There is deliberately no tab list: Chrome gives no event when a menu opens, so a
+ * list could only show tabs already granted access, and "Listen to this tab" covers the rest.
  *
  * `buildMenuModel` is a pure view of app state; `ContextMenu` applies it to Chrome, sending
  * only what changed (state is broadcast every second while capturing).
@@ -12,55 +15,40 @@
 import type { AppState } from "./state";
 
 export const MENU_ROOT_ID = "typetarget";
-export const MENU_START_ID = "typetarget-start";
+export const MENU_LISTEN_HERE_ID = "typetarget-listen-here";
 export const MENU_STOP_ID = "typetarget-stop";
 export const MENU_OUTPUT_ID = "typetarget-output";
-const SOURCE_ITEM_PREFIX = "typetarget-source:";
-const NO_SOURCES_ID = "typetarget-source-none";
-/** Tab titles can be very long; the menu is not the place to read them in full. */
-const MAX_SOURCE_TITLE_LENGTH = 60;
+/** A permanently greyed-out stand-in for the output item, shown everywhere but text boxes. */
+export const MENU_OUTPUT_UNAVAILABLE_ID = "typetarget-output-unavailable";
+export const MENU_STOP_TYPING_ID = "typetarget-stop-typing";
 
-type SourceItem = { id: string; title: string };
-
+/** Which items are enabled; every item is always visible. */
 export type MenuModel = {
-  /** While capturing, Stop listening is shown in place of the Start listening submenu. */
+  /** Stop listening. */
   capturing: boolean;
-  /** The Start listening submenu's items: each known tab is one to start capturing. */
-  sources: SourceItem[];
-  output: "Type here" | "Stop typing here";
+  /** Type to this field, on a text box: off only on the box that already is the output. */
+  canPick: boolean;
+  /** Stop typing: on whenever there is an output box, wherever the menu is opened. */
+  hasDestination: boolean;
 };
 
 /** Same test as the popup's Start/Stop toggle and the service worker's setSourceTab guard. */
 export const isCapturing = (status: AppState["status"]): boolean => status !== "idle" && status !== "error";
 
-const truncate = (title: string): string =>
-  title.length > MAX_SOURCE_TITLE_LENGTH ? `${title.slice(0, MAX_SOURCE_TITLE_LENGTH - 1)}…` : title;
-
 /**
  * `pointerOverDestination` comes from the destination's own frame (see service-worker.ts):
- * Chrome can't say which element a menu opens on, so that report is how the output item
- * knows to offer "Stop typing here".
+ * Chrome can't say which element a menu opens on, so that report is how Type to this field
+ * knows it is on the box that is already the output.
  */
-export const buildMenuModel = (state: AppState, pointerOverDestination: boolean): MenuModel => {
-  return {
-    capturing: isCapturing(state.status),
-    sources: state.knownTabs.map((tab) => ({ id: `${SOURCE_ITEM_PREFIX}${tab.tabId}`, title: truncate(tab.title) })),
-    output: pointerOverDestination && state.destination ? "Stop typing here" : "Type here",
-  };
-};
-
-/** The tab a Start listening item stands for, or null if `menuItemId` isn't one. */
-export const sourceTabIdOf = (menuItemId: string | number): number | null => {
-  if (typeof menuItemId !== "string" || !menuItemId.startsWith(SOURCE_ITEM_PREFIX)) return null;
-  const tabId = Number(menuItemId.slice(SOURCE_ITEM_PREFIX.length));
-  return Number.isInteger(tabId) ? tabId : null;
-};
+export const buildMenuModel = (state: AppState, pointerOverDestination: boolean): MenuModel => ({
+  capturing: isCapturing(state.status),
+  canPick: !(pointerOverDestination && state.destination),
+  hasDestination: state.destination !== null,
+});
 
 const warnIfFailed = () => {
   if (chrome.runtime.lastError) console.warn(`TypeTarget: right-click menu update failed (${chrome.runtime.lastError.message}).`);
 };
-
-const sourceListKey = (model: MenuModel): string => JSON.stringify(model.sources.map(({ id, title }) => [id, title]));
 
 export class ContextMenu {
   private applied: MenuModel | null = null;
@@ -75,13 +63,34 @@ export class ContextMenu {
     this.created = new Promise((resolve) => {
       chrome.contextMenus.removeAll(() => {
         chrome.contextMenus.create({ id: MENU_ROOT_ID, title: "TypeTarget", contexts: ["all"] }, warnIfFailed);
-        chrome.contextMenus.create({ id: MENU_START_ID, parentId: MENU_ROOT_ID, title: "Start listening", contexts: ["all"] }, warnIfFailed);
         chrome.contextMenus.create(
-          { id: MENU_STOP_ID, parentId: MENU_ROOT_ID, title: "Stop listening", visible: false, contexts: ["all"] },
+          { id: MENU_LISTEN_HERE_ID, parentId: MENU_ROOT_ID, title: "Listen to this tab", contexts: ["all"] },
           warnIfFailed,
         );
         chrome.contextMenus.create(
-          { id: MENU_OUTPUT_ID, parentId: MENU_ROOT_ID, title: "Type here", contexts: ["editable"] },
+          { id: MENU_STOP_ID, parentId: MENU_ROOT_ID, title: "Stop listening", enabled: false, contexts: ["all"] },
+          warnIfFailed,
+        );
+        chrome.contextMenus.create(
+          { id: MENU_OUTPUT_ID, parentId: MENU_ROOT_ID, title: "Type to this field", contexts: ["editable"] },
+          warnIfFailed,
+        );
+        // Chrome can't enable an item per click, but it can pick items by what was clicked: the
+        // real item appears only on text boxes, this greyed-out twin in the other contexts, so the
+        // menu always reads as one item. "frame" and "selection" are left out because they also
+        // apply on text boxes, where both would show. So text selected outside a text box shows neither.
+        chrome.contextMenus.create(
+          {
+            id: MENU_OUTPUT_UNAVAILABLE_ID,
+            parentId: MENU_ROOT_ID,
+            title: "Type to this field",
+            enabled: false,
+            contexts: ["page", "link", "image", "video", "audio"],
+          },
+          warnIfFailed,
+        );
+        chrome.contextMenus.create(
+          { id: MENU_STOP_TYPING_ID, parentId: MENU_ROOT_ID, title: "Stop typing", enabled: false, contexts: ["all"] },
           () => {
             warnIfFailed();
             resolve();
@@ -97,34 +106,13 @@ export class ContextMenu {
     this.applied = model;
 
     if (previous?.capturing !== model.capturing) {
-      chrome.contextMenus.update(MENU_START_ID, { visible: !model.capturing }, warnIfFailed);
-      chrome.contextMenus.update(MENU_STOP_ID, { visible: model.capturing }, warnIfFailed);
+      chrome.contextMenus.update(MENU_STOP_ID, { enabled: model.capturing }, warnIfFailed);
     }
-    if (previous?.output !== model.output) {
-      chrome.contextMenus.update(MENU_OUTPUT_ID, { title: model.output }, warnIfFailed);
+    if (previous?.canPick !== model.canPick) {
+      chrome.contextMenus.update(MENU_OUTPUT_ID, { enabled: model.canPick }, warnIfFailed);
     }
-    if (!previous || sourceListKey(previous) !== sourceListKey(model)) {
-      this.replaceSources(previous?.sources ?? [], model);
-    }
-  }
-
-  private replaceSources(previous: SourceItem[], model: MenuModel): void {
-    // With no previous model, the placeholder may or may not exist; removing a missing item is harmless.
-    for (const id of previous.length > 0 ? previous.map((item) => item.id) : [NO_SOURCES_ID]) {
-      chrome.contextMenus.remove(id, () => void chrome.runtime.lastError);
-    }
-    if (model.sources.length === 0) {
-      chrome.contextMenus.create(
-        { id: NO_SOURCES_ID, parentId: MENU_START_ID, title: "Open TypeTarget on a tab to capture it", enabled: false, contexts: ["all"] },
-        warnIfFailed,
-      );
-      return;
-    }
-    for (const item of model.sources) {
-      chrome.contextMenus.create(
-        { ...item, parentId: MENU_START_ID, contexts: ["all"] },
-        warnIfFailed,
-      );
+    if (previous?.hasDestination !== model.hasDestination) {
+      chrome.contextMenus.update(MENU_STOP_TYPING_ID, { enabled: model.hasDestination }, warnIfFailed);
     }
   }
 }

@@ -31,14 +31,16 @@ export type ListeningSession = {
 };
 
 /** What the badge over the destination's outline shows (see content/session-badge.ts). */
-export type SessionIndicator = {
-  /** Title of the tab being transcribed (the source tab), or "No Tab Selected". */
-  tabName: string;
-} & (
-  | { state: "listening" | "paused" | "reconnecting"; since: number }
-  /** A destination is picked but nothing is being transcribed; the timer reads 0:00. */
-  | { state: "stopped" }
-);
+export type SessionIndicator =
+  | {
+      state: "listening" | "paused" | "reconnecting";
+      /** Title of the tab being transcribed (the source tab). */
+      tabName: string;
+      since: number;
+    }
+  /** A destination is picked but nothing is being transcribed, so there is no tab to name;
+   * the timer reads 0:00. */
+  | { state: "stopped" };
 
 /**
  * Serializable view of background/state.ts's AppState, sent to the popup. Excludes
@@ -118,8 +120,8 @@ export type ContentToBackground =
   | { kind: "destination-picked"; elementId: string; label: string }
   | { kind: "destination-selection-cancelled" }
   | { kind: "destination-unavailable"; reason: string }
-  /** The pointer entered/left the destination element, so the right-click menu can offer
-   * "Deselect output" on it (Chrome gives no way to ask which element a menu opens on). */
+  /** The pointer entered/left the destination element, so the right-click menu can grey out
+   * "Type to this field" on it (Chrome gives no way to ask which element a menu opens on). */
   | { kind: "pointer-over-destination"; over: boolean };
 
 /** Background -> content script */
