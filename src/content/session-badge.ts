@@ -7,12 +7,19 @@
  * scroll/resize: chat boxes grow as text is typed and pages shift layout without firing
  * either, which left it floating away from the outline until the next tick. Only ever one,
  * for the one destination. Reads: state icon, the source tab's name (none when stopped), the timer.
+ *
+ * A second tab of the same color sits on the outline's top right with the output's two buttons:
+ * X (the same as the right-click menu's Stop typing) and Save (downloads the box's text as .txt).
  */
 import { formatElapsed } from "../domain/elapsed";
 import type { SessionIndicator } from "../domain/messages";
 import { DESTINATION_COLOR, setDestinationColor } from "./highlight";
 
 export const SESSION_BADGE_ID = "typetarget-session-badge";
+export const SESSION_BADGE_CONTROLS_ID = "typetarget-session-badge-controls";
+
+/** What the X and Save buttons on the outline's top right do. */
+export type BadgeActions = { onClose: () => void; onSave: () => void };
 
 const COLOR: Record<SessionIndicator["state"], string> = {
   listening: "#1f9d55",
@@ -28,27 +35,38 @@ const truncate = (name: string): string => (name.length > MAX_NAME_LENGTH ? `${n
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
+type IconShape = { tag: "path" | "rect"; attrs: Record<string, string> };
+
 /** Shapes on the same 12x12 grid as the popup's icons: play while listening, pause bars when
  * paused, a cross while reconnecting, a square when stopped. The badge is only this and the timer. */
-const ICON_SHAPES: Record<SessionIndicator["state"], { tag: "path" | "rect"; attrs: Record<string, string> }> = {
+const ICON_SHAPES: Record<SessionIndicator["state"], IconShape> = {
   listening: { tag: "path", attrs: { d: "M2 1.2 L10.5 6 L2 10.8 Z", fill: "currentColor" } },
   paused: { tag: "path", attrs: { d: "M1.5 1 H4.5 V11 H1.5 Z M7.5 1 H10.5 V11 H7.5 Z", fill: "currentColor" } },
   reconnecting: { tag: "path", attrs: { d: "M2.5 2.5 L9.5 9.5 M9.5 2.5 L2.5 9.5", stroke: "currentColor", "stroke-width": "2", fill: "none" } },
   stopped: { tag: "rect", attrs: { x: "1.5", y: "1.5", width: "9", height: "9", fill: "currentColor" } },
 };
 
-const createIcon = (state: SessionIndicator["state"]): SVGElement => {
-  const shape = ICON_SHAPES[state];
+const CLOSE_SHAPE: IconShape = { tag: "path", attrs: { d: "M2.5 2.5 L9.5 9.5 M9.5 2.5 L2.5 9.5", stroke: "currentColor", "stroke-width": "1.75", fill: "none" } };
+const SAVE_SHAPE: IconShape = {
+  tag: "path",
+  attrs: { d: "M6 1 V8 M3 5 L6 8 L9 5 M1.5 10.75 H10.5", stroke: "currentColor", "stroke-width": "1.5", fill: "none" },
+};
+
+const createSvg = (shape: IconShape, style: string): SVGElement => {
   const svg = document.createElementNS(SVG_NS, "svg");
   svg.setAttribute("viewBox", "0 0 12 12");
   svg.setAttribute("width", "10");
   svg.setAttribute("height", "10");
-  svg.setAttribute("style", "display: inline-block; vertical-align: -1px; margin-right: 4px");
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("style", style);
   const el = document.createElementNS(SVG_NS, shape.tag);
   for (const [name, value] of Object.entries(shape.attrs)) el.setAttribute(name, value);
   svg.append(el);
   return svg;
 };
+
+const createIcon = (state: SessionIndicator["state"]): SVGElement =>
+  createSvg(ICON_SHAPES[state], "display: inline-block; vertical-align: -1px; margin-right: 4px");
 
 /** `all: initial` first, so page styles for `div` can't reshape it. */
 const BASE_STYLE = [
@@ -65,7 +83,70 @@ const BASE_STYLE = [
   "white-space: nowrap",
 ].join("; ");
 
+/** The buttons' tab: the badge's look, but clickable. */
+const CONTROLS_STYLE = [BASE_STYLE, "pointer-events: auto", "padding: 1px 2px"].join("; ");
+
+const BUTTON_STYLE = [
+  "all: initial",
+  "display: inline-block",
+  "box-sizing: border-box",
+  "width: 20px",
+  "height: 16px",
+  "border-radius: 2px",
+  "color: #fff",
+  "cursor: pointer",
+  "text-align: center",
+  "vertical-align: top",
+  "line-height: 16px",
+].join("; ");
+
+/** Hover and keyboard focus show the same light wash; `all: initial` removed the focus ring. */
+const BUTTON_HIGHLIGHT = "rgba(255, 255, 255, 0.3)";
+
+const createButton = (label: string, shape: IconShape, onClick: () => void): HTMLButtonElement => {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.setAttribute("style", BUTTON_STYLE);
+  button.setAttribute("aria-label", label);
+  button.title = label;
+  button.append(createSvg(shape, "display: inline-block; vertical-align: -1px"));
+  const highlight = (on: boolean) => () => {
+    button.style.background = on ? BUTTON_HIGHLIGHT : "";
+  };
+  button.addEventListener("mouseenter", highlight(true));
+  button.addEventListener("mouseleave", highlight(false));
+  button.addEventListener("focus", highlight(true));
+  button.addEventListener("blur", highlight(false));
+  button.addEventListener("click", onClick);
+  return button;
+};
+
+const createControls = (): HTMLElement => {
+  const el = document.createElement("div");
+  el.id = SESSION_BADGE_CONTROLS_ID;
+  el.setAttribute("style", CONTROLS_STYLE);
+  el.setAttribute("role", "group");
+  el.setAttribute("aria-label", "TypeTarget output");
+  el.append(
+    createButton("Save as .txt", SAVE_SHAPE, () => actions?.onSave()),
+    createButton("Stop typing here", CLOSE_SHAPE, () => actions?.onClose()),
+  );
+  // Keeps focus (and the caret) in the output box, and keeps the page from treating the press
+  // as a click outside its own widget, e.g. a chat composer that collapses on outside clicks.
+  // Capture-phase page listeners still see it; nothing here can stop those.
+  for (const type of ["pointerdown", "mousedown"] as const) {
+    el.addEventListener(type, (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    });
+  }
+  el.addEventListener("click", (e) => e.stopPropagation());
+  return el;
+};
+
 let badge: HTMLElement | null = null;
+let controls: HTMLElement | null = null;
+let actions: BadgeActions | null = null;
 let anchor: Element | null = null;
 let indicator: SessionIndicator | null = null;
 let ticker: ReturnType<typeof setInterval> | null = null;
@@ -88,6 +169,7 @@ const render = (): void => {
   const timer = formatElapsed(elapsed);
   labelNode.data = indicator.state === "stopped" ? timer : `${truncate(indicator.tabName)} ${timer}`;
   badge.style.background = COLOR[indicator.state];
+  if (controls) controls.style.background = COLOR[indicator.state];
   setDestinationColor(COLOR[indicator.state]); // the outline always matches the label's color
   placed = ""; // the text may have changed the badge's height
   clippers = findClippers(anchor);
@@ -138,28 +220,42 @@ const visibleBox = (el: Element): Box | null => {
   return box.bottom > box.top && box.right > box.left ? box : null;
 };
 
-/** Keeps the badge sitting on the outline's top edge. Cheap enough to run every frame. */
+/** Keeps the badge and its buttons sitting on the outline's top edge. Cheap enough to run every frame. */
 const place = (): void => {
-  if (!badge || !anchor) return;
+  if (!badge || !controls || !anchor) return;
   const rect = anchor.isConnected ? visibleBox(anchor) : null;
   if (!rect) {
-    if (placed !== "hidden") badge.style.display = "none";
+    if (placed !== "hidden") {
+      badge.style.display = "none";
+      controls.style.display = "none";
+    }
     placed = "hidden";
     return;
   }
-  if (placed === "hidden" || placed === "") badge.style.display = "block";
-  const { offsetHeight } = badge;
+  if (placed === "hidden" || placed === "") {
+    badge.style.display = "block";
+    controls.style.display = "block";
+  }
   // The outline (highlight.ts) is drawn inside the element's edge, so the badge's left edge is
-  // the element's own, and its bottom sits 1px inside the top edge so it joins the outline's
-  // outer line. Where the element is at the top of the viewport it goes inside the top edge instead.
+  // the element's own (the buttons' right edge likewise), and its bottom sits 1px inside the top
+  // edge so it joins the outline's outer line. Where the element is at the top of the viewport
+  // it goes inside the top edge instead.
   const edge = rect.top + 1;
-  const above = edge - offsetHeight;
-  const top = `${above >= 0 ? above : edge}px`;
+  const topOf = ({ offsetHeight }: HTMLElement) => {
+    const above = edge - offsetHeight;
+    return `${above >= 0 ? above : edge}px`;
+  };
+  const top = topOf(badge);
   const left = `${Math.max(0, rect.left)}px`;
-  if (placed === `${top} ${left}`) return;
-  placed = `${top} ${left}`;
+  const controlsTop = topOf(controls);
+  const controlsLeft = `${Math.max(0, Math.min(rect.right, window.innerWidth) - controls.offsetWidth)}px`;
+  const key = `${top} ${left} ${controlsTop} ${controlsLeft}`;
+  if (placed === key) return;
+  placed = key;
   badge.style.top = top;
   badge.style.left = left;
+  controls.style.top = controlsTop;
+  controls.style.left = controlsLeft;
 };
 
 const follow = (): void => {
@@ -177,14 +273,18 @@ const remove = (): void => {
   clippers = [];
   badge?.remove();
   badge = null;
+  controls?.remove();
+  controls = null;
+  actions = null;
   shownState = null;
   labelNode = null;
 };
 
-/** Shows the timer on `el`, or removes it when either argument is null. */
-export const setSessionBadge = (el: Element | null, next: SessionIndicator | null): void => {
+/** Shows the timer and the buttons on `el`, or removes them when either of the first two is null. */
+export const setSessionBadge = (el: Element | null, next: SessionIndicator | null, nextActions: BadgeActions): void => {
   anchor = el;
   indicator = next;
+  actions = nextActions;
   if (!el || !next) {
     remove();
     return;
@@ -194,11 +294,13 @@ export const setSessionBadge = (el: Element | null, next: SessionIndicator | nul
     // old build's placement and would sit beside this one; same reason highlight.ts rewrites
     // its style element.
     document.getElementById(SESSION_BADGE_ID)?.remove();
+    document.getElementById(SESSION_BADGE_CONTROLS_ID)?.remove();
     badge = document.createElement("div");
     badge.id = SESSION_BADGE_ID;
     badge.setAttribute("style", BASE_STYLE);
     badge.setAttribute("aria-hidden", "true");
-    document.documentElement.append(badge);
+    controls = createControls();
+    document.documentElement.append(badge, controls);
     ticker = setInterval(render, 1000);
     frame = requestAnimationFrame(follow);
   }

@@ -26,7 +26,7 @@ import { CaptureController, CaptureError } from "./capture-controller";
 import { DestinationController, DestinationError } from "./destination-controller";
 import { OFFSCREEN_DOCUMENT_PATH } from "./offscreen-manager";
 import { createTranscriptRouter } from "./transcript-router";
-import { buildMenuModel, ContextMenu, isCapturing, MENU_LISTEN_HERE_ID, MENU_OUTPUT_ID, MENU_STOP_ID, MENU_STOP_TYPING_ID } from "./context-menu";
+import { buildMenuModel, ContextMenu, isCapturing, MENU_LISTEN_HERE_ID, MENU_NEW_FILE_ID, MENU_OUTPUT_ID, MENU_STOP_ID, MENU_STOP_TYPING_ID } from "./context-menu";
 
 // MV3 service workers are non-persistent: this module-level state is rebuilt from
 // scratch whenever Chrome wakes the worker, so it must never be the sole record of
@@ -337,9 +337,11 @@ const forgetPointerOverDestination = () => {
 chrome.tabs.onActivated.addListener(forgetPointerOverDestination);
 chrome.windows.onFocusChanged.addListener(forgetPointerOverDestination);
 
-const pickFromContextMenu = async (tabId: number, frameId: number): Promise<void> => {
+/** Type to this field / Type to new file: `pick` asks the page to pick, which reports back
+ * through destination-picked like any other pick. */
+const pickFromContextMenu = async (pick: () => Promise<void>): Promise<void> => {
   try {
-    await destinationController.pickFromContextMenu(tabId, frameId);
+    await pick();
     state.isSelectingDestination = false;
     state.lastError = null;
     broadcastState();
@@ -396,8 +398,14 @@ const handleMenuClick = async (info: chrome.contextMenus.OnClickData, tab: chrom
     if (state.destination) clearDestination();
     return;
   }
-  if (info.menuItemId !== MENU_OUTPUT_ID || tab?.id === undefined) return;
-  await pickFromContextMenu(tab.id, info.frameId ?? 0);
+  if (tab?.id === undefined) return;
+  const tabId = tab.id;
+  if (info.menuItemId === MENU_NEW_FILE_ID) {
+    await pickFromContextMenu(() => destinationController.openNewFileField(tabId));
+    return;
+  }
+  if (info.menuItemId !== MENU_OUTPUT_ID) return;
+  await pickFromContextMenu(() => destinationController.pickFromContextMenu(tabId, info.frameId ?? 0));
 };
 
 chrome.contextMenus.onClicked.addListener((info, tab) => void handleMenuClick(info, tab));
@@ -516,6 +524,7 @@ const CONTENT_MESSAGE_KINDS = new Set<ContentToBackground["kind"]>([
   "pointer-over-destination",
   "destination-selection-cancelled",
   "destination-unavailable",
+  "stop-typing-requested",
 ]);
 
 const handleContentMessage = (msg: ContentToBackground, sender: chrome.runtime.MessageSender): void => {
@@ -540,6 +549,13 @@ const handleContentMessage = (msg: ContentToBackground, sender: chrome.runtime.M
       if (!destination || destination.tabId !== tabId || destination.frameId !== frameId) return; // not the destination's frame
       pointerOverDestination = msg.over;
       syncContextMenu();
+      return;
+    }
+    case "stop-typing-requested": {
+      // Only the destination's own frame shows the X; any other sender is stale or not ours.
+      const { destination } = state;
+      if (!destination || destination.tabId !== tabId || destination.frameId !== frameId) return;
+      clearDestination(); // exactly what the right-click menu's Stop typing does
       return;
     }
     case "destination-unavailable":

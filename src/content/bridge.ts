@@ -43,6 +43,8 @@ export const installContentBridge = (): boolean => {
 
   destinationSession.onPointerOverDestination = (over) => sendToBackground({ kind: "pointer-over-destination", over });
 
+  destinationSession.onStopTypingRequested = () => sendToBackground({ kind: "stop-typing-requested" });
+
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (!isEnvelope<BackgroundToContent>(message)) return undefined;
     const msg = message.payload;
@@ -73,6 +75,11 @@ export const installContentBridge = (): boolean => {
               : ({ kind: "error", code: "no-focused-text-box", message: "TypeTarget couldn't find that text box. Click into it, then right-click it again." } as const),
           ),
         );
+        return undefined;
+      case "open-new-file-field":
+        // Reports itself through onPicked, like any other pick.
+        destinationSession.openNewFileField();
+        sendResponse(envelope({ kind: "ok" } as const));
         return undefined;
       case "clear-destination":
         destinationSession.clearDestination();

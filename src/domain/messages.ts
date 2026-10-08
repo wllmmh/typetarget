@@ -122,7 +122,9 @@ export type ContentToBackground =
   | { kind: "destination-unavailable"; reason: string }
   /** The pointer entered/left the destination element, so the right-click menu can grey out
    * "Type to this field" on it (Chrome gives no way to ask which element a menu opens on). */
-  | { kind: "pointer-over-destination"; over: boolean };
+  | { kind: "pointer-over-destination"; over: boolean }
+  /** The X on the destination's badge: the same as the right-click menu's "Stop typing". */
+  | { kind: "stop-typing-requested" };
 
 /** Background -> content script */
 export type BackgroundToContent =
@@ -134,6 +136,9 @@ export type BackgroundToContent =
   | { kind: "clear-destination" }
   /** From the right-click menu: pick the text box that was right-clicked (which is focused). */
   | { kind: "pick-focused-element" }
+  /** From the right-click menu's "Type to new file": open a text box over the bottom third of
+   * the page and pick it (see content/new-file-field.ts). */
+  | { kind: "open-new-file-field" }
   /** Shows (or, with null, removes) the timer badge above the destination's outline. */
   | { kind: "set-session-indicator"; indicator: SessionIndicator | null };
 

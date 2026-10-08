@@ -1,8 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { destinationSession } from "./destination-session";
-import { SESSION_BADGE_ID } from "./session-badge";
+import { within } from "@testing-library/react";
+import { SESSION_BADGE_CONTROLS_ID, SESSION_BADGE_ID } from "./session-badge";
 
 const badge = () => document.getElementById(SESSION_BADGE_ID);
+const controls = () => document.getElementById(SESSION_BADGE_CONTROLS_ID);
+/** The badge is attached to <html>, outside <body> where `screen` looks. */
+const page = () => within(document.documentElement);
 
 /** Picks a textarea laid out at (40, 100), since jsdom does no layout of its own. */
 const pickTextarea = () => {
@@ -14,10 +18,21 @@ const pickTextarea = () => {
   return textarea;
 };
 
+/** jsdom's Blob has no text(). */
+const readBlob = (blob: Blob) =>
+  new Promise<string>((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.readAsText(blob);
+  });
+
 afterEach(() => {
   destinationSession.clearDestination();
+  destinationSession.onStopTypingRequested = null;
   document.body.innerHTML = "";
   vi.useRealTimers();
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 describe("session badge over the destination", () => {
@@ -179,6 +194,78 @@ describe("session badge over the destination", () => {
 
     expect(document.querySelectorAll(`#${SESSION_BADGE_ID}`)).toHaveLength(1);
     expect(stale.isConnected).toBe(false);
+    expect(document.querySelectorAll(`#${SESSION_BADGE_CONTROLS_ID}`)).toHaveLength(1);
+  });
+
+  it("puts the Save and X buttons on the outline's top right, in the badge's color", () => {
+    pickTextarea(); // laid out at (40, 100), 200 wide
+
+    destinationSession.setIndicator({ tabName: "Meeting", since: Date.now(), state: "listening" });
+
+    expect(page().getByRole("button", { name: "Save as .txt" })).toBeVisible();
+    expect(page().getByRole("button", { name: "Stop typing here" })).toBeVisible();
+    expect(controls()?.style.top).toBe("101px");
+    expect(controls()?.style.left).toBe("240px"); // its right edge on the element's (jsdom gives it no width)
+    expect(controls()?.style.background).toBe("rgb(31, 157, 85)");
+
+    destinationSession.setIndicator({ state: "stopped" });
+    expect(controls()?.style.background).toBe("rgb(226, 39, 38)");
+  });
+
+  it("asks to stop typing when X is clicked", () => {
+    const onStopTypingRequested = vi.fn();
+    destinationSession.onStopTypingRequested = onStopTypingRequested;
+    pickTextarea();
+    destinationSession.setIndicator({ state: "stopped" });
+
+    page().getByRole("button", { name: "Stop typing here" }).click();
+
+    expect(onStopTypingRequested).toHaveBeenCalledTimes(1);
+  });
+
+  it("downloads the destination's text as a .txt file when Save is clicked", async () => {
+    const blobs: Blob[] = [];
+    // jsdom has no blob URLs.
+    vi.stubGlobal("URL", class extends URL {
+      static createObjectURL = (blob: Blob) => {
+        blobs.push(blob);
+        return "blob:typetarget-test";
+      };
+      static revokeObjectURL = vi.fn();
+    });
+    const downloads: string[] = [];
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (this: HTMLAnchorElement) {
+      downloads.push(`${this.download} ${this.href}`);
+    });
+    const textarea = pickTextarea();
+    textarea.value = "Hello from the meeting";
+    destinationSession.setIndicator({ state: "stopped" });
+
+    page().getByRole("button", { name: "Save as .txt" }).click();
+
+    expect(downloads).toHaveLength(1);
+    expect(downloads[0]).toMatch(/^typetarget-\d{4}-\d{2}-\d{2}-\d{4}\.txt blob:typetarget-test$/);
+    expect(await Promise.all(blobs.map(readBlob))).toEqual(["Hello from the meeting"]);
+  });
+
+  it("hides the buttons with the badge when none of the element is visible", () => {
+    const textarea = pickTextarea();
+    destinationSession.setIndicator({ state: "stopped" });
+
+    textarea.getBoundingClientRect = () => new DOMRect(0, 0, 0, 0);
+    destinationSession.setIndicator({ tabName: "Meeting", since: Date.now(), state: "listening" });
+
+    expect(controls()?.style.display).toBe("none");
+    expect(page().queryByRole("button", { name: "Save as .txt" })).toBeNull();
+  });
+
+  it("removes the buttons with the badge", () => {
+    pickTextarea();
+    destinationSession.setIndicator({ state: "stopped" });
+
+    destinationSession.clearDestination();
+
+    expect(controls()).toBeNull();
   });
 
   it("shows nothing when no destination is picked in this frame", () => {

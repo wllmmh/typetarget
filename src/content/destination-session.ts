@@ -9,7 +9,9 @@ import { findEligibleAncestor } from "./eligible-elements";
 import { setHighlighted, clearHighlight, setDestinationMarker } from "./highlight";
 import { getRegisteredElement, registerElement } from "./element-registry";
 import { insertTranscriptText, toInsertionTarget } from "./insert-text";
-import { setSessionBadge } from "./session-badge";
+import { setSessionBadge, type BadgeActions } from "./session-badge";
+import { createNewFileField } from "./new-file-field";
+import { saveTextFile, textOf } from "./save-text-file";
 import type { SessionIndicator } from "../domain/messages";
 
 export type PickedDestination = {
@@ -25,6 +27,14 @@ class DestinationSession {
   private trackedElement: HTMLElement | null = null;
   /** The listening timer shown above the destination, while capturing. */
   private indicator: SessionIndicator | null = null;
+  /** The "Type to new file" box, while it is the destination (see new-file-field.ts). */
+  private newFileField: HTMLTextAreaElement | null = null;
+
+  /** The X and Save buttons beside the badge. */
+  private readonly badgeActions: BadgeActions = {
+    onClose: () => this.onStopTypingRequested?.(),
+    onSave: () => this.saveToFile(),
+  };
 
   private readonly onPointerEnter = () => this.onPointerOverDestination?.(true);
   private readonly onPointerLeave = () => this.onPointerOverDestination?.(false);
@@ -43,10 +53,11 @@ class DestinationSession {
 
   private pick(el: HTMLElement): void {
     this.stopSelecting();
+    if (el !== this.newFileField) this.closeNewFileField(); // the output moved to another box in this frame
     this.pickedElementId = registerElement(el);
     this.insertionOffset = this.currentValueLength(el);
     setDestinationMarker(el);
-    setSessionBadge(el, this.indicator); // a replacement pick in this frame keeps the running timer
+    setSessionBadge(el, this.indicator, this.badgeActions); // a replacement pick in this frame keeps the running timer
     this.trackPointer(el);
     this.onPicked?.({ elementId: this.pickedElementId, label: describeElement(el) });
     // Picking by click or right-click leaves the pointer already inside, so no pointerenter will
@@ -62,6 +73,8 @@ class DestinationSession {
 
   onPicked: ((destination: PickedDestination) => void) | null = null;
   onPointerOverDestination: ((over: boolean) => void) | null = null;
+  /** The badge's X was clicked; the background decides, as for the menu's Stop typing. */
+  onStopTypingRequested: (() => void) | null = null;
 
   private trackPointer(el: HTMLElement | null): void {
     this.trackedElement?.removeEventListener("pointerenter", this.onPointerEnter);
@@ -98,6 +111,27 @@ class DestinationSession {
     return true;
   }
 
+  /**
+   * "Type to new file": opens a text box over the bottom third of the page and picks it. One
+   * already open is reused rather than stacked under a second.
+   */
+  openNewFileField(): void {
+    if (!this.newFileField?.isConnected) this.newFileField = createNewFileField();
+    this.newFileField.focus();
+    this.pick(this.newFileField);
+  }
+
+  private closeNewFileField(): void {
+    this.newFileField?.remove();
+    this.newFileField = null;
+  }
+
+  /** Downloads the destination's current text (what was transcribed and typed) as a .txt file. */
+  saveToFile(): void {
+    const el = this.pickedElementId ? getRegisteredElement(this.pickedElementId) : null;
+    if (el instanceof HTMLElement) saveTextFile(textOf(el));
+  }
+
   isDestinationAlive(): boolean {
     if (!this.pickedElementId) return false;
     return getRegisteredElement(this.pickedElementId) !== null;
@@ -108,14 +142,15 @@ class DestinationSession {
     this.insertionOffset = 0;
     setDestinationMarker(null);
     this.indicator = null;
-    setSessionBadge(null, null);
+    setSessionBadge(null, null, this.badgeActions);
     this.trackPointer(null);
+    this.closeNewFileField(); // it exists only to be the output
   }
 
   /** Shows (or with null, removes) the listening timer above the destination's outline. */
   setIndicator(indicator: SessionIndicator | null): void {
     this.indicator = indicator;
-    setSessionBadge(this.pickedElementId ? getRegisteredElement(this.pickedElementId) : null, indicator);
+    setSessionBadge(this.pickedElementId ? getRegisteredElement(this.pickedElementId) : null, indicator, this.badgeActions);
   }
 
   /** Inserts finalized text at the tracked boundary. Returns false if the destination is gone. */

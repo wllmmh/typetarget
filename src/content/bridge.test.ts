@@ -1,10 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { within } from "@testing-library/react";
 import { envelope, type BackgroundToContent } from "../domain/messages";
 import { installFakeChrome, type FakeChrome } from "../test/fake-chrome";
 import { CONTENT_BRIDGE_FLAG, installContentBridge } from "./bridge";
 import { destinationSession } from "./destination-session";
 
 let fake: FakeChrome;
+
+/** The new-file box and the badge are attached to <html>, outside <body> where `screen` looks. */
+const page = () => within(document.documentElement);
 let textarea: HTMLTextAreaElement;
 
 /** Every listener the bridge registered, as Chrome would call them for one message. */
@@ -71,6 +75,29 @@ describe("installContentBridge", () => {
     }
 
     expect(reply).toHaveBeenCalledWith(envelope(expect.objectContaining({ kind: "error", code: "no-focused-text-box" })));
+  });
+
+  it("opens a new-file box when asked by the right-click menu, and reports it as the pick", () => {
+    installContentBridge();
+
+    deliver({ kind: "open-new-file-field" });
+
+    const field = page().getByRole("textbox", { name: "TypeTarget new file" });
+    expect(document.activeElement).toBe(field);
+    expect(fake.runtime.sendMessage).toHaveBeenCalledWith(envelope(expect.objectContaining({ kind: "destination-picked", label: "TypeTarget new file" })));
+    deliver({ kind: "insert-text", text: "hello", separator: " " });
+    expect(field).toHaveValue("hello");
+  });
+
+  it("asks the background to stop typing when the badge's X is clicked", () => {
+    installContentBridge();
+    textarea.getBoundingClientRect = () => new DOMRect(40, 100, 200, 60); // jsdom does no layout; hidden buttons can't be clicked
+    pick(textarea);
+    deliver({ kind: "set-session-indicator", indicator: { state: "stopped" } });
+
+    page().getByRole("button", { name: "Stop typing here" }).click();
+
+    expect(fake.runtime.sendMessage).toHaveBeenCalledWith(envelope({ kind: "stop-typing-requested" }));
   });
 
   it("drops the destination and its outline when the background clears it", () => {

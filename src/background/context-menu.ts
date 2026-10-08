@@ -2,9 +2,10 @@
  * The page right-click menu: a "TypeTarget" submenu, available anywhere on a page, holding
  * Listen to this tab (records the tab and starts capturing it in one click — the click itself
  * grants the activeTab access both need, so a tab never opened in the popup works too),
- * Stop listening (greyed out unless capturing), Type to this field (enabled only on a text box
- * that isn't already the output) and Stop typing (greyed out while there is no output box; works
- * from anywhere). Every item is always shown, so the menu keeps its shape. It mirrors the popup's equivalent controls (worded
+ * Stop listening (greyed out unless capturing), Type to this field on a text box (greyed out on
+ * the one that is already the output) or Type to new file anywhere else (opens a text box over
+ * the page's bottom third as the output), and Stop typing (greyed out while there is no output
+ * box; works from anywhere). It mirrors the popup's equivalent controls (worded
  * differently there) so they can be used from the tab the user is typing into, without opening
  * the popup. There is deliberately no tab list: Chrome gives no event when a menu opens, so a
  * list could only show tabs already granted access, and "Listen to this tab" covers the rest.
@@ -18,11 +19,12 @@ export const MENU_ROOT_ID = "typetarget";
 export const MENU_LISTEN_HERE_ID = "typetarget-listen-here";
 export const MENU_STOP_ID = "typetarget-stop";
 export const MENU_OUTPUT_ID = "typetarget-output";
-/** A permanently greyed-out stand-in for the output item, shown everywhere but text boxes. */
-export const MENU_OUTPUT_UNAVAILABLE_ID = "typetarget-output-unavailable";
+/** Shown in place of the output item everywhere but text boxes. */
+export const MENU_NEW_FILE_ID = "typetarget-new-file";
 export const MENU_STOP_TYPING_ID = "typetarget-stop-typing";
 
-/** Which items are enabled; every item is always visible. */
+/** Which items are enabled; which of Type to this field / Type to new file shows depends on
+ * what was right-clicked, every other item is always visible. */
 export type MenuModel = {
   /** Stop listening. */
   capturing: boolean;
@@ -75,17 +77,16 @@ export class ContextMenu {
           { id: MENU_OUTPUT_ID, parentId: MENU_ROOT_ID, title: "Type to this field", contexts: ["editable"] },
           warnIfFailed,
         );
-        // Chrome can't enable an item per click, but it can pick items by what was clicked: the
-        // real item appears only on text boxes, this greyed-out twin in the other contexts, so the
-        // menu always reads as one item. "frame" and "selection" are left out because they also
-        // apply on text boxes, where both would show. So text selected outside a text box shows neither.
+        // Chrome picks items by what was clicked: Type to this field only on text boxes, this
+        // everywhere else. "frame" (any click inside an iframe) and "selection" also apply on a
+        // text box in an iframe or with text selected in it, where both items then show; they
+        // are kept so that a click anywhere on a page offers one of the two.
         chrome.contextMenus.create(
           {
-            id: MENU_OUTPUT_UNAVAILABLE_ID,
+            id: MENU_NEW_FILE_ID,
             parentId: MENU_ROOT_ID,
-            title: "Type to this field",
-            enabled: false,
-            contexts: ["page", "link", "image", "video", "audio"],
+            title: "Type to new file",
+            contexts: ["page", "frame", "selection", "link", "image", "video", "audio"],
           },
           warnIfFailed,
         );

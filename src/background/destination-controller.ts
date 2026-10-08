@@ -111,13 +111,26 @@ export class DestinationController {
    * handlePicked like any other.
    */
   async pickFromContextMenu(tabId: number, frameId: number): Promise<void> {
+    await this.pickInFrame(tabId, frameId, { kind: "pick-focused-element" });
+  }
+
+  /**
+   * The right-click menu's "Type to new file": opens a text box over the page's bottom third and
+   * picks it. Always in the top frame, whichever frame was right-clicked, so the box covers the
+   * tab's viewport rather than an iframe's.
+   */
+  async openNewFileField(tabId: number): Promise<void> {
+    await this.pickInFrame(tabId, 0, { kind: "open-new-file-field" });
+  }
+
+  private async pickInFrame(tabId: number, frameId: number, msg: BackgroundToContent): Promise<void> {
     await this.cancelSelection();
     await chrome.scripting.executeScript({ target: { tabId, frameIds: [frameId] }, files: [contentScriptFile] }).catch((err: unknown) => {
       const message = err instanceof Error ? err.message : "Unknown injection error.";
       throw new DestinationError(`Could not prepare this page to receive text. (${message})`, "injection-failed");
     });
     this.selectingTabIds.add(tabId);
-    const raw: unknown = await chrome.tabs.sendMessage(tabId, envelope<BackgroundToContent>({ kind: "pick-focused-element" }), { frameId });
+    const raw: unknown = await chrome.tabs.sendMessage(tabId, envelope(msg), { frameId });
     if (isEnvelope<BackgroundResponse>(raw) && raw.payload.kind === "error") {
       this.selectingTabIds.delete(tabId);
       throw new DestinationError(raw.payload.message, raw.payload.code);

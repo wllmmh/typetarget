@@ -76,6 +76,28 @@ describe("DestinationController.pickFromContextMenu", () => {
   });
 });
 
+describe("DestinationController.openNewFileField", () => {
+  it("opens the new-file box in the tab's top frame, whichever frame was right-clicked, and accepts its pick", async () => {
+    const onPicked = vi.fn();
+    const controller = new DestinationController({ onPicked, onUnavailable: vi.fn() });
+
+    await controller.openNewFileField(9);
+
+    expect(fake.scripting.executeScript).toHaveBeenLastCalledWith(expect.objectContaining({ target: { tabId: 9, frameIds: [0] } }));
+    expect(fake.tabs.sendMessage).toHaveBeenLastCalledWith(9, envelope({ kind: "open-new-file-field" }), { frameId: 0 });
+    controller.handlePicked(9, 0, "el-1", "TypeTarget new file");
+    expect(onPicked).toHaveBeenCalledWith({ tabId: 9, frameId: 0, elementId: "el-1" }, "TypeTarget new file");
+  });
+
+  it("throws when the page can't be injected into", async () => {
+    fake.scripting.executeScript.mockRejectedValue(new Error("Cannot access a chrome:// URL"));
+    const controller = new DestinationController({ onPicked: vi.fn(), onUnavailable: vi.fn() });
+
+    await expect(controller.openNewFileField(9)).rejects.toMatchObject({ code: "injection-failed" });
+    expect(controller.isSelecting).toBe(false);
+  });
+});
+
 describe("DestinationController.followTo", () => {
   it("extends selection mode into a tab the user switches to, and a pick there wins", async () => {
     fake.tabs.query.mockResolvedValue([{ id: 5 }]);

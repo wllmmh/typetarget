@@ -57,9 +57,12 @@ with or share any key. Click the key icon next to the model picker to open a dia
 - **contextMenus** — adds a "TypeTarget" submenu to the page's right-click menu, with
   "Listen to this tab" (starts listening to the tab you right-clicked in, even one you never
   opened the popup on; right-click a different tab while listening to switch to it), "Stop listening" (greyed out unless capturing),
-  "Type to this field" (enabled only when you right-click a text box that isn't already the output), and
-  "Stop typing" (works from anywhere while there is an output box), so you can drive
-  TypeTarget from the tab you're typing into.
+  "Type to this field" (when you right-click a text box; greyed out on the one that is already the output),
+  "Type to new file" (when you right-click anywhere else: opens a text box over the bottom third of
+  the page and types into that), and "Stop typing" (works from anywhere while there is an output box),
+  so you can drive TypeTarget from the tab you're typing into. The output box's colored outline carries
+  two buttons on its top right: X (same as "Stop typing"; it also closes a "new file" box) and Save,
+  which downloads the box's text to your device as a `.txt` file.
   Choosing an item gives TypeTarget the same one-tab access as opening the popup there.
 - **host_permissions** (`generativelanguage.googleapis.com`, `api.groq.com`) — lets the
   optional Gemini and Groq engines reach their providers' APIs. Each is only contacted

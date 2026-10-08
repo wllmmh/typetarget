@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { destinationSession } from "./destination-session";
+import { NEW_FILE_FIELD_ID } from "./new-file-field";
 
 describe("destinationSession", () => {
   let textarea: HTMLTextAreaElement;
@@ -134,5 +135,66 @@ describe("destinationSession", () => {
     textarea.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
 
     expect(onPicked).not.toHaveBeenCalled();
+  });
+
+  describe("Type to new file", () => {
+    const newFileField = () => document.getElementById(NEW_FILE_FIELD_ID);
+
+    it("opens a focused text box fixed over the bottom third of the page and picks it", () => {
+      const onPicked = vi.fn();
+      destinationSession.onPicked = onPicked;
+
+      destinationSession.openNewFileField();
+
+      const field = newFileField();
+      expect(field).toBeInstanceOf(HTMLTextAreaElement);
+      expect(document.activeElement).toBe(field);
+      expect(field?.style.position).toBe("fixed");
+      expect(field?.style.bottom).toBe("0px");
+      expect(field?.style.height).toMatch(/33\.33/); // a third of the viewport, however the browser serializes it
+      expect(field?.classList.contains("typetarget-destination")).toBe(true);
+      expect(onPicked).toHaveBeenCalledWith(expect.objectContaining({ label: "TypeTarget new file" }));
+      expect(destinationSession.insert("hello", " ")).toBe(true);
+      expect(field).toHaveValue("hello");
+    });
+
+    it("reuses the open box instead of opening a second one", () => {
+      destinationSession.openNewFileField();
+      destinationSession.insert("hello", " ");
+
+      destinationSession.openNewFileField();
+
+      expect(document.querySelectorAll(`#${NEW_FILE_FIELD_ID}`)).toHaveLength(1);
+      expect(newFileField()).toHaveValue("hello");
+    });
+
+    it("closes the box when typing stops", () => {
+      destinationSession.openNewFileField();
+
+      destinationSession.clearDestination();
+
+      expect(newFileField()).toBeNull();
+    });
+
+    it("closes the box when another text box becomes the output", () => {
+      destinationSession.openNewFileField();
+
+      destinationSession.startSelecting();
+      textarea.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+
+      expect(newFileField()).toBeNull();
+      expect(textarea.classList.contains("typetarget-destination")).toBe(true);
+    });
+
+    it("replaces a box left behind by an earlier injection", () => {
+      const stale = document.createElement("textarea");
+      stale.id = NEW_FILE_FIELD_ID;
+      document.documentElement.append(stale);
+
+      destinationSession.openNewFileField();
+
+      expect(stale.isConnected).toBe(false);
+      expect(document.querySelectorAll(`#${NEW_FILE_FIELD_ID}`)).toHaveLength(1);
+    });
   });
 });
