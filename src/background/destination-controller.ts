@@ -5,7 +5,7 @@
  * script is injected on demand via chrome.scripting, scoped to activeTab (the tab the
  * user is looking at when they click "Select destination").
  */
-import { envelope, isEnvelope, type BackgroundToContent, type BackgroundResponse, type DestinationRef, type SessionIndicator } from "../domain/messages";
+import { envelope, isEnvelope, type BackgroundToContent, type BackgroundResponse, type DestinationRef, type DestinationTextReply, type ReleaseReply, type SessionIndicator } from "../domain/messages";
 // `?script&iife` is @crxjs/vite-plugin's mechanism for content scripts that are only
 // ever injected dynamically (via chrome.scripting.executeScript) rather than declared
 // in manifest.content_scripts, which is the only place crxjs's own build-file
@@ -119,8 +119,8 @@ export class DestinationController {
    * picks it. Always in the top frame, whichever frame was right-clicked, so the box covers the
    * tab's viewport rather than an iframe's.
    */
-  async openNewFileField(tabId: number, text?: string): Promise<void> {
-    await this.pickInFrame(tabId, 0, { kind: "open-new-file-field", text });
+  async openNewFileField(tabId: number, text?: string, minimized?: boolean): Promise<void> {
+    await this.pickInFrame(tabId, 0, { kind: "open-new-file-field", text, minimized });
   }
 
   private async pickInFrame(tabId: number, frameId: number, msg: BackgroundToContent): Promise<void> {
@@ -168,10 +168,22 @@ export class DestinationController {
     });
   }
 
+  /** The destination's text, which "Type to new file" opens its box with. Null if the page is gone. */
+  async takeText(destination: DestinationRef): Promise<string | null> {
+    const raw: unknown = await chrome.tabs
+      .sendMessage(destination.tabId, envelope<BackgroundToContent>({ kind: "take-destination-text" }), { frameId: destination.frameId })
+      .catch(() => null);
+    return isEnvelope<DestinationTextReply>(raw) && raw.payload.kind === "destination-text" ? raw.payload.text : null;
+  }
+
   /** Tells the page to drop a destination the user deselected or replaced (removing its
-   * outline). Best effort: if the tab or frame is gone, so is the outline. */
-  async release(destination: DestinationRef): Promise<void> {
-    await sendToDestinationFrame(destination, { kind: "clear-destination" }).catch(() => {});
+   * outline). Best effort: if the tab or frame is gone, so is the outline. Resolves to the text
+   * of the "Type to new file" box this closed, if that was the destination (see ReleaseReply). */
+  async release(destination: DestinationRef): Promise<string | null> {
+    const raw: unknown = await chrome.tabs
+      .sendMessage(destination.tabId, envelope<BackgroundToContent>({ kind: "clear-destination" }), { frameId: destination.frameId })
+      .catch(() => null);
+    return isEnvelope<ReleaseReply>(raw) && raw.payload.kind === "released" ? raw.payload.carriedText : null;
   }
 
   /** Shows the listening timer above the destination (null removes it). Best effort, like release(). */

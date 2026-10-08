@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { within } from "@testing-library/react";
 import { destinationSession } from "./destination-session";
 import { NEW_FILE_FIELD_ID } from "./new-file-field";
 
@@ -177,12 +178,76 @@ describe("destinationSession", () => {
       expect(newFileField()).toHaveValue("from the editor then more");
     });
 
+    it("opens minimized when asked, with the text it was given", () => {
+      destinationSession.openNewFileField("typed on the page", true);
+
+      expect(newFileField()).toHaveValue("typed on the page");
+      expect(newFileField()?.style.height).toBe("46.5px");
+    });
+
     it("closes the box when typing stops", () => {
       destinationSession.openNewFileField();
 
       destinationSession.clearDestination();
 
       expect(newFileField()).toBeNull();
+    });
+
+    it("moves the box's text into the text box that becomes the output in its place", () => {
+      destinationSession.openNewFileField();
+      destinationSession.insert("said so far", " ");
+      textarea.value = "already here";
+
+      destinationSession.startSelecting();
+      textarea.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+      destinationSession.insert("and then", " ");
+
+      expect(textarea).toHaveValue("already here said so far and then");
+    });
+
+    it("hands the box's text to whatever replaces it in another frame, via clearDestination", () => {
+      destinationSession.openNewFileField();
+      destinationSession.insert("said so far", " ");
+
+      expect(destinationSession.clearDestination()).toBe("said so far");
+    });
+
+    it("doesn't hand the text over twice once Open in new tab took it", () => {
+      vi.spyOn(HTMLTextAreaElement.prototype, "getBoundingClientRect").mockReturnValue(new DOMRect(12, 400, 800, 200)); // jsdom does no layout
+      destinationSession.openNewFileField();
+      destinationSession.insert("said so far", " ");
+      destinationSession.setIndicator({ state: "stopped" });
+
+      within(document.documentElement).getByRole("button", { name: "Open in new tab" }).click();
+
+      expect(destinationSession.clearDestination()).toBeNull();
+      vi.restoreAllMocks();
+    });
+
+    it("gives up a page text box's text for a new box, leaving it in place", () => {
+      textarea.value = "typed on the page";
+      textarea.focus();
+      destinationSession.pickFocused();
+
+      expect(destinationSession.takeDestinationText()).toBe("typed on the page");
+      expect(textarea).toHaveValue("typed on the page");
+    });
+
+    it("doesn't carry a box's text a second time once a new box in another frame took it", () => {
+      destinationSession.openNewFileField();
+      destinationSession.insert("said so far", " ");
+
+      expect(destinationSession.takeDestinationText()).toBe("said so far");
+      expect(destinationSession.clearDestination()).toBeNull();
+    });
+
+    it("keeps carrying a reused box's text after it is picked again", () => {
+      destinationSession.openNewFileField();
+      destinationSession.insert("said so far", " ");
+      destinationSession.openNewFileField(destinationSession.takeDestinationText() ?? undefined);
+
+      expect(newFileField()).toHaveValue("said so far");
+      expect(destinationSession.clearDestination()).toBe("said so far");
     });
 
     it("closes the box when another text box becomes the output", () => {

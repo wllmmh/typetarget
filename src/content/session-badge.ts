@@ -10,8 +10,8 @@
  *
  * A second tab of the same color sits on the outline's top right with the output's buttons:
  * Save (downloads the box's text as .txt) and X (the same as the right-click menu's Stop typing).
- * For the "Type to new file" box, Minimize (or Restore) and Open in new tab sit between them; in
- * the editor tab it opens, Move back to page does.
+ * Minimize (or Restore) and Open in new tab sit between them — on a page's own text box, both
+ * move the output into a new-file box or editor tab; in that editor tab, Move back to page does.
  */
 import { formatElapsed } from "../domain/elapsed";
 import type { SessionIndicator } from "../domain/messages";
@@ -24,8 +24,9 @@ export const SESSION_BADGE_CONTROLS_ID = "typetarget-session-badge-controls";
 export type BadgeActions = {
   onClose: () => void;
   onSave: () => void;
-  /** Only for the "Type to new file" box (see new-file-field.ts). */
-  newFile?: { minimized: boolean; onToggleMinimize: () => void; onOpenInTab: () => void };
+  /** Everywhere but the editor tab: the "Type to new file" box shrinks itself; a page's own text
+   * box hands its text to a minimized new-file box instead. */
+  windowControls?: { minimized: boolean; onToggleMinimize: () => void; onOpenInTab: () => void };
   /** Only in the editor tab (see src/editor/main.ts). */
   onMoveBack?: () => void;
 };
@@ -167,18 +168,18 @@ const createControls = (): HTMLElement => {
 };
 
 /** Which buttons the controls hold, so they are rebuilt only when that changes. */
-const controlsLayout = ({ newFile, onMoveBack }: BadgeActions): string =>
-  newFile ? (newFile.minimized ? "minimized" : "new-file") : onMoveBack ? "editor" : "plain";
+const controlsLayout = ({ windowControls, onMoveBack }: BadgeActions): string =>
+  windowControls ? (windowControls.minimized ? "minimized" : "new-file") : onMoveBack ? "editor" : "plain";
 
-const fillControls = (el: HTMLElement, { newFile, onMoveBack }: BadgeActions): void => {
+const fillControls = (el: HTMLElement, { windowControls, onMoveBack }: BadgeActions): void => {
   el.replaceChildren(
     createButton("Save as .txt", SAVE_SHAPE, () => actions?.onSave()),
-    ...(newFile
+    ...(windowControls
       ? [
-          newFile.minimized
-            ? createButton("Restore", RESTORE_SHAPE, () => actions?.newFile?.onToggleMinimize())
-            : createButton("Minimize", MINIMIZE_SHAPE, () => actions?.newFile?.onToggleMinimize()),
-          createButton("Open in new tab", OPEN_IN_TAB_SHAPE, () => actions?.newFile?.onOpenInTab()),
+          windowControls.minimized
+            ? createButton("Restore", RESTORE_SHAPE, () => actions?.windowControls?.onToggleMinimize())
+            : createButton("Minimize", MINIMIZE_SHAPE, () => actions?.windowControls?.onToggleMinimize()),
+          createButton("Open in new tab", OPEN_IN_TAB_SHAPE, () => actions?.windowControls?.onOpenInTab()),
         ]
       : []),
     ...(onMoveBack ? [createButton("Move back to page", MOVE_BACK_SHAPE, () => actions?.onMoveBack?.())] : []),

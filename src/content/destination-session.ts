@@ -30,6 +30,9 @@ class DestinationSession {
   /** The "Type to new file" box, while it is the destination (see new-file-field.ts). */
   private newFileField: HTMLTextAreaElement | null = null;
   private newFileMinimized = false;
+  /** The new-file box's text already went to an editor tab (Open in new tab), so closing the
+   * box must not carry it anywhere a second time. */
+  private newFileTextHandedOver = false;
 
   /** The buttons beside the badge; the "Type to new file" box also gets Minimize and Open in new tab. */
   private badgeActionsFor(el: Element | null): BadgeActions {
@@ -37,17 +40,31 @@ class DestinationSession {
       onClose: () => this.onStopTypingRequested?.(),
       onSave: () => this.saveToFile(),
     };
-    if (this.onMoveBackRequested && el instanceof HTMLElement) {
+    if (!(el instanceof HTMLElement)) return actions;
+    if (this.onMoveBackRequested) {
       return { ...actions, onMoveBack: () => this.onMoveBackRequested?.(textOf(el)) };
     }
     const field = this.newFileField;
-    if (!field || el !== field) return actions;
+    if (!field || el !== field) {
+      // A page's own text box: both move the output (with a copy of its text) somewhere that can.
+      return {
+        ...actions,
+        windowControls: {
+          minimized: false,
+          onToggleMinimize: () => this.onMinimizeRequested?.(),
+          onOpenInTab: () => this.onOpenInTabRequested?.(textOf(el)),
+        },
+      };
+    }
     return {
       ...actions,
-      newFile: {
+      windowControls: {
         minimized: this.newFileMinimized,
         onToggleMinimize: () => this.setNewFileMinimized(!this.newFileMinimized),
-        onOpenInTab: () => this.onOpenInTabRequested?.(textOf(field)),
+        onOpenInTab: () => {
+          this.newFileTextHandedOver = true;
+          this.onOpenInTabRequested?.(textOf(field));
+        },
       },
     };
   }
@@ -76,9 +93,12 @@ class DestinationSession {
 
   private pick(el: HTMLElement): void {
     this.stopSelecting();
-    if (el !== this.newFileField) this.closeNewFileField(); // the output moved to another box in this frame
+    // The output moved to another box in this frame: the new-file box closes, and its text moves
+    // with the output, as it does to an editor tab or to a box in another frame.
+    const carried = el !== this.newFileField ? this.closeNewFileField() : null;
     this.pickedElementId = registerElement(el);
     this.insertionOffset = this.currentValueLength(el);
+    if (carried) this.insert(carried, " ");
     setDestinationMarker(el);
     setSessionBadge(el, this.indicator, this.badgeActionsFor(el)); // a replacement pick in this frame keeps the running timer
     this.trackPointer(el);
@@ -101,6 +121,9 @@ class DestinationSession {
   /** The new-file box's Open in new tab was clicked, with its text. The background opens an
    * editor tab that takes over as the output; releasing this one then closes the box. */
   onOpenInTabRequested: ((text: string) => void) | null = null;
+  /** Minimize on a page's own text box: the background opens a minimized new-file box (in the
+   * top frame) with this box's text, which then becomes the output. */
+  onMinimizeRequested: (() => void) | null = null;
   /** Set only in the editor tab (src/editor): adds Move back to page to the badge, which hands
    * the box's text back to the page the editor was opened from. */
   onMoveBackRequested: ((text: string) => void) | null = null;
@@ -144,20 +167,26 @@ class DestinationSession {
    * "Type to new file": opens a text box over the bottom third of the page and picks it. One
    * already open is reused rather than stacked under a second.
    */
-  openNewFileField(text?: string): void {
+  openNewFileField(text?: string, minimized = false): void {
     if (!this.newFileField?.isConnected) this.newFileField = createNewFileField();
+    this.newFileTextHandedOver = false; // re-picked, a box reused here owns its text again
     if (text !== undefined) this.newFileField.value = text; // moved back from the editor tab
-    // Asking for the box again brings back a minimized one.
-    this.newFileMinimized = false;
-    setNewFileFieldMinimized(this.newFileField, false);
+    // Asking for the box again brings back a minimized one, unless it is asked for minimized.
+    this.newFileMinimized = minimized;
+    setNewFileFieldMinimized(this.newFileField, minimized);
     this.newFileField.focus();
     this.pick(this.newFileField);
   }
 
-  private closeNewFileField(): void {
-    this.newFileField?.remove();
+  /** Closes the new-file box, returning the text it held for the next output, if any is owed. */
+  private closeNewFileField(): string | null {
+    const field = this.newFileField;
+    const carried = field && !this.newFileTextHandedOver && field.value.trim() !== "" ? field.value : null;
+    field?.remove();
     this.newFileField = null;
     this.newFileMinimized = false;
+    this.newFileTextHandedOver = false;
+    return carried;
   }
 
   /** Downloads the destination's current text (what was transcribed and typed) as a .txt file, named after the source tab. */
@@ -168,19 +197,36 @@ class DestinationSession {
     if (el instanceof HTMLElement) saveTextFile(textOf(el), tabName);
   }
 
+  /**
+   * The destination's text, for the "Type to new file" box about to replace it. If that is a
+   * new-file box (in this frame), its text now travels this way, so closing it won't carry it
+   * a second time.
+   */
+  takeDestinationText(): string | null {
+    const el = this.pickedElementId ? getRegisteredElement(this.pickedElementId) : null;
+    if (!(el instanceof HTMLElement)) return null;
+    if (el === this.newFileField) this.newFileTextHandedOver = true;
+    return textOf(el);
+  }
+
   isDestinationAlive(): boolean {
     if (!this.pickedElementId) return false;
     return getRegisteredElement(this.pickedElementId) !== null;
   }
 
-  clearDestination(): void {
+  /**
+   * Drops the destination. Returns the text of the new-file box this closed, when that box was
+   * the output: the background types it into the output that replaced it (another frame's), so
+   * it isn't lost with the box. Null otherwise.
+   */
+  clearDestination(): string | null {
     this.pickedElementId = null;
     this.insertionOffset = 0;
     setDestinationMarker(null);
     this.indicator = null;
     setSessionBadge(null, null, this.badgeActionsFor(null));
     this.trackPointer(null);
-    this.closeNewFileField(); // it exists only to be the output
+    return this.closeNewFileField(); // it exists only to be the output
   }
 
   /** Shows (or with null, removes) the listening timer above the destination's outline. */

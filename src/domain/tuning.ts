@@ -12,7 +12,7 @@
 export const CHUNK_MS_MIN = 3_000;
 /** Kept under Whisper's 30 s window, with room for the pre-roll that precedes an utterance. */
 export const CHUNK_MS_MAX = 25_000;
-export const CHUNK_MS_DEFAULT = 12_000;
+export const CHUNK_MS_DEFAULT = 3_000;
 export const CHUNK_MS_STEP = 1_000;
 
 /** Messages are a boundary: a value from the popup is clamped, and junk falls back to the default. */

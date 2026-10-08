@@ -11,7 +11,11 @@ The popup's Model dropdown lists every supported model, grouped by provider:
 
 - **Whisper** (`tiny.en`, `tiny.en-q5_1`, `base.en`) — runs fully local in a Worker,
   no network access, nothing to configure. The default. The first use of each model
-  downloads it once (31–142 MB) and caches it.
+  downloads it once (31–142 MB) and caches it. Also listed: quantized
+  `tiny.en-q8_0`, `base.en-q5_1`/`-q8_0`, `small.en-q5_1`/`-q8_0`, `medium.en-q5_0`/`-q8_0`,
+  and full-precision `small.en` (42–785 MB), from the same mirror. Larger models are more
+  accurate but much slower; the full-precision `medium.en` and the large models don't fit in
+  the bundled WASM build's ~2 GB memory.
 - **Gemini** (`3.5 Transcribe (Live)`) — Google's Gemini Live API, a persistent
   streaming connection. Optional; requires your own Gemini API key (see "API keys"
   below) and sends captured audio to Google.
@@ -57,9 +61,9 @@ with or share any key. Click the key icon next to the model picker to open a dia
 - **contextMenus** — adds a "TypeTarget" submenu to the page's right-click menu, with
   "Listen to this tab" (starts listening to the tab you right-clicked in, even one you never
   opened the popup on; right-click a different tab while listening to switch to it), "Stop listening" (greyed out unless capturing),
-  "Type to this field" (when you right-click a text box; greyed out on the one that is already the output),
-  "Type to new file" (when you right-click anywhere else: opens a text box over the bottom third of
-  the page and types into that), and "Stop typing" (works from anywhere while there is an output box),
+  "Type to this field" (greyed out unless you right-clicked a text box, and on the one that is already
+  the output), "Type to new file" (anywhere, text boxes included: opens a text box over the bottom third
+  of the page and types into that), and "Stop typing" (works from anywhere while there is an output box),
   so you can drive TypeTarget from the tab you're typing into. The output box's colored outline carries
   two buttons on its top right: X (same as "Stop typing"; it also closes a "new file" box) and Save,
   which downloads the box's text to your device as a `.txt` file.

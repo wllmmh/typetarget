@@ -75,7 +75,7 @@ describe("StreamingTranscriber", () => {
   });
 
   it("runs no partial inferences by default, so finals are never queued behind one", async () => {
-    const { calls, push } = setup();
+    const { calls, push } = setup({ maxUtteranceMs: 12_000 }); // a cap this speech stays under
     push("loud", 40); // far past the partial interval
     await tick();
 
@@ -87,7 +87,8 @@ describe("StreamingTranscriber", () => {
   });
 
   it("emits partials on the interval, with at most one in flight", async () => {
-    const { calls, events, push } = setup({ enablePartials: true, partialIntervalMs: 1000 });
+    // A cap this speech stays under, so only partials are inferred.
+    const { calls, events, push } = setup({ enablePartials: true, partialIntervalMs: 1000, maxUtteranceMs: 12_000 });
     push("loud", 15); // speech starts ~200 ms in; first interval elapses ~1.2 s in
     await tick();
     expect(calls).toHaveLength(1);

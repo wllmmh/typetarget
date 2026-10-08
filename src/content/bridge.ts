@@ -11,7 +11,7 @@
  * the isolated world's global object, which every execution of the script in this
  * frame shares.
  */
-import { isEnvelope, envelope, type BackgroundToContent, type ContentToBackground } from "../domain/messages";
+import { isEnvelope, envelope, type BackgroundToContent, type ContentToBackground, type DestinationTextReply, type ReleaseReply } from "../domain/messages";
 import { destinationSession } from "./destination-session";
 
 /** Exported so the test can clear it; nothing else should read it. */
@@ -52,6 +52,8 @@ export const installContentBridge = (acceptFrom: (sender: chrome.runtime.Message
 
   destinationSession.onOpenInTabRequested = (text) => sendToBackground({ kind: "open-in-new-tab", text });
 
+  destinationSession.onMinimizeRequested = () => sendToBackground({ kind: "minimize-requested" });
+
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (!isEnvelope<BackgroundToContent>(message) || !acceptFrom(sender)) return undefined;
     const msg = message.payload;
@@ -85,12 +87,14 @@ export const installContentBridge = (acceptFrom: (sender: chrome.runtime.Message
         return undefined;
       case "open-new-file-field":
         // Reports itself through onPicked, like any other pick.
-        destinationSession.openNewFileField(msg.text);
+        destinationSession.openNewFileField(msg.text, msg.minimized);
         sendResponse(envelope({ kind: "ok" } as const));
         return undefined;
       case "clear-destination":
-        destinationSession.clearDestination();
-        sendResponse(envelope({ kind: "ok" } as const));
+        sendResponse(envelope<ReleaseReply>({ kind: "released", carriedText: destinationSession.clearDestination() }));
+        return undefined;
+      case "take-destination-text":
+        sendResponse(envelope<DestinationTextReply>({ kind: "destination-text", text: destinationSession.takeDestinationText() }));
         return undefined;
       case "set-session-indicator":
         destinationSession.setIndicator(msg.indicator);

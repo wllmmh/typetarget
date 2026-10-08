@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { sendToBackground } from "./background-client";
 import { useBackgroundState } from "./use-background-state";
 import type { PublicAppState } from "../domain/messages";
-import { MODEL_CATALOG, type ModelId } from "../domain/models";
-import { API_KEY_PROVIDER_NAMES, type ApiKeyProvider } from "../domain/api-key";
+import { MODEL_CATALOG, type ModelId, type ModelInfo } from "../domain/models";
+import { API_KEY_PAGES, API_KEY_PROVIDER_NAMES, type ApiKeyProvider } from "../domain/api-key";
 import { CHUNK_MS_MAX, CHUNK_MS_MIN, CHUNK_MS_STEP } from "../domain/tuning";
 import { formatElapsed } from "../domain/elapsed";
 import "./popup.css";
@@ -76,6 +76,15 @@ const PlayIcon = () => (
     <path d="M2 1.2 L10.5 6 L2 10.8 Z" fill="currentColor" />
   </svg>
 );
+/** The model picker's sections: one per provider, in catalog order, so each model is listed
+ * once under its provider's name instead of repeating it on every option. */
+const MODEL_GROUPS: [string, ModelInfo[]][] = Object.entries(
+  Object.values(MODEL_CATALOG).reduce<Record<string, ModelInfo[]>>(
+    (groups, model) => ({ ...groups, [model.name]: [...(groups[model.name] ?? []), model] }),
+    {},
+  ),
+);
+
 const StopIcon = () => (
   <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
     <rect x="1.5" y="1.5" width="9" height="9" fill="currentColor" />
@@ -234,11 +243,15 @@ export const App = () => {
             disabled={isCapturing}
             onChange={(e) => handleModelChange(e.target.value as ModelId)}
           >
-            {Object.values(MODEL_CATALOG).map((model) => (
-              <option key={model.id} value={model.id}>
-                {model.name} — {model.label}
-                {model.approxSizeMb !== undefined ? ` (~${model.approxSizeMb} MB)` : ""}
-              </option>
+            {MODEL_GROUPS.map(([name, models]) => (
+              <optgroup key={name} label={name}>
+                {models.map((model) => (
+                  <option key={model.id} value={model.id}>
+                    {model.label}
+                    {model.approxSizeMb !== undefined ? ` (~${model.approxSizeMb} MB)` : ""}
+                  </option>
+                ))}
+              </optgroup>
             ))}
           </select>
           <button
@@ -286,9 +299,16 @@ export const App = () => {
             onBlur={(e) => handleApiKeyBlur(keyProvider, e.currentTarget)}
           />
         )}
-        <button type="button" onClick={() => apiKeyDialogRef.current?.close()}>
-          Done
-        </button>
+        <div className="dialog-actions">
+          {keyProvider && API_KEY_PAGES[keyProvider] && (
+            <button type="button" onClick={() => void chrome.tabs.create({ url: API_KEY_PAGES[keyProvider] })}>
+              Get API Key
+            </button>
+          )}
+          <button type="button" className="dialog-done" onClick={() => apiKeyDialogRef.current?.close()}>
+            Done
+          </button>
+        </div>
       </dialog>
 
       <section>

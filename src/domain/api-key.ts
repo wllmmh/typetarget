@@ -10,6 +10,11 @@ export const API_KEY_PROVIDER_NAMES: Record<ApiKeyProvider, string> = {
   groq: "Groq",
 };
 
+/** Where a provider's keys are created, for the API key dialog's Get API Key button. */
+export const API_KEY_PAGES: Partial<Record<ApiKeyProvider, string>> = {
+  "gemini-live": "https://aistudio.google.com/api-keys",
+};
+
 /** Short enough to catch an obvious mistake (a stray character, a whitespace-only
  * paste), long enough not to reject a real key. Deliberately not asserting any one
  * provider's exact format (e.g. a fixed prefix/length) - that isn't ours to know, and

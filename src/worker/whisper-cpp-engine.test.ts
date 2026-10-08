@@ -1,8 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WhisperCppEngine } from "./whisper-cpp-engine";
+import type { ModelSource } from "./model-downloader";
+import { MODEL_URLS as REAL_MODEL_URLS } from "./model-urls";
 import type { WhisperModule, WhisperModuleFactory, WhisperModuleOverrides } from "./whisper-module";
 
-const MODEL_URLS = {
+/** Every model needs a URL; the ones these tests download point at example.com. */
+const MODEL_URLS: ModelSource = {
+  ...REAL_MODEL_URLS,
   "tiny.en": "https://example.com/tiny.en.bin",
   "tiny.en-q5_1": "https://example.com/tiny.en-q5_1.bin",
   "base.en": "https://example.com/base.en.bin",

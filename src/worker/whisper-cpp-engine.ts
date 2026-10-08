@@ -17,6 +17,14 @@ const MODEL_FILENAME_IN_FS: Record<WhisperModelId, string> = {
   "tiny.en": "ggml-tiny.en.bin",
   "tiny.en-q5_1": "ggml-tiny.en-q5_1.bin",
   "base.en": "ggml-base.en.bin",
+  "tiny.en-q8_0": "ggml-tiny.en-q8_0.bin",
+  "base.en-q5_1": "ggml-base.en-q5_1.bin",
+  "base.en-q8_0": "ggml-base.en-q8_0.bin",
+  "small.en-q5_1": "ggml-small.en-q5_1.bin",
+  "small.en-q8_0": "ggml-small.en-q8_0.bin",
+  "small.en": "ggml-small.en.bin",
+  "medium.en-q5_0": "ggml-medium.en-q5_0.bin",
+  "medium.en-q8_0": "ggml-medium.en-q8_0.bin",
 };
 
 /** EngineRouter only ever loads this engine for whisper-cpp-provider models, but

@@ -38,6 +38,7 @@ afterEach(() => {
   destinationSession.onStopTypingRequested = null;
   destinationSession.onOpenInTabRequested = null;
   destinationSession.onMoveBackRequested = null;
+  destinationSession.onMinimizeRequested = null;
   document.body.innerHTML = "";
   vi.useRealTimers();
   vi.unstubAllGlobals();
@@ -257,15 +258,32 @@ describe("session badge over the destination", () => {
     expect(await Promise.all(blobs.map(readBlob))).toEqual(["Hello from the meeting"]);
   });
 
-  it("offers Minimize and Open in new tab, between Save and X, only for the new-file box", () => {
+  it("offers Minimize and Open in new tab, between Save and X, on a page's box and the new-file box", () => {
+    const buttonNames = () => within(controls() ?? document.body).getAllByRole("button").map((button) => button.getAttribute("aria-label"));
     pickTextarea();
     destinationSession.setIndicator({ state: "stopped" });
-    expect(page().queryByRole("button", { name: "Minimize" })).toBeNull();
+    expect(buttonNames()).toEqual(["Save as .txt", "Minimize", "Open in new tab", "Stop typing here"]);
 
     openNewFile();
 
-    const names = within(controls() ?? document.body).getAllByRole("button").map((button) => button.getAttribute("aria-label"));
-    expect(names).toEqual(["Save as .txt", "Minimize", "Open in new tab", "Stop typing here"]);
+    expect(buttonNames()).toEqual(["Save as .txt", "Minimize", "Open in new tab", "Stop typing here"]);
+  });
+
+  it("asks to move a page's box into a minimized new-file box, or a new tab with its text", () => {
+    const onMinimizeRequested = vi.fn();
+    const onOpenInTabRequested = vi.fn();
+    destinationSession.onMinimizeRequested = onMinimizeRequested;
+    destinationSession.onOpenInTabRequested = onOpenInTabRequested;
+    const textarea = pickTextarea();
+    textarea.value = "typed on the page";
+    destinationSession.setIndicator({ state: "stopped" });
+
+    page().getByRole("button", { name: "Minimize" }).click();
+    page().getByRole("button", { name: "Open in new tab" }).click();
+
+    expect(onMinimizeRequested).toHaveBeenCalledTimes(1);
+    expect(onOpenInTabRequested).toHaveBeenCalledWith("typed on the page");
+    expect(textarea).toHaveValue("typed on the page"); // the page keeps its text
   });
 
   it("minimizes the new-file box to one line and restores it", () => {
@@ -313,7 +331,7 @@ describe("session badge over the destination", () => {
     destinationSession.setIndicator({ state: "stopped" });
 
     const names = within(controls() ?? document.body).getAllByRole("button").map((button) => button.getAttribute("aria-label"));
-    expect(names).toEqual(["Save as .txt", "Move back to page", "Stop typing here"]);
+    expect(names).toEqual(["Save as .txt", "Move back to page", "Stop typing here"]); // already a tab: no Minimize or Open in new tab
     page().getByRole("button", { name: "Move back to page" }).click();
 
     expect(onMoveBackRequested).toHaveBeenCalledWith("Hello from the meeting");

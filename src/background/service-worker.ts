@@ -125,11 +125,14 @@ const captureController = new CaptureController({
 
 const destinationController = new DestinationController({
   onPicked: (ref, label) => {
-    // A pick in the same frame replaces its own outline; one elsewhere (another tab, window
-    // or frame) must be told to drop the old outline.
+    // A pick in the same frame replaces its own outline (and carries a new-file box's text
+    // itself); one elsewhere (another tab, window or frame) must be told to drop the old
+    // outline. If that closes a "Type to new file" box, its text moves to the new output.
     const previous = state.destination;
     if (previous && (previous.tabId !== ref.tabId || previous.frameId !== ref.frameId)) {
-      void destinationController.release(previous);
+      void destinationController.release(previous).then((carried) => {
+        if (carried && state.destination === ref) void destinationController.insertText(ref, carried, " ");
+      });
     }
     state.destination = ref;
     state.destinationLabel = label;
@@ -403,7 +406,10 @@ const handleMenuClick = async (info: chrome.contextMenus.OnClickData, tab: chrom
   if (tab?.id === undefined) return;
   const tabId = tab.id;
   if (info.menuItemId === MENU_NEW_FILE_ID) {
-    await pickFromContextMenu(() => destinationController.openNewFileField(tabId));
+    // The new box opens with the current output's text, as Open in new tab and Type to this
+    // field carry it. Copied from a page's own text box (which keeps it); moved from a new-file box.
+    const text = state.destination ? await destinationController.takeText(state.destination) : null;
+    await pickFromContextMenu(() => destinationController.openNewFileField(tabId, text?.trim() ? text : undefined));
     return;
   }
   if (info.menuItemId !== MENU_OUTPUT_ID) return;
@@ -528,6 +534,7 @@ const CONTENT_MESSAGE_KINDS = new Set<ContentToBackground["kind"]>([
   "destination-unavailable",
   "stop-typing-requested",
   "open-in-new-tab",
+  "minimize-requested",
 ]);
 
 /** The page "Open in new tab" opens (src/editor); registered as a build input in vite.config.ts. */
@@ -609,6 +616,16 @@ const handleContentMessage = (msg: ContentToBackground, sender: chrome.runtime.M
       const { destination } = state;
       if (!destination || destination.tabId !== tabId || destination.frameId !== frameId) return;
       clearDestination(); // exactly what the right-click menu's Stop typing does
+      return;
+    }
+    case "minimize-requested": {
+      // Only the destination's own frame shows the button, as for stop-typing-requested.
+      const { destination } = state;
+      if (!destination || destination.tabId !== tabId || destination.frameId !== frameId) return;
+      void (async () => {
+        const text = await destinationController.takeText(destination);
+        await pickFromContextMenu(() => destinationController.openNewFileField(destination.tabId, text?.trim() ? text : undefined, true));
+      })();
       return;
     }
     case "open-in-new-tab": {

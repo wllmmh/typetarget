@@ -14,7 +14,19 @@ export type EngineProvider = "whisper-cpp" | "gemini-live" | "groq";
  * machinery (model-urls.ts, model-downloader.ts, whisper-cpp-engine.ts) that's keyed by
  * "one URL/filename per whisper model" doesn't need an (nonsensical) entry for network
  * providers that have no file to download. English-only per AGENTS.md. */
-export type WhisperModelId = "tiny.en" | "tiny.en-q5_1" | "base.en";
+export type WhisperModelId =
+  | "tiny.en"
+  | "tiny.en-q5_1"
+  | "base.en"
+  // "More Whisper models" in the popup: same mirror (model-urls.ts), English-only like the rest.
+  | "tiny.en-q8_0"
+  | "base.en-q5_1"
+  | "base.en-q8_0"
+  | "small.en-q5_1"
+  | "small.en-q8_0"
+  | "small.en"
+  | "medium.en-q5_0"
+  | "medium.en-q8_0";
 
 /** Model identifiers across all providers. */
 export type ModelId = WhisperModelId | "gemini-3.5-transcribe-live" | "groq-whisper-large-v3-turbo" | "groq-whisper-large-v3";
@@ -57,7 +69,23 @@ export const MODEL_CATALOG: Record<ModelId, ModelInfo> = {
     label: "Tiny Q5 (English, quantized)",
     approxSizeMb: 31, // measured: 32,166,155 bytes
   },
+  "tiny.en-q8_0": { id: "tiny.en-q8_0", provider: "whisper-cpp", name: "Whisper", label: "Tiny Q8 (English, quantized)", approxSizeMb: 42 }, // 43,550,795 bytes
   "base.en": { id: "base.en", provider: "whisper-cpp", name: "Whisper", label: "Base (English)", approxSizeMb: 142 }, // not independently verified
+  "base.en-q5_1": { id: "base.en-q5_1", provider: "whisper-cpp", name: "Whisper", label: "Base Q5 (English, quantized)", approxSizeMb: 57 }, // 59,721,011 bytes
+  "base.en-q8_0": { id: "base.en-q8_0", provider: "whisper-cpp", name: "Whisper", label: "Base Q8 (English, quantized)", approxSizeMb: 78 }, // 81,781,811 bytes
+  // The rest of the mirror's English-only files the vendored build can hold, each family kept
+  // together in the popup's list (Tiny Q8 and Base Q5/Q8 sit above with their families).
+  // Sizes are the mirror's listed byte counts (2026-10-08), in MiB like the ones above. Larger
+  // models transcribe more accurately but far slower — this build is single-threaded, where even
+  // tiny.en runs slower than real time (HANDOFF.md) — so none is a default. The vendored WASM
+  // heap tops out near 2 GB (measured: 512 MB initial, growable to ~1.94 GiB), which rules out
+  // the full-precision medium.en (1.46 GiB of weights before working memory) and every large
+  // model; whether Medium Q8 fits alongside its working memory is unverified.
+  "small.en-q5_1": { id: "small.en-q5_1", provider: "whisper-cpp", name: "Whisper", label: "Small Q5 (English, quantized)", approxSizeMb: 181 }, // 190,098,681 bytes
+  "small.en-q8_0": { id: "small.en-q8_0", provider: "whisper-cpp", name: "Whisper", label: "Small Q8 (English, quantized)", approxSizeMb: 252 }, // 264,477,561 bytes
+  "small.en": { id: "small.en", provider: "whisper-cpp", name: "Whisper", label: "Small (English)", approxSizeMb: 465 }, // 487,614,201 bytes
+  "medium.en-q5_0": { id: "medium.en-q5_0", provider: "whisper-cpp", name: "Whisper", label: "Medium Q5 (English, quantized)", approxSizeMb: 514 }, // 539,225,533 bytes
+  "medium.en-q8_0": { id: "medium.en-q8_0", provider: "whisper-cpp", name: "Whisper", label: "Medium Q8 (English, quantized)", approxSizeMb: 785 }, // 823,382,461 bytes
   // Google's Gemini 3.5 Transcribe, via the Live API (persistent WebSocket, not the
   // simpler batch Files-API alternative — see HANDOFF.md for why). Unverified end to end
   // in this codebase: no real API key/browser available to test against the real

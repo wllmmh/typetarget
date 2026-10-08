@@ -127,7 +127,14 @@ export type ContentToBackground =
   | { kind: "stop-typing-requested" }
   /** The new-file box's "Open in new tab": carry its text to an editor tab, which becomes the
    * output in its place (see src/editor/main.ts). */
-  | { kind: "open-in-new-tab"; text: string };
+  | { kind: "open-in-new-tab"; text: string }
+  /** Minimize on a page's own text box: move the output to a minimized new-file box in the
+   * tab's top frame, opening with that box's text. */
+  | { kind: "minimize-requested" };
+
+/** Content script -> background, in reply to "clear-destination". `carriedText` is the text of
+ * the "Type to new file" box this closed, owed to whichever output replaced it; null otherwise. */
+export type ReleaseReply = { kind: "released"; carriedText: string | null };
 
 /** Editor page (src/editor) -> background. */
 export type EditorToBackground =
@@ -153,9 +160,15 @@ export type BackgroundToContent =
   | { kind: "pick-focused-element" }
   /** From the right-click menu's "Type to new file": open a text box over the bottom third of
    * the page and pick it (see content/new-file-field.ts). */
-  | { kind: "open-new-file-field"; text?: string }
+  | { kind: "open-new-file-field"; text?: string; minimized?: boolean }
   /** Shows (or, with null, removes) the timer badge above the destination's outline. */
-  | { kind: "set-session-indicator"; indicator: SessionIndicator | null };
+  | { kind: "set-session-indicator"; indicator: SessionIndicator | null }
+  /** "Type to new file" is about to replace this destination: reply with its text, which the
+   * new box opens with (see DestinationTextReply). */
+  | { kind: "take-destination-text" };
+
+/** Content script -> background, in reply to "take-destination-text"; null if nothing is picked. */
+export type DestinationTextReply = { kind: "destination-text"; text: string | null };
 
 /** Background -> offscreen document */
 export type BackgroundToOffscreen =

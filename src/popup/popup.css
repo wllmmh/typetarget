@@ -164,6 +164,13 @@ body {
   box-sizing: border-box;
 }
 
-.popup dialog button {
+.popup dialog .dialog-actions {
+  display: flex;
+  gap: 8px;
   margin-top: 14px;
+}
+
+/* Pushed right; Get API Key, when shown, stays on the left. */
+.popup dialog .dialog-done {
+  margin-left: auto;
 }

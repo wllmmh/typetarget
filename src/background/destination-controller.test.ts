@@ -210,8 +210,26 @@ describe("DestinationController.insertText / checkAlive", () => {
     expect(fake.tabs.sendMessage).toHaveBeenCalledWith(5, envelope({ kind: "clear-destination" }), { frameId: 3 });
 
     fake.tabs.sendMessage.mockRejectedValueOnce(new Error("No tab with id: 5"));
-    await expect(controller.release({ tabId: 5, frameId: 3, elementId: "el-1" })).resolves.toBeUndefined();
+    await expect(controller.release({ tabId: 5, frameId: 3, elementId: "el-1" })).resolves.toBeNull();
     expect(onUnavailable).not.toHaveBeenCalled();
+  });
+
+  it("reads the destination's text from its own frame, for a new-file box to open with", async () => {
+    const controller = new DestinationController({ onPicked: vi.fn(), onUnavailable: vi.fn() });
+    fake.tabs.sendMessage.mockResolvedValueOnce(envelope({ kind: "destination-text", text: "typed on the page" }));
+
+    await expect(controller.takeText({ tabId: 5, frameId: 2, elementId: "el-1" })).resolves.toBe("typed on the page");
+    expect(fake.tabs.sendMessage).toHaveBeenCalledWith(5, envelope({ kind: "take-destination-text" }), { frameId: 2 });
+
+    fake.tabs.sendMessage.mockRejectedValueOnce(new Error("No tab with id: 5"));
+    await expect(controller.takeText({ tabId: 5, frameId: 2, elementId: "el-1" })).resolves.toBeNull();
+  });
+
+  it("resolves to the text of a new-file box the release closed", async () => {
+    const controller = new DestinationController({ onPicked: vi.fn(), onUnavailable: vi.fn() });
+    fake.tabs.sendMessage.mockResolvedValueOnce(envelope({ kind: "released", carriedText: "said so far" }));
+
+    await expect(controller.release({ tabId: 5, frameId: 0, elementId: "el-1" })).resolves.toBe("said so far");
   });
 
   it("does not report unavailable when insertion succeeds", async () => {
