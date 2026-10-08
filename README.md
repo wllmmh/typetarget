@@ -1,4 +1,4 @@
-# TypeTarget — Directed Transcriber
+# TypeTarget — Speech to text anywhere
 
 Captures a browser tab's audio and streams transcribed text into a text field you
 choose in another tab. You choose how it's transcribed: a hosted model (Groq or

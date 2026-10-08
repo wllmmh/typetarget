@@ -6,7 +6,7 @@ package, see "Releasing" in [CONTRIBUTING.md](../../CONTRIBUTING.md).
 
 ## Store listing tab
 
-**Name** (from the manifest): TypeTarget — Directed Transcriber
+**Name** (from the manifest): TypeTarget — Speech to text anywhere
 
 **Summary** (the manifest `description`, 113/132 characters):
 Live-transcribe any tab's audio straight into any text field, with your choice of AI model. Free and open source.
