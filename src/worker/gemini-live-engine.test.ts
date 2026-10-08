@@ -510,7 +510,7 @@ describe("GeminiLiveEngine.flush", () => {
 });
 
 describe("GeminiLiveEngine.reset", () => {
-  it("closes the current session and reconnects a fresh one for the same model", async () => {
+  it("closes the current session without reconnecting", async () => {
     const events: TranscriptEvent[] = [];
     const { connect, sessions } = createFakeConnect();
     const engine = createEngine("test-key", events, connect);
@@ -519,17 +519,33 @@ describe("GeminiLiveEngine.reset", () => {
     await engine.reset();
 
     expect(sessions[0]?.close).toHaveBeenCalled();
-    expect(connect).toHaveBeenCalledTimes(2);
-    expect(engine.getStatus()).toEqual({ state: "ready", modelId: "gemini-3.5-transcribe-live" });
+    expect(connect).toHaveBeenCalledTimes(1);
+    expect(engine.getStatus()).toEqual({ state: "unloaded" });
   });
 
-  it("drops a late message from the closed session after reset reconnects", async () => {
+  it("does not reopen a connection when audio arrives after a reset", async () => {
+    const events: TranscriptEvent[] = [];
+    const { connect } = createFakeConnect();
+    const engine = createEngine("test-key", events, connect);
+    await engine.load("gemini-3.5-transcribe-live");
+    await engine.reset();
+
+    engine.pushAudio(new Float32Array(1600));
+
+    expect(connect).toHaveBeenCalledTimes(1);
+  });
+
+  it("drops a late message from the closed session, and the next load starts fresh", async () => {
     const events: TranscriptEvent[] = [];
     const { connect, emit: emitOnLatest } = createFakeConnect();
     const engine = createEngine("test-key", events, connect);
     await engine.load("gemini-3.5-transcribe-live");
     await engine.reset();
 
+    emitOnLatest({ inputTranscription: { text: "said before Stop" } });
+    expect(events).toEqual([]);
+
+    await engine.load("gemini-3.5-transcribe-live");
     // The stabilizer was reset too, so a stray interim from before a reset can't be
     // mistaken for a continuation of the new session's utterance.
     emitOnLatest({ interimInputTranscription: { text: "fresh start" } });

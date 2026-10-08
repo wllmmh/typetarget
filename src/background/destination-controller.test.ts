@@ -147,6 +147,17 @@ describe("DestinationController.handlePicked", () => {
     expect(controller.isSelecting).toBe(false);
   });
 
+  it("accepts the pick of an editor tab it adopted, without injecting into it", async () => {
+    const onPicked = vi.fn();
+    const controller = new DestinationController({ onPicked, onUnavailable: vi.fn() });
+    await controller.adoptEditorTab(12);
+
+    controller.handlePicked(12, 0, "el-1", "TypeTarget file");
+
+    expect(fake.scripting.executeScript).not.toHaveBeenCalled();
+    expect(onPicked).toHaveBeenCalledWith({ tabId: 12, frameId: 0, elementId: "el-1" }, "TypeTarget file");
+  });
+
   it("ignores a pick reported from a tab that is not the one being selected in", async () => {
     fake.tabs.query.mockResolvedValue([{ id: 5 }]);
     const onPicked = vi.fn();

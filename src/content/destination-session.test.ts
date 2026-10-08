@@ -150,7 +150,8 @@ describe("destinationSession", () => {
       expect(field).toBeInstanceOf(HTMLTextAreaElement);
       expect(document.activeElement).toBe(field);
       expect(field?.style.position).toBe("fixed");
-      expect(field?.style.bottom).toBe("0px");
+      expect(field?.style.bottom).toBe("12px"); // a margin on the left, right and below
+      expect(field?.style.left).toBe("12px");
       expect(field?.style.height).toMatch(/33\.33/); // a third of the viewport, however the browser serializes it
       expect(field?.classList.contains("typetarget-destination")).toBe(true);
       expect(onPicked).toHaveBeenCalledWith(expect.objectContaining({ label: "TypeTarget new file" }));
@@ -166,6 +167,14 @@ describe("destinationSession", () => {
 
       expect(document.querySelectorAll(`#${NEW_FILE_FIELD_ID}`)).toHaveLength(1);
       expect(newFileField()).toHaveValue("hello");
+    });
+
+    it("opens with the text moved back from the editor tab, and types after it", () => {
+      destinationSession.openNewFileField("from the editor");
+
+      destinationSession.insert("then more", " ");
+
+      expect(newFileField()).toHaveValue("from the editor then more");
     });
 
     it("closes the box when typing stops", () => {

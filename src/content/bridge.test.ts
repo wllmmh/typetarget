@@ -100,6 +100,33 @@ describe("installContentBridge", () => {
     expect(fake.runtime.sendMessage).toHaveBeenCalledWith(envelope({ kind: "stop-typing-requested" }));
   });
 
+  it("asks the background to open the new-file box's text in a new tab", () => {
+    installContentBridge();
+    vi.spyOn(HTMLTextAreaElement.prototype, "getBoundingClientRect").mockReturnValue(new DOMRect(12, 400, 800, 200)); // jsdom does no layout
+    deliver({ kind: "open-new-file-field" });
+    deliver({ kind: "insert-text", text: "hello", separator: " " });
+    deliver({ kind: "set-session-indicator", indicator: { state: "stopped" } });
+
+    page().getByRole("button", { name: "Open in new tab" }).click();
+
+    expect(fake.runtime.sendMessage).toHaveBeenCalledWith(envelope({ kind: "open-in-new-tab", text: "hello" }));
+    vi.restoreAllMocks();
+  });
+
+  it("ignores messages from senders it wasn't told to accept", () => {
+    // The editor page runs the bridge and also hears the popup's own "clear-destination" request.
+    installContentBridge((sender) => sender.id === "background");
+    const listener = fake.runtime.onMessage.addListener.mock.calls[0]?.[0] as (m: unknown, s: unknown, r: (v: unknown) => void) => void;
+    listener(envelope({ kind: "enter-selection-mode" }), { id: "background" }, () => {});
+    textarea.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    const reply = vi.fn();
+
+    listener(envelope({ kind: "clear-destination" }), { id: "popup" }, reply);
+
+    expect(textarea.classList.contains("typetarget-destination")).toBe(true);
+    expect(reply).not.toHaveBeenCalled();
+  });
+
   it("drops the destination and its outline when the background clears it", () => {
     installContentBridge();
     pick(textarea);

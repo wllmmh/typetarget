@@ -8,8 +8,10 @@
  * either, which left it floating away from the outline until the next tick. Only ever one,
  * for the one destination. Reads: state icon, the source tab's name (none when stopped), the timer.
  *
- * A second tab of the same color sits on the outline's top right with the output's two buttons:
- * X (the same as the right-click menu's Stop typing) and Save (downloads the box's text as .txt).
+ * A second tab of the same color sits on the outline's top right with the output's buttons:
+ * Save (downloads the box's text as .txt) and X (the same as the right-click menu's Stop typing).
+ * For the "Type to new file" box, Minimize (or Restore) and Open in new tab sit between them; in
+ * the editor tab it opens, Move back to page does.
  */
 import { formatElapsed } from "../domain/elapsed";
 import type { SessionIndicator } from "../domain/messages";
@@ -18,8 +20,15 @@ import { DESTINATION_COLOR, setDestinationColor } from "./highlight";
 export const SESSION_BADGE_ID = "typetarget-session-badge";
 export const SESSION_BADGE_CONTROLS_ID = "typetarget-session-badge-controls";
 
-/** What the X and Save buttons on the outline's top right do. */
-export type BadgeActions = { onClose: () => void; onSave: () => void };
+/** What the buttons on the outline's top right do. */
+export type BadgeActions = {
+  onClose: () => void;
+  onSave: () => void;
+  /** Only for the "Type to new file" box (see new-file-field.ts). */
+  newFile?: { minimized: boolean; onToggleMinimize: () => void; onOpenInTab: () => void };
+  /** Only in the editor tab (see src/editor/main.ts). */
+  onMoveBack?: () => void;
+};
 
 const COLOR: Record<SessionIndicator["state"], string> = {
   listening: "#1f9d55",
@@ -28,7 +37,7 @@ const COLOR: Record<SessionIndicator["state"], string> = {
   stopped: DESTINATION_COLOR,
 };
 
-const MAX_NAME_LENGTH = 28;
+const MAX_NAME_LENGTH = 48;
 
 /** Tab titles can be long; the badge only needs enough to recognize the tab. */
 const truncate = (name: string): string => (name.length > MAX_NAME_LENGTH ? `${name.slice(0, MAX_NAME_LENGTH - 1).trimEnd()}…` : name);
@@ -50,6 +59,23 @@ const CLOSE_SHAPE: IconShape = { tag: "path", attrs: { d: "M2.5 2.5 L9.5 9.5 M9.
 const SAVE_SHAPE: IconShape = {
   tag: "path",
   attrs: { d: "M6 1 V8 M3 5 L6 8 L9 5 M1.5 10.75 H10.5", stroke: "currentColor", "stroke-width": "1.5", fill: "none" },
+};
+
+const MINIMIZE_SHAPE: IconShape = { tag: "path", attrs: { d: "M2 9.5 H10", stroke: "currentColor", "stroke-width": "1.75", fill: "none" } };
+const RESTORE_SHAPE: IconShape = {
+  tag: "rect",
+  attrs: { x: "2", y: "2", width: "8", height: "8", stroke: "currentColor", "stroke-width": "1.5", fill: "none" },
+};
+/** A box with an arrow leaving it: the text opens elsewhere. */
+const OPEN_IN_TAB_SHAPE: IconShape = {
+  tag: "path",
+  attrs: { d: "M7 1.5 H10.5 V5 M10.5 1.5 L5.5 6.5 M9 7.5 V10.5 H1.5 V3 H4.5", stroke: "currentColor", "stroke-width": "1.5", fill: "none" },
+};
+
+/** An arrow turning back down-left: the text goes back where it came from. */
+const MOVE_BACK_SHAPE: IconShape = {
+  tag: "path",
+  attrs: { d: "M10 2 V7 H3 M5.5 4.5 L3 7 L5.5 9.5", stroke: "currentColor", "stroke-width": "1.5", fill: "none" },
 };
 
 const createSvg = (shape: IconShape, style: string): SVGElement => {
@@ -127,10 +153,6 @@ const createControls = (): HTMLElement => {
   el.setAttribute("style", CONTROLS_STYLE);
   el.setAttribute("role", "group");
   el.setAttribute("aria-label", "TypeTarget output");
-  el.append(
-    createButton("Save as .txt", SAVE_SHAPE, () => actions?.onSave()),
-    createButton("Stop typing here", CLOSE_SHAPE, () => actions?.onClose()),
-  );
   // Keeps focus (and the caret) in the output box, and keeps the page from treating the press
   // as a click outside its own widget, e.g. a chat composer that collapses on outside clicks.
   // Capture-phase page listeners still see it; nothing here can stop those.
@@ -142,6 +164,26 @@ const createControls = (): HTMLElement => {
   }
   el.addEventListener("click", (e) => e.stopPropagation());
   return el;
+};
+
+/** Which buttons the controls hold, so they are rebuilt only when that changes. */
+const controlsLayout = ({ newFile, onMoveBack }: BadgeActions): string =>
+  newFile ? (newFile.minimized ? "minimized" : "new-file") : onMoveBack ? "editor" : "plain";
+
+const fillControls = (el: HTMLElement, { newFile, onMoveBack }: BadgeActions): void => {
+  el.replaceChildren(
+    createButton("Save as .txt", SAVE_SHAPE, () => actions?.onSave()),
+    ...(newFile
+      ? [
+          newFile.minimized
+            ? createButton("Restore", RESTORE_SHAPE, () => actions?.newFile?.onToggleMinimize())
+            : createButton("Minimize", MINIMIZE_SHAPE, () => actions?.newFile?.onToggleMinimize()),
+          createButton("Open in new tab", OPEN_IN_TAB_SHAPE, () => actions?.newFile?.onOpenInTab()),
+        ]
+      : []),
+    ...(onMoveBack ? [createButton("Move back to page", MOVE_BACK_SHAPE, () => actions?.onMoveBack?.())] : []),
+    createButton("Stop typing here", CLOSE_SHAPE, () => actions?.onClose()),
+  );
 };
 
 let badge: HTMLElement | null = null;
@@ -157,6 +199,7 @@ let placed = "";
 /** The badge's icon is rebuilt only when the state changes, not on each tick. */
 let shownState: SessionIndicator["state"] | null = null;
 let labelNode: Text | null = null;
+let shownLayout: string | null = null;
 
 const render = (): void => {
   if (!badge || !anchor || !indicator) return;
@@ -278,6 +321,7 @@ const remove = (): void => {
   actions = null;
   shownState = null;
   labelNode = null;
+  shownLayout = null;
 };
 
 /** Shows the timer and the buttons on `el`, or removes them when either of the first two is null. */
@@ -303,6 +347,11 @@ export const setSessionBadge = (el: Element | null, next: SessionIndicator | nul
     document.documentElement.append(badge, controls);
     ticker = setInterval(render, 1000);
     frame = requestAnimationFrame(follow);
+  }
+  const layout = controlsLayout(nextActions);
+  if (controls && layout !== shownLayout) {
+    shownLayout = layout;
+    fillControls(controls, nextActions);
   }
   render();
 };

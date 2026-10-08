@@ -10,7 +10,7 @@ import { setHighlighted, clearHighlight, setDestinationMarker } from "./highligh
 import { getRegisteredElement, registerElement } from "./element-registry";
 import { insertTranscriptText, toInsertionTarget } from "./insert-text";
 import { setSessionBadge, type BadgeActions } from "./session-badge";
-import { createNewFileField } from "./new-file-field";
+import { createNewFileField, setNewFileFieldMinimized } from "./new-file-field";
 import { saveTextFile, textOf } from "./save-text-file";
 import type { SessionIndicator } from "../domain/messages";
 
@@ -29,12 +29,35 @@ class DestinationSession {
   private indicator: SessionIndicator | null = null;
   /** The "Type to new file" box, while it is the destination (see new-file-field.ts). */
   private newFileField: HTMLTextAreaElement | null = null;
+  private newFileMinimized = false;
 
-  /** The X and Save buttons beside the badge. */
-  private readonly badgeActions: BadgeActions = {
-    onClose: () => this.onStopTypingRequested?.(),
-    onSave: () => this.saveToFile(),
-  };
+  /** The buttons beside the badge; the "Type to new file" box also gets Minimize and Open in new tab. */
+  private badgeActionsFor(el: Element | null): BadgeActions {
+    const actions: BadgeActions = {
+      onClose: () => this.onStopTypingRequested?.(),
+      onSave: () => this.saveToFile(),
+    };
+    if (this.onMoveBackRequested && el instanceof HTMLElement) {
+      return { ...actions, onMoveBack: () => this.onMoveBackRequested?.(textOf(el)) };
+    }
+    const field = this.newFileField;
+    if (!field || el !== field) return actions;
+    return {
+      ...actions,
+      newFile: {
+        minimized: this.newFileMinimized,
+        onToggleMinimize: () => this.setNewFileMinimized(!this.newFileMinimized),
+        onOpenInTab: () => this.onOpenInTabRequested?.(textOf(field)),
+      },
+    };
+  }
+
+  private setNewFileMinimized(minimized: boolean): void {
+    if (!this.newFileField) return;
+    this.newFileMinimized = minimized;
+    setNewFileFieldMinimized(this.newFileField, minimized);
+    setSessionBadge(this.newFileField, this.indicator, this.badgeActionsFor(this.newFileField));
+  }
 
   private readonly onPointerEnter = () => this.onPointerOverDestination?.(true);
   private readonly onPointerLeave = () => this.onPointerOverDestination?.(false);
@@ -57,7 +80,7 @@ class DestinationSession {
     this.pickedElementId = registerElement(el);
     this.insertionOffset = this.currentValueLength(el);
     setDestinationMarker(el);
-    setSessionBadge(el, this.indicator, this.badgeActions); // a replacement pick in this frame keeps the running timer
+    setSessionBadge(el, this.indicator, this.badgeActionsFor(el)); // a replacement pick in this frame keeps the running timer
     this.trackPointer(el);
     this.onPicked?.({ elementId: this.pickedElementId, label: describeElement(el) });
     // Picking by click or right-click leaves the pointer already inside, so no pointerenter will
@@ -75,6 +98,12 @@ class DestinationSession {
   onPointerOverDestination: ((over: boolean) => void) | null = null;
   /** The badge's X was clicked; the background decides, as for the menu's Stop typing. */
   onStopTypingRequested: (() => void) | null = null;
+  /** The new-file box's Open in new tab was clicked, with its text. The background opens an
+   * editor tab that takes over as the output; releasing this one then closes the box. */
+  onOpenInTabRequested: ((text: string) => void) | null = null;
+  /** Set only in the editor tab (src/editor): adds Move back to page to the badge, which hands
+   * the box's text back to the page the editor was opened from. */
+  onMoveBackRequested: ((text: string) => void) | null = null;
 
   private trackPointer(el: HTMLElement | null): void {
     this.trackedElement?.removeEventListener("pointerenter", this.onPointerEnter);
@@ -115,8 +144,12 @@ class DestinationSession {
    * "Type to new file": opens a text box over the bottom third of the page and picks it. One
    * already open is reused rather than stacked under a second.
    */
-  openNewFileField(): void {
+  openNewFileField(text?: string): void {
     if (!this.newFileField?.isConnected) this.newFileField = createNewFileField();
+    if (text !== undefined) this.newFileField.value = text; // moved back from the editor tab
+    // Asking for the box again brings back a minimized one.
+    this.newFileMinimized = false;
+    setNewFileFieldMinimized(this.newFileField, false);
     this.newFileField.focus();
     this.pick(this.newFileField);
   }
@@ -124,12 +157,15 @@ class DestinationSession {
   private closeNewFileField(): void {
     this.newFileField?.remove();
     this.newFileField = null;
+    this.newFileMinimized = false;
   }
 
-  /** Downloads the destination's current text (what was transcribed and typed) as a .txt file. */
+  /** Downloads the destination's current text (what was transcribed and typed) as a .txt file, named after the source tab. */
   saveToFile(): void {
     const el = this.pickedElementId ? getRegisteredElement(this.pickedElementId) : null;
-    if (el instanceof HTMLElement) saveTextFile(textOf(el));
+    // The source tab is only known while capturing; once stopped the file gets the plain name.
+    const tabName = this.indicator?.state === "stopped" ? undefined : this.indicator?.tabName;
+    if (el instanceof HTMLElement) saveTextFile(textOf(el), tabName);
   }
 
   isDestinationAlive(): boolean {
@@ -142,7 +178,7 @@ class DestinationSession {
     this.insertionOffset = 0;
     setDestinationMarker(null);
     this.indicator = null;
-    setSessionBadge(null, null, this.badgeActions);
+    setSessionBadge(null, null, this.badgeActionsFor(null));
     this.trackPointer(null);
     this.closeNewFileField(); // it exists only to be the output
   }
@@ -150,7 +186,8 @@ class DestinationSession {
   /** Shows (or with null, removes) the listening timer above the destination's outline. */
   setIndicator(indicator: SessionIndicator | null): void {
     this.indicator = indicator;
-    setSessionBadge(this.pickedElementId ? getRegisteredElement(this.pickedElementId) : null, indicator, this.badgeActions);
+    const el = this.pickedElementId ? getRegisteredElement(this.pickedElementId) : null;
+    setSessionBadge(el, indicator, this.badgeActionsFor(el));
   }
 
   /** Inserts finalized text at the tracked boundary. Returns false if the destination is gone. */

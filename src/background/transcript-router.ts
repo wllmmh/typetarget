@@ -39,6 +39,9 @@ export const createTranscriptRouter = ({ state, insertText, onStateChanged }: Tr
         const { event } = message;
         switch (event.type) {
           case "final": {
+            // Stopping flushes the transcriber, and inference runs slower than real time, so
+            // finals of the stopped session keep arriving; they must not be typed after Stop.
+            if (state.status === "idle") return;
             const { destination } = state;
             if (!destination) {
               reportError("no-destination", "Select a destination to receive the transcribed text.");
@@ -49,6 +52,7 @@ export const createTranscriptRouter = ({ state, insertText, onStateChanged }: Tr
             // propagate to every later final, silently dropping the rest of the transcript.
             insertions = insertions
               .then(async () => {
+                if (state.status === "idle") return; // stopped while this one waited its turn
                 await insertText(destination, event.text, FINAL_SEPARATOR);
                 state.transcript = { ...state.transcript, inserted: state.transcript.inserted + 1 };
               })

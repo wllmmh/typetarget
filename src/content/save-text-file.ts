@@ -9,9 +9,26 @@ const REVOKE_DELAY_MS = 10_000;
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
-/** e.g. typetarget-2026-10-08-1730.txt, in local time. */
-export const textFileName = (date: Date): string =>
-  `typetarget-${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}.txt`;
+const MAX_TAB_NAME_LENGTH = 50;
+
+/** A tab title as a file-name part: no path/reserved characters, whitespace collapsed, capped. */
+const fileNamePart = (tabName: string): string =>
+  tabName
+    .replace(/[\\/:*?"<>|\p{Cc}]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, MAX_TAB_NAME_LENGTH)
+    .trim();
+
+/**
+ * e.g. typetarget-2026-10-08-1730.txt in local time, or with the source tab's title,
+ * typetarget-My Video-2026-10-08-1730.txt. A title with nothing usable in it is left out.
+ */
+export const textFileName = (date: Date, tabName?: string): string => {
+  const stamp = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}`;
+  const name = tabName ? fileNamePart(tabName) : "";
+  return `typetarget-${name ? `${name}-` : ""}${stamp}.txt`;
+};
 
 /**
  * The text a box holds. `innerText` keeps a rich editor's line breaks, which `textContent`
@@ -22,11 +39,11 @@ export const textOf = (el: HTMLElement): string => {
   return typeof el.innerText === "string" ? el.innerText : el.textContent ?? "";
 };
 
-export const saveTextFile = (text: string, now: Date = new Date()): void => {
+export const saveTextFile = (text: string, tabName?: string, now: Date = new Date()): void => {
   const url = URL.createObjectURL(new Blob([text], { type: "text/plain;charset=utf-8" }));
   const link = document.createElement("a");
   link.href = url;
-  link.download = textFileName(now);
+  link.download = textFileName(now, tabName);
   link.click();
   setTimeout(() => URL.revokeObjectURL(url), REVOKE_DELAY_MS);
 };

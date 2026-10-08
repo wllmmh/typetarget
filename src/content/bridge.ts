@@ -23,8 +23,13 @@ const sendToBackground = (msg: ContentToBackground) => {
   void chrome.runtime.sendMessage(envelope(msg));
 };
 
-/** Returns false if this frame was already wired up by an earlier injection. */
-export const installContentBridge = (): boolean => {
+/**
+ * Returns false if this frame was already wired up by an earlier injection. `acceptFrom`
+ * filters by sender: an extension page (src/editor) running the bridge also hears the
+ * runtime.sendMessage traffic of the popup, whose requests share some kinds (e.g.
+ * "clear-destination"); a content script only ever hears chrome.tabs.sendMessage.
+ */
+export const installContentBridge = (acceptFrom: (sender: chrome.runtime.MessageSender) => boolean = () => true): boolean => {
   const world = globalThis as GuardedGlobal;
   if (world[CONTENT_BRIDGE_FLAG]) return false;
   world[CONTENT_BRIDGE_FLAG] = true;
@@ -45,8 +50,10 @@ export const installContentBridge = (): boolean => {
 
   destinationSession.onStopTypingRequested = () => sendToBackground({ kind: "stop-typing-requested" });
 
-  chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-    if (!isEnvelope<BackgroundToContent>(message)) return undefined;
+  destinationSession.onOpenInTabRequested = (text) => sendToBackground({ kind: "open-in-new-tab", text });
+
+  chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (!isEnvelope<BackgroundToContent>(message) || !acceptFrom(sender)) return undefined;
     const msg = message.payload;
 
     switch (msg.kind) {
@@ -78,7 +85,7 @@ export const installContentBridge = (): boolean => {
         return undefined;
       case "open-new-file-field":
         // Reports itself through onPicked, like any other pick.
-        destinationSession.openNewFileField();
+        destinationSession.openNewFileField(msg.text);
         sendResponse(envelope({ kind: "ok" } as const));
         return undefined;
       case "clear-destination":

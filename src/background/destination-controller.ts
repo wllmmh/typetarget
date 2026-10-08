@@ -119,8 +119,8 @@ export class DestinationController {
    * picks it. Always in the top frame, whichever frame was right-clicked, so the box covers the
    * tab's viewport rather than an iframe's.
    */
-  async openNewFileField(tabId: number): Promise<void> {
-    await this.pickInFrame(tabId, 0, { kind: "open-new-file-field" });
+  async openNewFileField(tabId: number, text?: string): Promise<void> {
+    await this.pickInFrame(tabId, 0, { kind: "open-new-file-field", text });
   }
 
   private async pickInFrame(tabId: number, frameId: number, msg: BackgroundToContent): Promise<void> {
@@ -135,6 +135,16 @@ export class DestinationController {
       this.selectingTabIds.delete(tabId);
       throw new DestinationError(raw.payload.message, raw.payload.code);
     }
+  }
+
+  /**
+   * The editor tab TypeTarget opened ("Open in new tab") picks its own text box: it is an
+   * extension page, so it runs the content bridge itself rather than being injected, and its
+   * pick is accepted like one made in selection mode.
+   */
+  async adoptEditorTab(tabId: number): Promise<void> {
+    await this.cancelSelection();
+    this.selectingTabIds.add(tabId);
   }
 
   async cancelSelection(): Promise<void> {

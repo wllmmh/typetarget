@@ -94,7 +94,13 @@ const loadModel = (modelId: ModelId): Promise<OffscreenReply> =>
     getAsrWorker().send({ kind: "load-model", modelId });
   });
 
-/** Tears down capture and the PCM tap, and has the worker finalize whatever utterance was in progress. */
+/**
+ * Tears down capture and the PCM tap, and has the worker drop whatever utterance was in
+ * progress or still queued. Inference runs slower than real time, so a stopped session can
+ * have finals pending; they would otherwise be transcribed and typed after the user stopped
+ * listening, or into the next session. Dropping them is the point — Stop means nothing more
+ * is typed. (Pause, by contrast, flushes: the words already spoken are still wanted.)
+ */
 const stopCapture = () => {
   if (statsTimer !== null) clearInterval(statsTimer);
   statsTimer = null;
@@ -106,18 +112,13 @@ const stopCapture = () => {
   active?.stop();
   active = null;
   paused = false;
-  asrWorker?.send({ kind: "flush" });
+  asrWorker?.send({ kind: "reset" });
 };
 
 const handleMessage = async (msg: BackgroundToOffscreen): Promise<OffscreenReply> => {
   switch (msg.kind) {
     case "start-capture": {
-      stopCapture();
-      // Inference runs slower than real time, so the previous session can still have finals
-      // queued; they would otherwise be transcribed and typed into this session. Dropping
-      // them is the point — the tail of a session the user already stopped is not what they
-      // want appearing in the next one.
-      asrWorker?.send({ kind: "reset" });
+      stopCapture(); // also drops the previous session's queued finals
       try {
         active = await startTabCapture(msg.streamId);
         pcm = await startPcmStream(active.audioContext, active.sourceNode, (samples) => {

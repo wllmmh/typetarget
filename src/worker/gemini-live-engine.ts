@@ -228,18 +228,24 @@ export class GeminiLiveEngine implements TranscriptionEngine {
   }
 
   /**
-   * Closes and reopens the session so nothing from before the reset can surface
-   * afterwards — the same intent as StreamingTranscriber's generation counter
-   * (HANDOFF.md: "audio from the last session was transcribed and typed into the next
-   * one"), just via connection lifecycle instead of a counter, since there is no local
-   * queue here to invalidate.
+   * Closes the session so nothing from before the reset can surface afterwards — the same
+   * intent as StreamingTranscriber's generation counter (HANDOFF.md: "audio from the last
+   * session was transcribed and typed into the next one"), just via connection lifecycle
+   * instead of a counter, since there is no local queue here to invalidate.
+   *
+   * Deliberately does not reconnect: Stop resets, and Stop must cut the connection. Every
+   * caller that wants one again (Start, a model load) follows the reset with load(). A
+   * pending load or reconnect is abandoned too (`lifecycle`), so it can't reopen one.
    */
   async reset(): Promise<void> {
-    const modelId = this.status.state === "ready" || this.status.state === "loading" ? this.status.modelId : null;
+    this.lifecycle++;
     this.dropSession();
     this.clearAudio();
     this.resetUtteranceState();
-    if (modelId) await this.load(modelId);
+    this.reconnecting = false;
+    // Nothing is connected now, and "ready" would have the next audio reopen a connection by
+    // itself (pushAudio's idle-disconnect path) instead of waiting for the load that follows.
+    if (this.status.state === "ready" || this.status.state === "loading") this.status = { state: "unloaded" };
   }
 
   getStatus(): EngineStatus {

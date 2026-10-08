@@ -124,7 +124,22 @@ export type ContentToBackground =
    * "Type to this field" on it (Chrome gives no way to ask which element a menu opens on). */
   | { kind: "pointer-over-destination"; over: boolean }
   /** The X on the destination's badge: the same as the right-click menu's "Stop typing". */
-  | { kind: "stop-typing-requested" };
+  | { kind: "stop-typing-requested" }
+  /** The new-file box's "Open in new tab": carry its text to an editor tab, which becomes the
+   * output in its place (see src/editor/main.ts). */
+  | { kind: "open-in-new-tab"; text: string };
+
+/** Editor page (src/editor) -> background. */
+export type EditorToBackground =
+  /** Asks for the text it opens with, and to become the output. */
+  | { kind: "editor-ready" }
+  /** The badge's Move back to page: reopen the "Type to new file" box, with this text, on the
+   * page the editor was opened from, and close the editor tab. */
+  | { kind: "move-back-requested"; originTabId: number; text: string };
+
+/** Background -> editor page, in reply to "editor-ready". `originTabId` is the page it was
+ * opened from; the editor keeps it, so moving back still works after a service-worker restart. */
+export type EditorReply = { kind: "editor-text"; text: string; originTabId: number | null };
 
 /** Background -> content script */
 export type BackgroundToContent =
@@ -138,7 +153,7 @@ export type BackgroundToContent =
   | { kind: "pick-focused-element" }
   /** From the right-click menu's "Type to new file": open a text box over the bottom third of
    * the page and pick it (see content/new-file-field.ts). */
-  | { kind: "open-new-file-field" }
+  | { kind: "open-new-file-field"; text?: string }
   /** Shows (or, with null, removes) the timer badge above the destination's outline. */
   | { kind: "set-session-indicator"; indicator: SessionIndicator | null };
 

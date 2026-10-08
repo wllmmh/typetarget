@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { destinationSession } from "./destination-session";
 import { within } from "@testing-library/react";
 import { SESSION_BADGE_CONTROLS_ID, SESSION_BADGE_ID } from "./session-badge";
+import { NEW_FILE_FIELD_ID } from "./new-file-field";
 
 const badge = () => document.getElementById(SESSION_BADGE_ID);
 const controls = () => document.getElementById(SESSION_BADGE_CONTROLS_ID);
@@ -18,6 +19,12 @@ const pickTextarea = () => {
   return textarea;
 };
 
+/** Opens the "Type to new file" box, laid out (jsdom does no layout) so its buttons show. */
+const openNewFile = () => {
+  vi.spyOn(HTMLTextAreaElement.prototype, "getBoundingClientRect").mockReturnValue(new DOMRect(12, 400, 800, 200));
+  destinationSession.openNewFileField();
+};
+
 /** jsdom's Blob has no text(). */
 const readBlob = (blob: Blob) =>
   new Promise<string>((resolve) => {
@@ -29,6 +36,8 @@ const readBlob = (blob: Blob) =>
 afterEach(() => {
   destinationSession.clearDestination();
   destinationSession.onStopTypingRequested = null;
+  destinationSession.onOpenInTabRequested = null;
+  destinationSession.onMoveBackRequested = null;
   document.body.innerHTML = "";
   vi.useRealTimers();
   vi.unstubAllGlobals();
@@ -94,8 +103,8 @@ describe("session badge over the destination", () => {
     vi.useFakeTimers({ now: 10_000 });
     pickTextarea();
 
-    destinationSession.setIndicator({ tabName: "A very long page title that goes on and on", since: 10_000, state: "listening" });
-    expect(badge()?.textContent).toBe("A very long page title that… 0:00");
+    destinationSession.setIndicator({ tabName: "A very long page title that goes on and on, and then some more", since: 10_000, state: "listening" });
+    expect(badge()?.textContent).toBe("A very long page title that goes on and on, and… 0:00"); // 48 characters with the ellipsis
   });
 
   it("stays on the outline when the element moves without a scroll or resize (e.g. a chat box growing)", async () => {
@@ -246,6 +255,68 @@ describe("session badge over the destination", () => {
     expect(downloads).toHaveLength(1);
     expect(downloads[0]).toMatch(/^typetarget-\d{4}-\d{2}-\d{2}-\d{4}\.txt blob:typetarget-test$/);
     expect(await Promise.all(blobs.map(readBlob))).toEqual(["Hello from the meeting"]);
+  });
+
+  it("offers Minimize and Open in new tab, between Save and X, only for the new-file box", () => {
+    pickTextarea();
+    destinationSession.setIndicator({ state: "stopped" });
+    expect(page().queryByRole("button", { name: "Minimize" })).toBeNull();
+
+    openNewFile();
+
+    const names = within(controls() ?? document.body).getAllByRole("button").map((button) => button.getAttribute("aria-label"));
+    expect(names).toEqual(["Save as .txt", "Minimize", "Open in new tab", "Stop typing here"]);
+  });
+
+  it("minimizes the new-file box to one line and restores it", () => {
+    openNewFile();
+    destinationSession.setIndicator({ state: "stopped" });
+    const field = document.getElementById(NEW_FILE_FIELD_ID);
+
+    page().getByRole("button", { name: "Minimize" }).click();
+    expect(field?.style.height).toBe("46.5px"); // one 15px line at 1.5 line-height, plus 12px padding above and below
+    expect(page().queryByRole("button", { name: "Minimize" })).toBeNull();
+
+    page().getByRole("button", { name: "Restore" }).click();
+    expect(field?.style.height).toMatch(/33\.33/);
+    expect(page().getByRole("button", { name: "Minimize" })).toBeVisible();
+  });
+
+  it("restores a minimized new-file box when Type to new file is chosen again", () => {
+    openNewFile();
+    destinationSession.setIndicator({ state: "stopped" });
+    page().getByRole("button", { name: "Minimize" }).click();
+
+    openNewFile();
+
+    expect(document.getElementById(NEW_FILE_FIELD_ID)?.style.height).toMatch(/33\.33/);
+    expect(page().getByRole("button", { name: "Minimize" })).toBeVisible();
+  });
+
+  it("hands the new-file box's text over when Open in new tab is clicked", () => {
+    const onOpenInTabRequested = vi.fn();
+    destinationSession.onOpenInTabRequested = onOpenInTabRequested;
+    openNewFile();
+    destinationSession.insert("Hello from the meeting", " ");
+    destinationSession.setIndicator({ state: "stopped" });
+
+    page().getByRole("button", { name: "Open in new tab" }).click();
+
+    expect(onOpenInTabRequested).toHaveBeenCalledWith("Hello from the meeting");
+  });
+
+  it("offers Move back to page in the editor tab, handing over the box's text", () => {
+    const onMoveBackRequested = vi.fn();
+    destinationSession.onMoveBackRequested = onMoveBackRequested;
+    const textarea = pickTextarea();
+    textarea.value = "Hello from the meeting";
+    destinationSession.setIndicator({ state: "stopped" });
+
+    const names = within(controls() ?? document.body).getAllByRole("button").map((button) => button.getAttribute("aria-label"));
+    expect(names).toEqual(["Save as .txt", "Move back to page", "Stop typing here"]);
+    page().getByRole("button", { name: "Move back to page" }).click();
+
+    expect(onMoveBackRequested).toHaveBeenCalledWith("Hello from the meeting");
   });
 
   it("hides the buttons with the badge when none of the element is visible", () => {

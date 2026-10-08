@@ -7,6 +7,7 @@ const DESTINATION: DestinationRef = { tabId: 7, frameId: 0, elementId: "el-1" };
 
 const setup = (options?: { destination?: DestinationRef | null; insertText?: () => Promise<void> }) => {
   const state = createInitialState();
+  state.status = "capturing";
   state.destination = options?.destination === undefined ? DESTINATION : options.destination;
   const insertText = vi.fn(options?.insertText ?? (async () => {}));
   const onStateChanged = vi.fn();
@@ -36,7 +37,7 @@ describe("createTranscriptRouter", () => {
       .mockImplementation(async (_d, text) => {
         order.push(text);
       });
-    const router = createTranscriptRouter({ state: { ...createInitialState(), destination: DESTINATION }, insertText, onStateChanged: vi.fn() });
+    const router = createTranscriptRouter({ state: { ...createInitialState(), status: "capturing" as const, destination: DESTINATION }, insertText, onStateChanged: vi.fn() });
 
     const first = router.handle(final("one"));
     const second = router.handle(final("two"));
@@ -44,6 +45,20 @@ describe("createTranscriptRouter", () => {
     await Promise.all([first, second]);
 
     expect(order).toEqual(["one", "two"]);
+  });
+
+  it("drops finals that arrive after capture stopped, including ones already queued", async () => {
+    let release = () => {};
+    const { router, insertText, state } = setup({ insertText: () => new Promise<void>((resolve) => (release = resolve)) });
+    const first = router.handle(final("one"));
+    const second = router.handle(final("two"));
+    await vi.waitFor(() => expect(insertText).toHaveBeenCalledTimes(1)); // "one" is mid-insertion
+    state.status = "idle";
+    release();
+    await Promise.all([first, second]);
+    await router.handle(final("three"));
+    expect(insertText).toHaveBeenCalledTimes(1);
+    expect(insertText).toHaveBeenCalledWith(DESTINATION, "one", " ");
   });
 
   it("does not insert partials", async () => {
@@ -121,7 +136,7 @@ describe("createTranscriptRouter", () => {
 
   it("keeps inserting after one insertion fails, and reports it", async () => {
     const insertText = vi.fn().mockRejectedValueOnce(new Error("tab gone")).mockResolvedValue(undefined);
-    const state = { ...createInitialState(), destination: DESTINATION };
+    const state = { ...createInitialState(), status: "capturing" as const, destination: DESTINATION };
     const router = createTranscriptRouter({ state, insertText, onStateChanged: vi.fn() });
 
     await router.handle(final("one"));

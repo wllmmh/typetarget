@@ -34,8 +34,10 @@ export default defineConfig({
       // The offscreen document isn't referenced by any manifest field (it's created
       // at runtime via chrome.offscreen.createDocument), so crx's manifest-driven
       // HTML discovery won't find it on its own; register it as an explicit entry.
+      // The editor page (opened with chrome.tabs.create) likewise.
       input: {
         offscreen: "src/offscreen/index.html",
+        editor: "src/editor/index.html",
       },
     },
   },

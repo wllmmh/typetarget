@@ -11,6 +11,8 @@ import {
   type CapturableTab,
   type ContentToBackground,
   type DestinationRef,
+  type EditorReply,
+  type EditorToBackground,
   type OffscreenToBackground,
   type PopupRequest,
   type SessionIndicator,
@@ -525,7 +527,58 @@ const CONTENT_MESSAGE_KINDS = new Set<ContentToBackground["kind"]>([
   "destination-selection-cancelled",
   "destination-unavailable",
   "stop-typing-requested",
+  "open-in-new-tab",
 ]);
+
+/** The page "Open in new tab" opens (src/editor); registered as a build input in vite.config.ts. */
+const EDITOR_PAGE_PATH = "src/editor/index.html";
+
+/** What each editor tab opens with, until it asks for it ("editor-ready"). */
+const editorTexts = new Map<number, { text: string; originTabId: number }>();
+/** The editor tab being created. Its page can ask for its text before tabs.create resolves
+ * with its id, so "editor-ready" waits on this first. */
+let editorOpening: Promise<void> = Promise.resolve();
+
+const openInNewTab = (text: string, openerTabId: number): void => {
+  editorOpening = (async () => {
+    const tab = await chrome.tabs.create({ url: chrome.runtime.getURL(EDITOR_PAGE_PATH), openerTabId });
+    if (tab.id !== undefined) editorTexts.set(tab.id, { text, originTabId: openerTabId });
+  })();
+  editorOpening.catch((err: unknown) => {
+    state.lastError = { code: "open-in-tab-failed", message: err instanceof Error ? err.message : "Could not open a new tab." };
+    broadcastState();
+  });
+};
+
+/** The editor tab is up: hands it its text and lets it pick its box, which replaces the current
+ * output (releasing the new-file box closes it). */
+const adoptEditorTab = async (tabId: number): Promise<EditorReply> => {
+  await editorOpening.catch(() => {});
+  const opened = editorTexts.get(tabId);
+  editorTexts.delete(tabId);
+  await destinationController.adoptEditorTab(tabId);
+  return { kind: "editor-text", text: opened?.text ?? "", originTabId: opened?.originTabId ?? null };
+};
+
+/** The editor tab's Move back to page: the "Type to new file" box reopens on the page it came
+ * from, with the editor's text, and becomes the output; then that page is brought forward and
+ * the editor tab closed. If the page is gone (or navigated, ending TypeTarget's access), the
+ * editor stays the output and the popup says why. */
+const moveBackToPage = async (editorTabId: number, originTabId: number, text: string): Promise<void> => {
+  try {
+    await destinationController.openNewFileField(originTabId, text);
+  } catch {
+    state.lastError = { code: "move-back-failed", message: "Couldn't move the text back: the page it came from is closed or has changed." };
+    broadcastState();
+    return;
+  }
+  state.isSelectingDestination = false;
+  state.lastError = null;
+  broadcastState();
+  const origin = await chrome.tabs.update(originTabId, { active: true }).catch(() => undefined);
+  if (origin) await chrome.windows.update(origin.windowId, { focused: true }).catch(() => {});
+  await chrome.tabs.remove(editorTabId).catch(() => {});
+};
 
 const handleContentMessage = (msg: ContentToBackground, sender: chrome.runtime.MessageSender): void => {
   const tabId = sender.tab?.id;
@@ -556,6 +609,13 @@ const handleContentMessage = (msg: ContentToBackground, sender: chrome.runtime.M
       const { destination } = state;
       if (!destination || destination.tabId !== tabId || destination.frameId !== frameId) return;
       clearDestination(); // exactly what the right-click menu's Stop typing does
+      return;
+    }
+    case "open-in-new-tab": {
+      // Only the destination's own frame shows the button, as for stop-typing-requested.
+      const { destination } = state;
+      if (!destination || destination.tabId !== tabId || destination.frameId !== frameId) return;
+      openInNewTab(msg.text, destination.tabId);
       return;
     }
     case "destination-unavailable":
@@ -601,6 +661,24 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (isEnvelope<OffscreenToBackground>(message) && isOffscreenMessage(message.payload)) {
     // Text is inserted into a user-chosen page, so only the offscreen document may feed it.
     if (isFromExtensionPage(sender, OFFSCREEN_DOCUMENT_PATH)) void transcriptRouter.handle(message.payload);
+    return undefined;
+  }
+
+  if (isEnvelope<EditorToBackground>(message) && message.payload.kind === "editor-ready") {
+    const tabId = sender.tab?.id;
+    if (!isFromExtensionPage(sender, EDITOR_PAGE_PATH) || tabId === undefined) return undefined;
+    void adoptEditorTab(tabId).then((reply) => sendResponse(envelope<EditorReply>(reply)));
+    return true; // keep the message channel open for the async response
+  }
+
+  if (isEnvelope<EditorToBackground>(message) && message.payload.kind === "move-back-requested") {
+    const tabId = sender.tab?.id;
+    if (!isFromExtensionPage(sender, EDITOR_PAGE_PATH) || tabId === undefined) return undefined;
+    const { originTabId, text } = message.payload;
+    void stateRestored.then(() => {
+      // Only the editor that is the output shows the button; any other request is stale.
+      if (state.destination?.tabId === tabId) return moveBackToPage(tabId, originTabId, text);
+    });
     return undefined;
   }
 
