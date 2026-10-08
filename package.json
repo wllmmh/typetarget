@@ -2,7 +2,7 @@
   "name": "typetarget",
   "version": "0.1.0",
   "private": true,
-  "description": "Local Chromium live audio transcriber extension (tab capture -> local Whisper -> cross-tab text insertion).",
+  "description": "Chromium live audio transcriber extension (tab capture -> hosted or in-browser Whisper/Gemini -> cross-tab text insertion).",
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -23,7 +23,7 @@ import { clampChunkMs } from "../domain/tuning";
 import { isPlausibleApiKey, API_KEY_PROVIDER_NAMES, type ApiKeyProvider } from "../domain/api-key";
 import { createInitialState, toPublicState } from "./state";
 import { pruneKnownTabs, recordKnownTab, removeKnownTab, sameKnownTabs, updateKnownTab } from "./known-tabs";
-import { persistState, restorePersistedState } from "./persisted-state";
+import { persistState, restorePersistedState, restrictLocalStorageToExtension } from "./persisted-state";
 import { CaptureController, CaptureError } from "./capture-controller";
 import { DestinationController, DestinationError } from "./destination-controller";
 import { OFFSCREEN_DOCUMENT_PATH } from "./offscreen-manager";
@@ -32,16 +32,17 @@ import { buildMenuModel, ContextMenu, isCapturing, MENU_LISTEN_HERE_ID, MENU_NEW
 
 // MV3 service workers are non-persistent: this module-level state is rebuilt from
 // scratch whenever Chrome wakes the worker, so it must never be the sole record of
-// anything that has to survive a worker restart mid-capture. Today capture state
-// lives only here and in the offscreen document (which chrome.offscreen keeps alive
-// independently of the service worker) — restoring popup-visible state after an
-// unexpected worker restart during an active capture is a known Phase-7 gap, called
-// out in the final report rather than silently assumed away.
+// anything that has to survive a worker restart mid-capture. The offscreen document
+// (which chrome.offscreen keeps alive independently of this worker) owns the running
+// capture; a restarted worker asks it whether it still is (see captureReattached below).
 const state = createInitialState();
+
+void restrictLocalStorageToExtension();
 
 // MV3 restarts this worker freely, so the user's picks are reloaded from storage before
 // any request is answered (see persisted-state.ts).
-const stateRestored = restorePersistedState(state);
+const persistedCapture = restorePersistedState(state);
+const stateRestored: Promise<void> = persistedCapture.then(() => {});
 
 /**
  * The pointer is over the destination element, per the destination's own frame
@@ -119,7 +120,7 @@ const captureController = new CaptureController({
     state.sourceTabId = null;
     state.session = null;
     state.lastError = { code: "source-tab-closed", message: "Source tab is no longer available." };
-    broadcastState();
+    commitState();
   },
 });
 
@@ -151,6 +152,35 @@ const transcriptRouter = createTranscriptRouter({
   state,
   insertText: (destination, text, separator) => destinationController.insertText(destination, text, separator),
   onStateChanged: broadcastState,
+  onCaptureEnded: () => {
+    if (!isCapturing(state.status)) return;
+    void captureController.stop();
+    state.status = "error";
+    state.sourceTabId = null;
+    state.session = null;
+    state.lastError = {
+      code: "capture-ended",
+      message: "The source tab's audio stopped reaching TypeTarget. Start listening again to resume.",
+    };
+    commitState();
+  },
+});
+
+/**
+ * Picks a capture back up after this worker restarted mid-capture. Until it settles, the
+ * restored state says idle, which would drop the offscreen document's finals (and is why
+ * its messages wait on this), so everything that reads capture state awaits it.
+ */
+const captureReattached: Promise<void> = persistedCapture.then(async (capture) => {
+  if (!capture) return;
+  const running = await captureController.reattach(capture.sourceTabId).catch(() => null);
+  if (running) {
+    state.status = running.paused ? "paused" : "capturing";
+    state.sourceTabId = capture.sourceTabId;
+    state.pendingSourceTabId = capture.sourceTabId;
+    state.session = capture.session;
+  }
+  commitState(); // either way the stored capture now matches what is actually running
 });
 
 /**
@@ -226,14 +256,14 @@ const startCapture = async (sourceTabId: number): Promise<BackgroundResponse> =>
     state.sourceTabId = sourceTabId;
     state.lastError = null;
     state.modelDownload = null;
-    broadcastState();
+    commitState(); // the running capture is persisted
     return { kind: "ok" };
   } catch (err) {
     const captureErr = err instanceof CaptureError ? err : new CaptureError("Unknown capture error.", "unknown");
     state.status = "error";
     state.modelDownload = null;
     state.lastError = { code: captureErr.code, message: captureErr.message };
-    broadcastState();
+    commitState();
     return { kind: "error", code: captureErr.code, message: captureErr.message };
   }
 };
@@ -263,7 +293,7 @@ const setPaused = async (paused: boolean): Promise<BackgroundResponse> => {
     return { kind: "error", code: err instanceof CaptureError ? err.code : "unknown", message };
   }
   state.status = paused ? "paused" : "capturing";
-  broadcastState();
+  commitState();
   return { kind: "ok" };
 };
 
@@ -328,7 +358,7 @@ const beginDestinationSelection = async (): Promise<BackgroundResponse> => {
   }
 };
 
-void stateRestored.then(() => {
+void captureReattached.then(() => {
   syncContextMenu();
   syncSessionIndicator(); // a restored destination shows "Stopped" until capture starts
 });
@@ -376,7 +406,7 @@ const listenTo = async (tabId: number): Promise<void> => {
 };
 
 const handleMenuClick = async (info: chrome.contextMenus.OnClickData, tab: chrome.tabs.Tab | undefined): Promise<void> => {
-  await stateRestored;
+  await captureReattached;
   if (tab) {
     const knownTabs = recordKnownTab(state.knownTabs, tab);
     if (!sameKnownTabs(knownTabs, state.knownTabs)) {
@@ -400,7 +430,7 @@ const handleMenuClick = async (info: chrome.contextMenus.OnClickData, tab: chrom
     return;
   }
   if (info.menuItemId === MENU_STOP_TYPING_ID) {
-    if (state.destination) clearDestination();
+    if (state.destination) clearDestination({ keepNewFileField: true });
     return;
   }
   if (tab?.id === undefined) return;
@@ -457,8 +487,10 @@ const cancelDestinationSelection = async (): Promise<BackgroundResponse> => {
   return { kind: "ok" };
 };
 
-const clearDestination = (): BackgroundResponse => {
-  if (state.destination) void destinationController.release(state.destination);
+/** Stop typing (`keepNewFileField`) leaves a "Type to new file" box on the page with its text;
+ * the badge's X is what removes one. */
+const clearDestination = ({ keepNewFileField = false } = {}): BackgroundResponse => {
+  if (state.destination) void destinationController.release(state.destination, keepNewFileField);
   state.destination = null;
   state.destinationLabel = null;
   commitState();
@@ -480,7 +512,7 @@ const setSourceTab = (sourceTabId: number | null): BackgroundResponse => {
 };
 
 const handlePopupRequest = async (req: PopupRequest): Promise<BackgroundResponse> => {
-  await stateRestored;
+  await captureReattached;
   switch (req.kind) {
     case "get-state":
       return { kind: "state", state: toPublicState(state) };
@@ -499,7 +531,7 @@ const handlePopupRequest = async (req: PopupRequest): Promise<BackgroundResponse
     case "cancel-destination-selection":
       return cancelDestinationSelection();
     case "clear-destination":
-      return clearDestination();
+      return clearDestination({ keepNewFileField: true }); // the popup's Stop typing, same as the menu's
     case "pause-transcription":
       return setPaused(true);
     case "resume-transcription":
@@ -615,7 +647,7 @@ const handleContentMessage = (msg: ContentToBackground, sender: chrome.runtime.M
       // Only the destination's own frame shows the X; any other sender is stale or not ours.
       const { destination } = state;
       if (!destination || destination.tabId !== tabId || destination.frameId !== frameId) return;
-      clearDestination(); // exactly what the right-click menu's Stop typing does
+      clearDestination(); // like Stop typing, but the X also removes a "Type to new file" box
       return;
     }
     case "minimize-requested": {
@@ -677,7 +709,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (isEnvelope<OffscreenToBackground>(message) && isOffscreenMessage(message.payload)) {
     // Text is inserted into a user-chosen page, so only the offscreen document may feed it.
-    if (isFromExtensionPage(sender, OFFSCREEN_DOCUMENT_PATH)) void transcriptRouter.handle(message.payload);
+    if (isFromExtensionPage(sender, OFFSCREEN_DOCUMENT_PATH)) {
+      const { payload } = message;
+      // Chained, so a woken worker handles them in order once it knows what is capturing.
+      void captureReattached.then(() => transcriptRouter.handle(payload));
+    }
     return undefined;
   }
 

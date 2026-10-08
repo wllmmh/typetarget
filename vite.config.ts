@@ -20,8 +20,20 @@ const whisperGlue = (): Plugin => ({
   },
 });
 
+// The licenses of TypeTarget and of the code it bundles (whisper.cpp, React, @google/genai...)
+// must travel with the packaged extension, not just the repo.
+const licenseFiles = (): Plugin => ({
+  name: "typetarget-license-files",
+  apply: "build",
+  generateBundle() {
+    for (const fileName of ["LICENSE", "THIRD_PARTY_NOTICES.md"]) {
+      this.emitFile({ type: "asset", fileName, source: readFileSync(fileName) });
+    }
+  },
+});
+
 export default defineConfig({
-  plugins: [react(), crx({ manifest }), whisperGlue()],
+  plugins: [react(), crx({ manifest }), whisperGlue(), licenseFiles()],
   server: {
     // crx's HMR client connects on a fixed port; avoid clashing with other local dev servers.
     port: 5175,

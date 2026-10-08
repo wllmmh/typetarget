@@ -91,7 +91,7 @@ export const installContentBridge = (acceptFrom: (sender: chrome.runtime.Message
         sendResponse(envelope({ kind: "ok" } as const));
         return undefined;
       case "clear-destination":
-        sendResponse(envelope<ReleaseReply>({ kind: "released", carriedText: destinationSession.clearDestination() }));
+        sendResponse(envelope<ReleaseReply>({ kind: "released", carriedText: destinationSession.clearDestination(msg.keepNewFileField) }));
         return undefined;
       case "take-destination-text":
         sendResponse(envelope<DestinationTextReply>({ kind: "destination-text", text: destinationSession.takeDestinationText() }));

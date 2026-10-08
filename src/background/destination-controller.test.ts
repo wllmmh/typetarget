@@ -207,7 +207,7 @@ describe("DestinationController.insertText / checkAlive", () => {
     const controller = new DestinationController({ onPicked: vi.fn(), onUnavailable });
 
     await controller.release({ tabId: 5, frameId: 3, elementId: "el-1" });
-    expect(fake.tabs.sendMessage).toHaveBeenCalledWith(5, envelope({ kind: "clear-destination" }), { frameId: 3 });
+    expect(fake.tabs.sendMessage).toHaveBeenCalledWith(5, envelope({ kind: "clear-destination", keepNewFileField: false }), { frameId: 3 });
 
     fake.tabs.sendMessage.mockRejectedValueOnce(new Error("No tab with id: 5"));
     await expect(controller.release({ tabId: 5, frameId: 3, elementId: "el-1" })).resolves.toBeNull();

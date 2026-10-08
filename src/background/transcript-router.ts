@@ -15,13 +15,15 @@ export type TranscriptRouterDeps = {
   insertText: (destination: DestinationRef, text: string, separator: string) => Promise<void>;
   /** Call after mutating `state` so the popup re-renders. */
   onStateChanged: () => void;
+  /** The captured stream ended by itself; the offscreen document has already stopped it. */
+  onCaptureEnded: () => void;
 };
 
 export type TranscriptRouter = {
   handle: (message: OffscreenToBackground) => Promise<void>;
 };
 
-export const createTranscriptRouter = ({ state, insertText, onStateChanged }: TranscriptRouterDeps): TranscriptRouter => {
+export const createTranscriptRouter = ({ state, insertText, onStateChanged, onCaptureEnded }: TranscriptRouterDeps): TranscriptRouter => {
   // Finals must reach the destination in the order they were produced, so insertions
   // are chained rather than fired independently. The chain is kept in a resolved state
   // (see the catch below) so one failure cannot kill everything after it.
@@ -112,6 +114,9 @@ export const createTranscriptRouter = ({ state, insertText, onStateChanged }: Tr
         onStateChanged();
         return;
       }
+      case "capture-ended":
+        onCaptureEnded();
+        return;
       default: {
         const _exhaustive: never = message;
         return _exhaustive;

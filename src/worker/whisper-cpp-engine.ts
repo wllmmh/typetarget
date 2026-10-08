@@ -168,12 +168,12 @@ export class WhisperCppEngine implements TranscriptionEngine {
         throw new Error(`whisper.cpp inference failed with code ${resultCode}.`);
       }
 
-      // Note: with the synchronous build this timeout cannot fire while inference runs —
-      // full_default() blocks the worker, so there is no chance to tick. It guards the case
-      // where the completion marker never arrives at all.
+      // This only guards a completion marker that never arrives. It can't detect slow
+      // inference: full_default() blocks the worker, so nothing ticks while it runs. Falling
+      // behind real time is judged in the popup instead, from the inference stats.
       await pollUntil(() => inferenceFinished, {
         timeoutMs: 30_000,
-        onTimeout: "Transcription fell behind real time.", // exact wording from AGENTS.md "Error handling"
+        onTimeout: "Transcription did not finish.",
       });
 
       const segments = parseWhisperOutput(capturedStdout.join("\n"));

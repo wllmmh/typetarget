@@ -32,14 +32,14 @@ export type WhisperModelId =
 export type ModelId = WhisperModelId | "gemini-3.5-transcribe-live" | "groq-whisper-large-v3-turbo" | "groq-whisper-large-v3";
 
 /**
- * tiny.en, not base.en: a cold first run must download the model before anything can be
- * transcribed (~74 MB / ~40 s vs ~142 MB / ~81 s measured in Chrome), and per-utterance
- * inference cost is dominated by Whisper's fixed 30 s window either way. base.en stays
- * one dropdown pick away for accuracy. Network providers are opt-in, never the default —
- * both because they are unverified in this codebase and because sending audio off-device
- * must be a deliberate user choice, not a silent default.
+ * tiny.en-q5_1: the smallest download (~31 MB) and, measured in Chrome, ~1.3× faster than
+ * tiny.en with an identical transcript (HANDOFF.md "Lever 3"). Local models are one option
+ * among several: whether any of them keeps up live depends on the user's machine, and most
+ * won't, so the popup points slow machines at a network model. Network providers are still
+ * never the default — sending audio off-device must be a deliberate choice, and they need
+ * the user's own API key.
  */
-export const DEFAULT_MODEL: ModelId = "tiny.en";
+export const DEFAULT_MODEL: ModelId = "tiny.en-q5_1";
 
 export type ModelInfo = {
   id: ModelId;
@@ -52,16 +52,15 @@ export type ModelInfo = {
   /** Only local models have a fixed download size. */
   approxSizeMb?: number;
   /** True if selecting this model sends captured audio off-device. Drives the popup's
-   * privacy notice — see HANDOFF.md "API key". */
+   * notice under the model picker. */
   network?: boolean;
   requiresApiKey?: boolean;
 };
 
 export const MODEL_CATALOG: Record<ModelId, ModelInfo> = {
   "tiny.en": { id: "tiny.en", provider: "whisper-cpp", name: "Whisper", label: "Tiny (English)", approxSizeMb: 74 }, // measured: 77,704,715 bytes
-  // 5-bit quantized tiny.en, same architecture, smaller/faster download only — inference
-  // speed is unverified (quantization trades memory bandwidth for CPU dequant cost; see
-  // HANDOFF.md "Lever 3"). Offered as a user-chosen option, not the default, until measured.
+  // 5-bit quantized tiny.en, same architecture: smaller download and ~1.3× faster inference,
+  // same transcript (measured, HANDOFF.md "Lever 3"). The default.
   "tiny.en-q5_1": {
     id: "tiny.en-q5_1",
     provider: "whisper-cpp",
@@ -76,8 +75,8 @@ export const MODEL_CATALOG: Record<ModelId, ModelInfo> = {
   // The rest of the mirror's English-only files the vendored build can hold, each family kept
   // together in the popup's list (Tiny Q8 and Base Q5/Q8 sit above with their families).
   // Sizes are the mirror's listed byte counts (2026-10-08), in MiB like the ones above. Larger
-  // models transcribe more accurately but far slower — this build is single-threaded, where even
-  // tiny.en runs slower than real time (HANDOFF.md) — so none is a default. The vendored WASM
+  // models transcribe more accurately but far slower — this build is single-threaded, so whether
+  // even tiny.en keeps up live depends on the machine (HANDOFF.md) — so none is a default. The vendored WASM
   // heap tops out near 2 GB (measured: 512 MB initial, growable to ~1.94 GiB), which rules out
   // the full-precision medium.en (1.46 GiB of weights before working memory) and every large
   // model; whether Medium Q8 fits alongside its working memory is unverified.
@@ -87,9 +86,8 @@ export const MODEL_CATALOG: Record<ModelId, ModelInfo> = {
   "medium.en-q5_0": { id: "medium.en-q5_0", provider: "whisper-cpp", name: "Whisper", label: "Medium Q5 (English, quantized)", approxSizeMb: 514 }, // 539,225,533 bytes
   "medium.en-q8_0": { id: "medium.en-q8_0", provider: "whisper-cpp", name: "Whisper", label: "Medium Q8 (English, quantized)", approxSizeMb: 785 }, // 823,382,461 bytes
   // Google's Gemini 3.5 Transcribe, via the Live API (persistent WebSocket, not the
-  // simpler batch Files-API alternative — see HANDOFF.md for why). Unverified end to end
-  // in this codebase: no real API key/browser available to test against the real
-  // service. Sends captured audio to Google using the user's own API key.
+  // simpler batch Files-API alternative — see HANDOFF.md for why). Confirmed working with a
+  // real key by the user (2026-10-08). Sends captured audio to Google using the user's own API key.
   "gemini-3.5-transcribe-live": {
     id: "gemini-3.5-transcribe-live",
     provider: "gemini-live",

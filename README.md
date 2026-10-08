@@ -1,17 +1,19 @@
 # TypeTarget — Directed Transcriber
 
 Captures a browser tab's audio and streams transcribed text into a text field you
-choose in another tab. Transcription runs locally by default (Whisper, compiled to
-WASM) — no audio or transcript ever leaves the device unless you deliberately pick a
-network model and supply your own API key.
+choose in another tab. You choose how it's transcribed: a hosted model (Groq or
+Gemini, with your own API key), which keeps up live on any computer, or Whisper
+running in the browser, which keeps audio on your device but only keeps up live on a
+fast enough machine.
 
 ## Models
 
 The popup's Model dropdown lists every supported model, grouped by provider:
 
-- **Whisper** (`tiny.en`, `tiny.en-q5_1`, `base.en`) — runs fully local in a Worker,
-  no network access, nothing to configure. The default. The first use of each model
-  downloads it once (31–142 MB) and caches it. Also listed: quantized
+- **Whisper** (`tiny.en-q5_1`, the default, plus `tiny.en` and `base.en`) — runs in the
+  browser in a Worker, with no network access and nothing to configure. Whether it keeps up
+  live depends on your computer, and on most it won't; the popup tells you when it is
+  falling behind. The first use of each model downloads it once (31–142 MB) and caches it. Also listed: quantized
   `tiny.en-q8_0`, `base.en-q5_1`/`-q8_0`, `small.en-q5_1`/`-q8_0`, `medium.en-q5_0`/`-q8_0`,
   and full-precision `small.en` (42–785 MB), from the same mirror. Larger models are more
   accurate but much slower; the full-precision `medium.en` and the large models don't fit in
@@ -25,13 +27,13 @@ The popup's Model dropdown lists every supported model, grouped by provider:
   Groq. Groq bills every request as at least 10 seconds of audio, so a longer chunk
   length (see below) costs less per minute of speech.
 
-Only one model is active per capture session, and nothing is sent anywhere unless
-you've explicitly picked a Gemini or Groq model.
+Only one model is active per capture session. Audio is only sent anywhere while a Gemini
+or Groq model is selected, and the popup says so under the model picker.
 
 ## Chunk length
 
 The slider caps how long one utterance can grow (3–25 s) before it is transcribed
-anyway; a pause in speech finalizes it sooner. With the local Whisper models, each
+anyway; a pause in speech finalizes it sooner. With the in-browser Whisper models, each
 transcription costs about the same regardless of length, so a longer chunk keeps up
 better on slow hardware. It also sets how often Gemini and Groq receive a finished utterance.
 
@@ -63,9 +65,10 @@ with or share any key. Click the key icon next to the model picker to open a dia
   opened the popup on; right-click a different tab while listening to switch to it), "Stop listening" (greyed out unless capturing),
   "Type to this field" (greyed out unless you right-clicked a text box, and on the one that is already
   the output), "Type to new file" (anywhere, text boxes included: opens a text box over the bottom third
-  of the page and types into that), and "Stop typing" (works from anywhere while there is an output box),
+  of the page and types into that), and "Stop typing" (works from anywhere while there is an output box;
+  a "new file" box stays on the page with its text, marked "Not typing"),
   so you can drive TypeTarget from the tab you're typing into. The output box's colored outline carries
-  two buttons on its top right: X (same as "Stop typing"; it also closes a "new file" box) and Save,
+  two buttons on its top right: X (stops typing, and closes a "new file" box) and Save,
   which downloads the box's text to your device as a `.txt` file.
   Choosing an item gives TypeTarget the same one-tab access as opening the popup there.
 - **host_permissions** (`generativelanguage.googleapis.com`, `api.groq.com`) — lets the
@@ -79,8 +82,18 @@ right-clicked a text box and chose TypeTarget → "Select field".
 
 ## Privacy
 
-- **Network models are opt-in.** Selecting a Gemini or Groq model is a deliberate
-  choice. While capturing, a Gemini model streams captured audio to Google, and a Groq
-  model uploads each finished utterance to Groq, using your API key.
+- **Hosted models send audio to their provider.** While capturing, a Gemini model streams
+  captured audio to Google, and a Groq model uploads each finished utterance to Groq,
+  using your API key. The popup shows this under the model picker whenever one is selected.
+- **Whisper models keep audio on your device.** They need no key and send nothing.
 - **Nothing is logged or telemetered.** No audio, transcript, or API key leaves this
-  device except audio sent to a network model you've explicitly selected.
+  device except audio sent to the hosted model you selected.
+- **API keys can be removed** at any time with Remove key in the API Keys dialog.
+
+The full privacy policy is in [PRIVACY.md](PRIVACY.md); the audit behind it, with open issues,
+is in [docs/privacy-audit.md](docs/privacy-audit.md).
+
+## License
+
+MIT — see [LICENSE](LICENSE). Bundled third-party code (whisper.cpp, React, `@google/genai`
+and its dependencies) is listed with its licenses in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

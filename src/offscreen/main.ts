@@ -120,7 +120,10 @@ const handleMessage = async (msg: BackgroundToOffscreen): Promise<OffscreenReply
     case "start-capture": {
       stopCapture(); // also drops the previous session's queued finals
       try {
-        active = await startTabCapture(msg.streamId);
+        active = await startTabCapture(msg.streamId, () => {
+          stopCapture();
+          sendToBackground({ kind: "capture-ended" });
+        });
         pcm = await startPcmStream(active.audioContext, active.sourceNode, (samples) => {
           stats.batches++;
           stats.peakLevel = Math.max(stats.peakLevel, peakOf(samples));
@@ -176,6 +179,8 @@ const handleMessage = async (msg: BackgroundToOffscreen): Promise<OffscreenReply
       paused = false;
       return { kind: "ok" };
     }
+    case "get-capture-status":
+      return { kind: "capture-status", capturing: active !== null, paused };
     default: {
       const _exhaustive: never = msg;
       return _exhaustive;

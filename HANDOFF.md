@@ -5,7 +5,7 @@ phase status, `docs/whisper-wasm-provenance.md` before touching anything ASR, th
 file for what is fragile, what was learned the hard way, and where the performance work
 has to go.
 
-Last updated 2026-09-29.
+Last updated 2026-10-08.
 
 ## Where the project actually is
 
@@ -20,11 +20,36 @@ Last updated 2026-09-29.
   which it cannot do unless the whole chain works.
 - The user commits manually (see `~/.claude/CLAUDE.md`); agents never commit. `dist/` is
   tracked (commit `651109a`), so a build shows up as changes there.
-- It is **not usable for live transcription yet**, and that is a performance problem, not
-  a wiring problem. See "Performance: the actual blocker" below — that is the section
-  that matters most.
+- **Product direction (2026-10-08, from the user): the extension is not local-first.**
+  In-browser Whisper is one transcription method among several, and only works live on
+  a fast enough machine — which most users won't have. Hosted models (Groq, Gemini) are
+  the practical route to live transcription for most people. Making local Whisper fast
+  enough for live use is *not* a goal; the popup instead warns when a local model falls
+  behind real time and points at a hosted model. See "Local Whisper performance" below
+  for the measurements and optional speedups, should anyone want them.
 
 ## What this session did
+
+### 2026-10-08: not local-first; restart and ended-stream handling
+
+- Direction change from the user: local Whisper is one method, viable live only on fast
+  machines. README, package description, offscreen justification, PLAN.md and this file
+  no longer frame the project as local-first or local speed as the blocker.
+- `tiny.en-q5_1` is now `DEFAULT_MODEL`. A stored `selectedModel` still wins, so existing
+  installs keep whatever they had picked.
+- Popup: hosted-model notice under the picker; "slower than real time" warning for a local
+  model whose last inference exceeded the chunk length (only while capturing).
+- Service-worker restart mid-capture and ended capture streams handled — see "Known gaps".
+- Not verified in a real browser: none of the above has been hand-tested yet.
+- **The Gemini engine works end to end** — the user has been using it with a real key
+  (reported 2026-10-08). Groq still has no real request on record.
+- Stop typing (right-click menu and popup) no longer removes a "Type to new file" box: it
+  stays on the page with its text and its outline (grey, like its buttons), badge reading
+  "Not typing" with Save and a "Close" X,
+  which removes it locally (the background no longer tracks it). "Type to new file" again
+  re-picks that same box. Picking another text box in the same frame still closes it and
+  carries its text over (existing move-the-output behavior). The output's own X still stops
+  typing *and* closes the box.
 
 ### 2026-09-29: Groq engine built
 
@@ -79,7 +104,7 @@ table in `docs/whisper-wasm-provenance.md`. Headlines:
   deferred `setTimeout`, not a normal click).
 - **Lever 3 measured: `tiny.en-q5_1` is ~1.3× faster** than `tiny.en` (single-threaded
   ~10.4 s vs ~13.4 s on 11 s of speech; ~9.7 vs ~12.8 s on silence), identical transcript,
-  2.4× smaller download. Not promoted to default yet — that is a product call; recommended.
+  2.4× smaller download. Promoted to default 2026-10-08.
 - **Lever 1 measured: the threaded build (`bench/libmain-threaded.js`) works** — correct
   transcripts, stable over repeated calls, scaling near-linearly to the 6 physical cores:
   13.8 s → 6.5 s (×2) → 3.4 s (×4) → 2.3 s (×6), no further gain at ×8 (SMT). Stacked with
@@ -96,9 +121,9 @@ table in `docs/whisper-wasm-provenance.md`. Headlines:
   `no_context = true`). This is what the audio_ctx numbers were measured with; it is a
   candidate replacement for `third_party/whisper-wasm/single-thread.patch`, not applied to
   the vendored build yet. (The same binding was also added to the threaded checkout at
-  `/home/will/voicewrite-toolchain/whisper.cpp`, whose `build-em` output therefore no longer
+  `/home/will/typetarget-toolchain/whisper.cpp`, whose `build-em` output therefore no longer
   matches `bench/libmain-threaded.js` exactly; the single-threaded build lives in a git
-  worktree at `/home/will/voicewrite-toolchain/whisper.cpp-st`.)
+  worktree at `/home/will/typetarget-toolchain/whisper.cpp-st`.)
 - The Playwright driver scripts were throwaway (scratchpad) and not committed; the method is
   above — Playwright from the npx cache, `executablePath: /usr/bin/google-chrome`, model
   requests to huggingface.co fulfilled from local copies via `page.route`. Note that
@@ -165,7 +190,7 @@ extension.** Old injected instances live in the page.
 
 ### Performance investigation (2026-09-22)
 
-Picked up directly from "Performance: the actual blocker" below, in the order it
+Picked up directly from "Local Whisper performance" below, in the order it
 recommended. No sandbox tooling for the heavy levers (no `emsdk`/`cmake`/`ninja`/browser
 binary here), so this session did what's verifiable without them and left what isn't
 clearly marked:
@@ -209,7 +234,7 @@ clearly marked:
   in "Lever 1" below.
 - **Lever 2 (`audio_ctx`) not attempted** this session (the toolchain time went to Lever 1
   instead, at the user's direction) — but the toolchain built for Lever 1 is sitting at
-  `/home/will/voicewrite-toolchain/` on this machine, outside the repo, so this no longer
+  `/home/will/typetarget-toolchain/` on this machine, outside the repo, so this no longer
   needs a from-scratch setup for whoever picks it up next.
 
 ### Multi-provider transcription: Gemini Live added, Groq architected for
@@ -344,11 +369,13 @@ next low-energy frame would be the real fix. Not yet tested in the extension its
   performance problem below. If inference gets under the chunk length, the backlog (and
   this symptom) disappears.
 
-## Performance: the actual blocker
+## Local Whisper performance
 
-The end goal is near-live transcription on limited hardware. Right now the extension is
-roughly **2× slower than real time on a 12-core desktop**, which means "limited hardware"
-is currently out of reach entirely. The arithmetic below is the whole problem.
+Optional work, not a blocker (see "Where the project actually is"): local Whisper only
+needs to be live on machines fast enough for it, and users on the rest pick a hosted
+model. The shipped single-threaded build runs roughly **2× slower than real time on a
+12-core desktop**. The levers below record what was measured, in case someone wants to
+widen the set of machines it works live on.
 
 ### The cost model
 
@@ -521,8 +548,7 @@ to near-live (3.3 s ÷ ~5 ≈ 0.7 s per call → 2–3 s chunks → ~3 s behind)
 31 MB, vs. 77,704,715 bytes for `tiny.en`) is now a selectable model: `ModelId` in
 `src/domain/models.ts`, `MODEL_CATALOG` (same file), `MODEL_URLS`
 (`src/worker/model-urls.ts`), `MODEL_FILENAME_IN_FS` (`src/worker/whisper-cpp-engine.ts`).
-Pure model swap, no C++ change, no default change — `tiny.en` stays `DEFAULT_MODEL` until
-this is measured. The popup dropdown picks it up automatically (it renders from
+Pure model swap, no C++ change. Measured 2026-09-23 and made `DEFAULT_MODEL` 2026-10-08. The popup dropdown picks it up automatically (it renders from
 `MODEL_CATALOG`). `npx tsc -b --noEmit`, `npx eslint .`, `npx vitest run` (190 tests) and
 `npx vite build` all pass with it added.
 
@@ -599,14 +625,14 @@ to "near-live on limited hardware", and the engine boundary
 
 ### Recommended order
 
-(As of 2026-09-29 the fastest route to usable speed on weak hardware is simply picking a
-Groq model: it avoids local inference entirely, at the cost of sending audio off-device.
-The levers below still matter for the local, private default.)
+(Live transcription on ordinary hardware comes from the hosted models — Groq or Gemini —
+not from these levers. They only widen which machines can run local Whisper live, and none
+of them is planned.)
 
 1. ~~**Lever 4** (why no SIMD)~~ — resolved 2026-09-22, no code change: SIMD was already
    on, the earlier "no gain" reading was a no-op flag placement. Nothing to build.
-2. **Lever 3** (quantized model) — measured 2026-09-23: ~1.3× faster, identical transcript.
-   Next: decide whether to promote `tiny.en-q5_1` to `DEFAULT_MODEL` (recommended).
+2. ~~**Lever 3** (quantized model)~~ — measured 2026-09-23: ~1.3× faster, identical
+   transcript. `tiny.en-q5_1` promoted to `DEFAULT_MODEL` 2026-10-08.
 3. **Lever 2** (`audio_ctx`) — **now the best shippable lever**: works without threads and
    without the capture-flow change. Next: (a) decide the short-utterance policy (see
    "Lever 2"), (b) rebuild the vendored `libmain.js` from `bench/single-thread-full-opts.patch`,
@@ -616,7 +642,7 @@ The levers below still matter for the local, private default.)
    instead, at the user's direction). The toolchain this session set up for Lever 1
    (`emsdk`/`cmake`/`ninja`, none of which were available in this sandbox until now — see
    `bench/README.md` for exact versions and the no-root install method) is sitting at
-   `/home/will/voicewrite-toolchain/` on this machine, outside the repo, ready to reuse for
+   `/home/will/typetarget-toolchain/` on this machine, outside the repo, ready to reuse for
    this too rather than redone from scratch.
 4. **Lever 1** (`desktopCapture` → threads) — days, real UX cost. Started 2026-09-22 at the
    user's explicit go-ahead: the threaded wasm rebuild is done (artifact at
@@ -762,15 +788,21 @@ from one 12-core desktop measured by an earlier session, or not yet measured at 
 
 ## Known gaps (Phase 7)
 
-- **A captured stream that goes silent is not reported.** A user run showed
-  `level 0.000` over 289 batches while "Capturing" — batches still counting with zero level
-  is what an *ended* tabCapture track looks like (the source node keeps producing silence),
-  though a paused/muted video would look the same. Nothing listens for the track's `ended`
-  event, so there is no error. Cause of that run not yet known.
-
-- **Service-worker restart mid-capture loses state.** `state` in `service-worker.ts` is
-  memory-only, while the offscreen document and its MediaStream may still be alive. MV3
-  workers *will* be killed on real usage timescales. Highest-value correctness gap.
+- ~~**A captured stream that ends is not reported.**~~ Fixed 2026-10-08: the offscreen
+  document listens for the audio track's `ended` event (which only fires when the source
+  goes away, not for our own `track.stop()`), tears the capture down, and sends
+  `capture-ended`; the service worker stops capture and shows an error. A stream that stays
+  live but *silent* (paused or muted video) is still only the popup's existing
+  "No audible audio" hint — not an error, because that is often intended. Whether Chrome
+  fires `ended` for every way a tab capture dies (navigation, discard) is unverified.
+- ~~**Service-worker restart mid-capture loses state.**~~ Fixed 2026-10-08: the running
+  capture (source tab and timer) is persisted in `storage.session` alongside the binding.
+  A restarted worker asks the offscreen document (`get-capture-status`) whether it is still
+  capturing and, if so, restores status/pause state and re-watches the source tab
+  (`CaptureController.reattach`); otherwise it drops the stored capture. Popup requests,
+  menu clicks and offscreen messages all wait for that check, so finals arriving at a
+  freshly woken worker are no longer dropped as "idle". Unit tested; not yet exercised by
+  killing the worker in a real browser (`chrome://serviceworker-internals` → Stop).
 - **Contenteditable insertion now uses `document.execCommand("insertText")`** (2026-09-24),
   falling back to the old bare-DOM insertion only if the command is refused. The DOM path was
   silently reverted by Lexical while the popup still counted it "inserted" (ProseMirror and
@@ -788,10 +820,20 @@ from one 12-core desktop measured by an earlier session, or not yet measured at 
   level 0.442 with 0 finals; the next report was duplicate insertions, so finals clearly
   flow now — but no clean single-session run has been observed and described. Worth one
   deliberate confirmation pass.
-- **`whisper-cpp-engine.ts`'s 30 s inference timeout cannot fire** with the synchronous
-  build (noted in a comment there). Revisit if inference ever returns to a thread.
-- No privacy audit pass.
-- **No in-popup notice when a network model is selected.** README used to claim one; it
-  was never built. The dropdown label names the provider (Gemini/Groq) and the README
-  covers it, but a one-line notice under the model picker would be cheap and worth adding.
+- **`whisper-cpp-engine.ts`'s 30 s timeout only catches a missing completion marker**, not
+  slow inference (the synchronous build blocks the worker while it runs). Its message was
+  "Transcription fell behind real time", which it could never detect; reworded 2026-10-08
+  to "Transcription did not finish." Falling behind is now judged in the popup: a local
+  model whose last call took longer than the chunk length shows a warning pointing at
+  Groq/Gemini.
+- ~~No privacy audit pass.~~ Done 2026-10-08: `docs/privacy-audit.md`. Fixed there: API keys
+  readable from the content script (`storage.local` now restricted to extension pages) and no
+  way to remove a saved key (Remove key button). **Open:** the badge puts the source tab's
+  title in the destination page's DOM; the content script is web-accessible to all sites
+  (extension fingerprinting); badge and picker accept synthetic clicks; model downloads
+  aren't hash-checked. Release material: `PRIVACY.md`, `LICENSE` (MIT),
+  `THIRD_PARTY_NOTICES.md` (copied into `dist/` by `vite.config.ts`), `docs/store-listing.md`.
+- ~~**No in-popup notice when a network model is selected.**~~ Added 2026-10-08: a line
+  under the model picker ("Captured audio is sent to Groq using your API key."), driven by
+  `ModelInfo.network`.
 - ~~Benchmarking harness never run~~ — run 2026-09-23 in real Chrome; it works (see top).

@@ -1,0 +1,132 @@
+# Chrome Web Store listing
+
+Copy-paste material for the Chrome Web Store Developer Dashboard, field by field. Keep it in
+step with the manifest and [PRIVACY.md](../PRIVACY.md) when either changes.
+
+## Package
+
+Build with `npm run build` and zip the **contents** of `dist/`, not the folder itself, so
+`manifest.json` sits at the root of the zip:
+
+```sh
+npm run build && (cd dist && zip -r ../typetarget-0.1.0.zip .)
+```
+
+Before zipping, check `dist/whisper/libmain.js` exists. The build only warns when it is missing
+(see docs/whisper-wasm-provenance.md), and without it Whisper models can't transcribe.
+`LICENSE` and `THIRD_PARTY_NOTICES.md` are copied into `dist/` by the build.
+
+## Store listing tab
+
+**Name** (from the manifest): TypeTarget — Directed Transcriber
+
+**Summary** (the manifest `description`, 113/132 characters):
+Live-transcribe any tab's audio straight into any text field, with your choice of AI model. Free and open source.
+
+**Category:** Productivity. (Accessibility also fits, for captioning audio; pick one.)
+
+**Language:** English
+
+**Description:**
+
+```text
+TypeTarget listens to the audio playing in any browser tab — a video, a meeting, a lecture, a
+podcast — and types what is said, live, into any text field you choose, in any tab.
+
+Take notes from a lecture straight into your doc. Caption a meeting into a chat box. Pull a
+transcript of a video into a form, an email or a note-taking app. Or type into TypeTarget's own
+text box and save the result as a .txt file.
+
+HOW IT WORKS
+1. Open TypeTarget on the tab you want to transcribe and click Start listening.
+2. Click Select field and click any text box, in that tab or another one.
+3. Transcribed text appears there as people speak. Pause, resume or switch fields any time.
+
+Everything is also in the right-click menu: Listen to this tab, Type to this field, Type to new
+file and Stop typing.
+
+CHOOSE YOUR TRANSCRIPTION MODEL
+• Groq (Whisper Large v3 / v3 Turbo) — fast and accurate on any computer. Uses your own Groq
+  API key.
+• Gemini 3.5 Transcribe (Live) — Google's streaming transcription. Uses your own Gemini API key.
+• Whisper in your browser — no key, no account, and audio never leaves your device. Keeps up
+  live only on fast computers; TypeTarget tells you when it is falling behind.
+
+PRIVATE BY DESIGN
+• No accounts, no servers, no analytics, no tracking.
+• Audio goes only to the provider you pick, using your own key, and never to the developer.
+• API keys are stored on your device only.
+• Free and open source (MIT): https://github.com/wllmmh/typetarget
+
+English transcription only.
+```
+
+**Graphic assets** (none exist yet):
+
+| Asset | Size | Required | Notes |
+| --- | --- | --- | --- |
+| Store icon | 128×128 PNG | Yes | `public/icons/icon128.png` |
+| Screenshots | 1280×800 or 640×400 | At least 1, up to 5 | See shot list below |
+| Small promo tile | 440×280 | Yes | Icon, name and a short tagline such as "Any tab's audio, typed anywhere" |
+| Marquee promo tile | 1400×560 | No | Only used if the store features the extension |
+
+Screenshot shot list:
+
+1. A video playing in one tab, its transcript appearing in a Google Doc in another, with the
+   popup open showing "Listening to" and "Typing to".
+2. The popup's model picker opened, showing the Whisper, Gemini and Groq groups.
+3. The right-click TypeTarget submenu on a text box.
+4. The "Type to new file" box over a page, with the green listening badge and Save button.
+5. The API Keys dialog, with "Stored on this device only".
+
+Avoid real people's private meetings or messages in screenshots.
+
+## Privacy practices tab
+
+**Single purpose:**
+
+```text
+TypeTarget transcribes the audio of a browser tab the user chooses and types the transcript into a text field the user chooses.
+```
+
+**Permission justifications:**
+
+| Permission | Justification |
+| --- | --- |
+| `tabCapture` | Captures the audio of the tab the user chooses to transcribe. This is the extension's core function. |
+| `activeTab` | Gives one-time access to the tab where the user opened the popup or chose a right-click menu item, so that tab can be captured or its text box picked, without broad host permissions. |
+| `scripting` | Injects the text-field picker and text-insertion script into the tab the user is picking a field in, only after they act on that tab. |
+| `storage` | Saves the user's settings (model, chunk length), their own API keys for hosted models, and the current source tab and field for the browser session. |
+| `offscreen` | Runs audio capture and transcription in an offscreen document, because the service worker can be stopped at any time and can't hold a media stream. |
+| `contextMenus` | Adds the TypeTarget right-click menu: listen to this tab, type to this field, type to a new box, stop typing. |
+| Host: `https://generativelanguage.googleapis.com/*` | Sends captured audio to Google's Gemini API for transcription, only when the user selects a Gemini model and supplies their own key. |
+| Host: `https://api.groq.com/*` | Sends captured audio to Groq's API for transcription, only when the user selects a Groq model and supplies their own key. |
+
+**Remote code:** No, I am not using remote code. All JavaScript and the WebAssembly build of
+whisper.cpp ship in the package. Whisper model files downloaded from Hugging Face are model
+weights (data), not executable code.
+
+**Data usage.** The dashboard asks which data types the extension "collects", which includes
+data sent to third parties. These are the honest answers given that audio and keys go to Groq
+or Google when the user chooses them. Review them yourself before submitting:
+
+| Data type | Tick? | Why |
+| --- | --- | --- |
+| Website content | Yes | Tab audio is sent to Groq/Google when a hosted model is selected. |
+| Personal communications | Yes | The captured tab may be a call or meeting. |
+| Authentication information | Yes | The user's own Groq/Gemini API key is sent to that provider. |
+| Personally identifiable information, Health, Financial and payment, Location, Web history, User activity | No | Not collected or sent. Tab titles are kept locally for the session only and never transmitted. |
+
+Certify all three statements: data is not sold to third parties; not used or transferred for
+purposes unrelated to the single purpose; not used to determine creditworthiness or for lending.
+
+**Privacy policy URL:** a public URL for [PRIVACY.md](../PRIVACY.md), for example
+`https://github.com/wllmmh/typetarget/blob/main/PRIVACY.md`. This only works if the
+repository is public; otherwise host the file elsewhere (e.g. GitHub Pages).
+
+## Before submitting
+
+- Load the zipped build unpacked in a clean Chrome profile and run each model once.
+- Make sure the repository URL in the description and privacy policy is public.
+- The listing names Groq and Google only to say which services it can use. Don't use their
+  logos in the screenshots or promo tiles.

@@ -52,6 +52,7 @@ export type FakeChrome = {
 export type FakeStorageArea = {
   get: ReturnType<typeof vi.fn>;
   set: ReturnType<typeof vi.fn>;
+  setAccessLevel: ReturnType<typeof vi.fn>;
   /** Test helper: the area's current contents. */
   data: Record<string, unknown>;
 };
@@ -64,6 +65,7 @@ const createFakeStorageArea = (): FakeStorageArea => {
     set: vi.fn(async (items: Record<string, unknown>) => {
       Object.assign(area.data, items);
     }),
+    setAccessLevel: vi.fn(async () => {}),
   };
   return area;
 };

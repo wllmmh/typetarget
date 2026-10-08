@@ -1,8 +1,9 @@
 /**
  * The text box opened by the right-click menu's "Type to new file": fixed over the bottom
  * third of the viewport, so it can be picked as the output on a page that has no text box of
- * its own. It only exists while it is the output — destination-session.ts removes it when the
- * output is cleared (the badge's X, or Stop typing) or moved to another box. Its text is kept
+ * its own. destination-session.ts removes it when the badge's X is clicked or the output moves
+ * to another box; Stop typing leaves it on the page with its text, no longer typed into, until
+ * its X is clicked. Its text is kept
  * with the badge's Save button, like any other output's. The badge also offers Minimize (down to
  * one line at the bottom of the viewport) and Open in new tab, for this box only.
  */

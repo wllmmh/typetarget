@@ -178,10 +178,11 @@ export class DestinationController {
 
   /** Tells the page to drop a destination the user deselected or replaced (removing its
    * outline). Best effort: if the tab or frame is gone, so is the outline. Resolves to the text
-   * of the "Type to new file" box this closed, if that was the destination (see ReleaseReply). */
-  async release(destination: DestinationRef): Promise<string | null> {
+   * of the "Type to new file" box this closed, if that was the destination (see ReleaseReply).
+   * With `keepNewFileField` such a box stays on the page instead (Stop typing). */
+  async release(destination: DestinationRef, keepNewFileField = false): Promise<string | null> {
     const raw: unknown = await chrome.tabs
-      .sendMessage(destination.tabId, envelope<BackgroundToContent>({ kind: "clear-destination" }), { frameId: destination.frameId })
+      .sendMessage(destination.tabId, envelope<BackgroundToContent>({ kind: "clear-destination", keepNewFileField }), { frameId: destination.frameId })
       .catch(() => null);
     return isEnvelope<ReleaseReply>(raw) && raw.payload.kind === "released" ? raw.payload.carriedText : null;
   }

@@ -8,7 +8,7 @@ import { envelope, isEnvelope, type BackgroundToOffscreen, type OffscreenReply }
 import type { ModelId } from "../domain/models";
 import type { ApiKeyProvider } from "../domain/api-key";
 import { getTabCaptureStreamId } from "./tab-capture";
-import { ensureOffscreenDocument, closeOffscreenDocument } from "./offscreen-manager";
+import { ensureOffscreenDocument, closeOffscreenDocument, hasOffscreenDocument } from "./offscreen-manager";
 
 const sendToOffscreen = async (msg: BackgroundToOffscreen): Promise<OffscreenReply> => {
   const raw = await chrome.runtime.sendMessage(envelope(msg));
@@ -92,6 +92,28 @@ export class CaptureController {
       throw err;
     }
 
+    this.watchSourceTab(sourceTabId);
+  }
+
+  /**
+   * After a service-worker restart: picks the running capture back up, if the offscreen
+   * document (which Chrome keeps alive independently of this worker) is still capturing.
+   * Returns its pause state, or null when nothing is capturing any more — then there is
+   * nothing to resume, and any stream left for a source tab that is gone is stopped.
+   */
+  async reattach(sourceTabId: number): Promise<{ paused: boolean } | null> {
+    if (!(await hasOffscreenDocument().catch(() => false))) return null;
+    const reply = await sendToOffscreen({ kind: "get-capture-status" }).catch(() => null);
+    if (reply?.kind !== "capture-status" || !reply.capturing) return null;
+    if (!(await chrome.tabs.get(sourceTabId).catch(() => null))) {
+      await this.stop();
+      return null;
+    }
+    this.watchSourceTab(sourceTabId);
+    return { paused: reply.paused };
+  }
+
+  private watchSourceTab(sourceTabId: number): void {
     this.sourceTabId = sourceTabId;
     if (!chrome.tabs.onRemoved.hasListener(this.onTabRemoved)) {
       chrome.tabs.onRemoved.addListener(this.onTabRemoved);

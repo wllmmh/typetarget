@@ -147,7 +147,7 @@ describe("WhisperCppEngine.transcribe", () => {
     await expect(engine.transcribe(new Float32Array(16_000))).rejects.toThrow(/failed with code -1/);
   });
 
-  it("times out with 'Transcription fell behind real time.' when no completion signal arrives", async () => {
+  it("times out with 'Transcription did not finish.' when no completion signal arrives", async () => {
     const fakeModule = createFakeModule({ neverFinishes: true });
     const engine = createEngine(fakeModule);
     await engine.load("tiny.en"); // real timers: model download uses real fetch/stream promises
@@ -155,7 +155,7 @@ describe("WhisperCppEngine.transcribe", () => {
     vi.useFakeTimers();
     try {
       const transcribePromise = engine.transcribe(new Float32Array(16_000));
-      const assertion = expect(transcribePromise).rejects.toThrow("Transcription fell behind real time.");
+      const assertion = expect(transcribePromise).rejects.toThrow("Transcription did not finish.");
       await vi.advanceTimersByTimeAsync(30_000);
       await assertion;
     } finally {

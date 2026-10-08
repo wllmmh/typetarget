@@ -42,7 +42,7 @@ export type StartCaptureResult = {
  * played to the user" — the fix is an explicit MediaStreamAudioSourceNode -> destination
  * connection here, in the offscreen document that owns the getUserMedia call).
  */
-export const startTabCapture = async (streamId: string): Promise<StartCaptureResult> => {
+export const startTabCapture = async (streamId: string, onEnded: () => void): Promise<StartCaptureResult> => {
   const constraints: ChromeTabCaptureConstraints = {
     audio: {
       mandatory: {
@@ -71,6 +71,17 @@ export const startTabCapture = async (streamId: string): Promise<StartCaptureRes
     sourceNode.disconnect();
     for (const track of stream.getTracks()) track.stop();
   };
+
+  // "ended" fires only when the source goes away on its own (the tab closed, Chrome revoked
+  // the capture), never for our own track.stop(). Without it, a dead stream keeps the source
+  // node producing silence and capture looks alive with a level of zero.
+  for (const track of stream.getAudioTracks()) {
+    track.addEventListener("ended", () => {
+      if (stopped) return;
+      stop();
+      onEnded();
+    });
+  }
 
   return { stop, audioContext, sourceNode };
 };

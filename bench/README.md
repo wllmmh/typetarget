@@ -1,7 +1,7 @@
 # bench/
 
-Manual performance tooling, not part of the extension build. See HANDOFF.md "Performance:
-the actual blocker" for the full picture; this directory just holds the tools.
+Manual performance tooling, not part of the extension build. See HANDOFF.md "Local
+Whisper performance" for the full picture; this directory just holds the tools.
 
 - `whisper-bench.html` — loads a `libmain.js` glue build directly in a plain page and times
   repeated `full_default` calls. Open via `serve.mjs`, not `file://`.

@@ -11,7 +11,7 @@ export const OFFSCREEN_DOCUMENT_PATH = "src/offscreen/index.html";
 
 let ensurePromise: Promise<void> | null = null;
 
-const hasOffscreenDocument = async (): Promise<boolean> => {
+export const hasOffscreenDocument = async (): Promise<boolean> => {
   const contexts = await chrome.runtime.getContexts({
     contextTypes: [chrome.runtime.ContextType.OFFSCREEN_DOCUMENT],
   });
@@ -26,7 +26,7 @@ export const ensureOffscreenDocument = async (): Promise<void> => {
     await chrome.offscreen.createDocument({
       url: OFFSCREEN_DOCUMENT_PATH,
       reasons: [chrome.offscreen.Reason.USER_MEDIA],
-      justification: "Captures and plays back the selected tab's audio for local transcription.",
+      justification: "Captures and plays back the selected tab's audio for transcription.",
     });
   })();
 

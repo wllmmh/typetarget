@@ -6,14 +6,15 @@
  * Split by lifetime, not convenience: the model choice is a lasting preference
  * (`storage.local`), while tab ids and injected-element ids only mean anything within
  * one browser session (`storage.session`) — restoring them after a restart would point
- * at whatever tab happened to inherit the id.
+ * at whatever tab happened to inherit the id. The running capture is session-scoped too: it
+ * is what lets a restarted worker pick up a capture the offscreen document is still running.
  */
 import type { DestinationRef } from "../domain/messages";
 import { MODEL_CATALOG, type ModelId } from "../domain/models";
 import { clampChunkMs } from "../domain/tuning";
 import { API_KEY_PROVIDER_NAMES, type ApiKeyProvider } from "../domain/api-key";
 import { parseKnownTabs } from "./known-tabs";
-import type { CapturableTab } from "../domain/messages";
+import type { CapturableTab, ListeningSession } from "../domain/messages";
 import type { AppState } from "./state";
 
 const MODEL_KEY = "selectedModel";
@@ -35,11 +36,15 @@ const parseApiKeys = (value: unknown): Partial<Record<ApiKeyProvider, string>> =
   return result;
 };
 
+/** A capture that was running (or paused) when last persisted. */
+export type PersistedCapture = { sourceTabId: number; session: ListeningSession | null };
+
 type PersistedBinding = {
   pendingSourceTabId: number | null;
   knownTabs: CapturableTab[];
   destination: DestinationRef | null;
   destinationLabel: string | null;
+  capture: PersistedCapture | null;
 };
 
 const isModelId = (value: unknown): value is ModelId =>
@@ -48,13 +53,29 @@ const isModelId = (value: unknown): value is ModelId =>
 /** Storage is untrusted input like any other boundary: it may hold values written by an older build. */
 const parseBinding = (value: unknown): PersistedBinding | null => {
   if (typeof value !== "object" || value === null) return null;
-  const { pendingSourceTabId, knownTabs, destination, destinationLabel } = value as Record<string, unknown>;
+  const { pendingSourceTabId, knownTabs, destination, destinationLabel, capture } = value as Record<string, unknown>;
   return {
     pendingSourceTabId: typeof pendingSourceTabId === "number" ? pendingSourceTabId : null,
     knownTabs: parseKnownTabs(knownTabs),
     destination: isDestinationRef(destination) ? destination : null,
     destinationLabel: typeof destinationLabel === "string" ? destinationLabel : null,
+    capture: parseCapture(capture),
   };
+};
+
+const parseCapture = (value: unknown): PersistedCapture | null => {
+  if (typeof value !== "object" || value === null) return null;
+  const { sourceTabId, session } = value as Record<string, unknown>;
+  if (typeof sourceTabId !== "number") return null;
+  return { sourceTabId, session: parseSession(session) };
+};
+
+/** A reconnect in progress is not restored: the engine reports its connection again anyway. */
+const parseSession = (value: unknown): ListeningSession | null => {
+  if (typeof value !== "object" || value === null) return null;
+  const { since, reconnects } = value as Record<string, unknown>;
+  if (typeof since !== "number" || typeof reconnects !== "number") return null;
+  return { since, reconnects, reconnecting: null };
 };
 
 const isDestinationRef = (value: unknown): value is DestinationRef => {
@@ -63,8 +84,27 @@ const isDestinationRef = (value: unknown): value is DestinationRef => {
   return typeof tabId === "number" && typeof frameId === "number" && typeof elementId === "string";
 };
 
-/** Fills `state` in place from storage. Never throws: a failed restore means defaults, not a broken extension. */
-export const restorePersistedState = async (state: AppState): Promise<void> => {
+/**
+ * `storage.local` holds the user's API keys, and unlike `storage.session` it is readable from
+ * content scripts by default — which run inside arbitrary web pages. Nothing outside the
+ * extension's own pages needs it, so it is restricted to them, on every worker start (harmless
+ * if Chrome already kept the setting). A failure leaves the keys readable from the content
+ * script; it is reported, not fatal.
+ */
+export const restrictLocalStorageToExtension = async (): Promise<void> => {
+  try {
+    await chrome.storage.local.setAccessLevel({ accessLevel: "TRUSTED_CONTEXTS" });
+  } catch (err) {
+    console.warn(`TypeTarget: could not restrict local storage to the extension (${err instanceof Error ? err.message : String(err)}).`);
+  }
+};
+
+/**
+ * Fills `state` in place from storage. Never throws: a failed restore means defaults, not a
+ * broken extension. A capture that was running is returned rather than restored into `state`:
+ * only the offscreen document can say whether it still is (see CaptureController.reattach).
+ */
+export const restorePersistedState = async (state: AppState): Promise<PersistedCapture | null> => {
   try {
     const [local, chunk, apiKeys, session] = await Promise.all([
       chrome.storage.local.get(MODEL_KEY),
@@ -88,8 +128,10 @@ export const restorePersistedState = async (state: AppState): Promise<void> => {
       state.destination = binding.destination;
       state.destinationLabel = binding.destinationLabel;
     }
+    return binding?.capture ?? null;
   } catch {
     // Keep the in-memory defaults.
+    return null;
   }
 };
 
@@ -99,6 +141,10 @@ export const persistState = async (state: AppState): Promise<void> => {
     knownTabs: state.knownTabs,
     destination: state.destination,
     destinationLabel: state.destinationLabel,
+    capture:
+      (state.status === "capturing" || state.status === "paused") && state.sourceTabId !== null
+        ? { sourceTabId: state.sourceTabId, session: state.session }
+        : null,
   };
   try {
     await Promise.all([

@@ -33,6 +33,8 @@ class DestinationSession {
   /** The new-file box's text already went to an editor tab (Open in new tab), so closing the
    * box must not carry it anywhere a second time. */
   private newFileTextHandedOver = false;
+  /** The new-file box is still on the page after Stop typing, but is no longer the output. */
+  private newFileDetached = false;
 
   /** The buttons beside the badge; the "Type to new file" box also gets Minimize and Open in new tab. */
   private badgeActionsFor(el: Element | null): BadgeActions {
@@ -170,6 +172,7 @@ class DestinationSession {
   openNewFileField(text?: string, minimized = false): void {
     if (!this.newFileField?.isConnected) this.newFileField = createNewFileField();
     this.newFileTextHandedOver = false; // re-picked, a box reused here owns its text again
+    this.newFileDetached = false;
     if (text !== undefined) this.newFileField.value = text; // moved back from the editor tab
     // Asking for the box again brings back a minimized one, unless it is asked for minimized.
     this.newFileMinimized = minimized;
@@ -186,7 +189,27 @@ class DestinationSession {
     this.newFileField = null;
     this.newFileMinimized = false;
     this.newFileTextHandedOver = false;
+    this.newFileDetached = false;
     return carried;
+  }
+
+  /** Badge for a new-file box kept after Stop typing: no timer, since nothing types into it;
+   * X removes the box (handled here, as the background no longer knows of it) and Save keeps its
+   * text. The outline stays, in the badge's grey (the badge colors it). */
+  private showDetachedBadge(): void {
+    const field = this.newFileField;
+    if (!field) return;
+    setDestinationMarker(field);
+    setSessionBadge(field, { state: "not-typing" }, {
+      onClose: () => {
+        if (this.newFileField !== field) return;
+        setDestinationMarker(null);
+        setSessionBadge(null, null, this.badgeActionsFor(null));
+        this.closeNewFileField();
+      },
+      onSave: () => saveTextFile(textOf(field)),
+      closeLabel: "Close",
+    });
   }
 
   /** Downloads the destination's current text (what was transcribed and typed) as a .txt file, named after the source tab. */
@@ -218,14 +241,23 @@ class DestinationSession {
    * Drops the destination. Returns the text of the new-file box this closed, when that box was
    * the output: the background types it into the output that replaced it (another frame's), so
    * it isn't lost with the box. Null otherwise.
+   *
+   * With `keepNewFileField` (Stop typing), a new-file box that was the output stays on the page
+   * with its text, no longer typed into; only its X removes it.
    */
-  clearDestination(): string | null {
+  clearDestination(keepNewFileField = false): string | null {
+    const el = this.pickedElementId ? getRegisteredElement(this.pickedElementId) : null;
     this.pickedElementId = null;
     this.insertionOffset = 0;
     setDestinationMarker(null);
     this.indicator = null;
     setSessionBadge(null, null, this.badgeActionsFor(null));
     this.trackPointer(null);
+    if (keepNewFileField && this.newFileField && el === this.newFileField) {
+      this.newFileDetached = true;
+      this.showDetachedBadge();
+      return null;
+    }
     return this.closeNewFileField(); // it exists only to be the output
   }
 
@@ -233,6 +265,11 @@ class DestinationSession {
   setIndicator(indicator: SessionIndicator | null): void {
     this.indicator = indicator;
     const el = this.pickedElementId ? getRegisteredElement(this.pickedElementId) : null;
+    // With no output in this frame, the background's "remove the badge" must not take the kept box's X with it.
+    if (!el && this.newFileDetached) {
+      this.showDetachedBadge();
+      return;
+    }
     setSessionBadge(el, indicator, this.badgeActionsFor(el));
   }
 

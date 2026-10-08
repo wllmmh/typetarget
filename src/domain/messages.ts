@@ -154,8 +154,9 @@ export type BackgroundToContent =
   | { kind: "exit-selection-mode" }
   | { kind: "insert-text"; text: string; separator: string }
   | { kind: "check-destination-alive" }
-  /** The user deselected this destination or picked another one; drop it and its outline. */
-  | { kind: "clear-destination" }
+  /** The user deselected this destination or picked another one; drop it and its outline.
+   * `keepNewFileField` (Stop typing) leaves a "Type to new file" box on the page, no longer the output. */
+  | { kind: "clear-destination"; keepNewFileField?: boolean }
   /** From the right-click menu: pick the text box that was right-clicked (which is focused). */
   | { kind: "pick-focused-element" }
   /** From the right-click menu's "Type to new file": open a text box over the bottom third of
@@ -179,12 +180,16 @@ export type BackgroundToOffscreen =
   | { kind: "load-model"; modelId: ModelId }
   | { kind: "unload-model" }
   | { kind: "set-chunk-ms"; chunkMs: number }
-  | { kind: "set-api-key"; provider: ApiKeyProvider; apiKey: string };
+  | { kind: "set-api-key"; provider: ApiKeyProvider; apiKey: string }
+  /** Asked by a restarted service worker, to learn whether the capture it lost track of still runs. */
+  | { kind: "get-capture-status" };
 
 /** Offscreen document -> background, as a direct reply to a BackgroundToOffscreen message. */
 export type OffscreenReply =
   | { kind: "ok" }
-  | { kind: "error"; code: string; message: string };
+  | { kind: "error"; code: string; message: string }
+  /** Reply to "get-capture-status". */
+  | { kind: "capture-status"; capturing: boolean; paused: boolean };
 
 /** Offscreen document -> background, unsolicited (broadcast while capture is running). */
 export type OffscreenToBackground =
@@ -194,7 +199,9 @@ export type OffscreenToBackground =
   | { kind: "pipeline-stats"; batches: number; droppedBatches: number; peakLevel: number }
   | { kind: "inference-stats"; stats: InferenceStats }
   | { kind: "engine-status"; status: EngineStatus }
-  | { kind: "connection-status"; status: ConnectionStatus };
+  | { kind: "connection-status"; status: ConnectionStatus }
+  /** The captured stream ended on its own (not through stop-capture); the offscreen side has already torn it down. */
+  | { kind: "capture-ended" };
 
 export const EXTENSION_MESSAGE_SOURCE = "typetarget" as const;
 

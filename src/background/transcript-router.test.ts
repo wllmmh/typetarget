@@ -11,8 +11,9 @@ const setup = (options?: { destination?: DestinationRef | null; insertText?: () 
   state.destination = options?.destination === undefined ? DESTINATION : options.destination;
   const insertText = vi.fn(options?.insertText ?? (async () => {}));
   const onStateChanged = vi.fn();
-  const router = createTranscriptRouter({ state, insertText, onStateChanged });
-  return { state, insertText, onStateChanged, router };
+  const onCaptureEnded = vi.fn();
+  const router = createTranscriptRouter({ state, insertText, onStateChanged, onCaptureEnded });
+  return { state, insertText, onStateChanged, onCaptureEnded, router };
 };
 
 const final = (text: string) => ({ kind: "transcript-event" as const, event: { type: "final" as const, text, timestamp: 0 } });
@@ -37,7 +38,7 @@ describe("createTranscriptRouter", () => {
       .mockImplementation(async (_d, text) => {
         order.push(text);
       });
-    const router = createTranscriptRouter({ state: { ...createInitialState(), status: "capturing" as const, destination: DESTINATION }, insertText, onStateChanged: vi.fn() });
+    const router = createTranscriptRouter({ state: { ...createInitialState(), status: "capturing" as const, destination: DESTINATION }, insertText, onStateChanged: vi.fn(), onCaptureEnded: vi.fn() });
 
     const first = router.handle(final("one"));
     const second = router.handle(final("two"));
@@ -137,7 +138,7 @@ describe("createTranscriptRouter", () => {
   it("keeps inserting after one insertion fails, and reports it", async () => {
     const insertText = vi.fn().mockRejectedValueOnce(new Error("tab gone")).mockResolvedValue(undefined);
     const state = { ...createInitialState(), status: "capturing" as const, destination: DESTINATION };
-    const router = createTranscriptRouter({ state, insertText, onStateChanged: vi.fn() });
+    const router = createTranscriptRouter({ state, insertText, onStateChanged: vi.fn(), onCaptureEnded: vi.fn() });
 
     await router.handle(final("one"));
     await router.handle(final("two"));
@@ -175,5 +176,14 @@ describe("createTranscriptRouter", () => {
     await router.handle({ kind: "engine-status", status: { state: "error", message: "Could not reconnect." } });
 
     expect(state.session).toBeNull();
+  });
+
+  it("hands an ended capture to the service worker instead of typing anything", async () => {
+    const { router, onCaptureEnded, insertText } = setup();
+
+    await router.handle({ kind: "capture-ended" });
+
+    expect(onCaptureEnded).toHaveBeenCalledTimes(1);
+    expect(insertText).not.toHaveBeenCalled();
   });
 });

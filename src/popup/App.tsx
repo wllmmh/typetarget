@@ -199,6 +199,12 @@ export const App = () => {
     input.value = "";
   };
 
+  /** An empty key clears the stored one (see the background's setApiKey). */
+  const handleApiKeyRemove = async (provider: ApiKeyProvider) => {
+    const res = await sendToBackground({ kind: "set-api-key", provider, apiKey: "" });
+    setApiKeyError(res.kind === "error" ? res.message : null);
+  };
+
   const handleTogglePause = async () => {
     setBusy(true);
     setLoadError(null);
@@ -210,7 +216,15 @@ export const App = () => {
   };
 
   /** The selected model's key provider; null for local models, whose dialog says no key is needed. */
-  const { provider: modelProvider, requiresApiKey } = MODEL_CATALOG[state.selectedModel];
+  const { provider: modelProvider, requiresApiKey, network: sendsAudio, name: providerName } = MODEL_CATALOG[state.selectedModel];
+  /**
+   * Whether a local model keeps up depends on the machine, and on most it won't. An utterance
+   * is at most one chunk of audio, so a call that takes longer than a chunk means this machine
+   * transcribes slower than real time and the backlog grows while speech continues. Only
+   * judged while capturing: the counters outlive Stop, and the model may have changed since.
+   */
+  const fallingBehind =
+    isCapturing && modelProvider === "whisper-cpp" && (state.inference?.lastMs ?? 0) > state.chunkMs;
   const keyProvider = requiresApiKey && modelProvider !== "whisper-cpp" ? modelProvider : null;
   const keySaved = keyProvider !== null && state.apiKeyProviders.includes(keyProvider);
 
@@ -264,6 +278,13 @@ export const App = () => {
             <KeyIcon />
           </button>
         </div>
+        {sendsAudio && <p className="hint">Captured audio is sent to {providerName} using your API key.</p>}
+        {fallingBehind && (
+          <p className="error">
+            This computer is transcribing slower than real time with this model. A Groq or Gemini model keeps up on any
+            computer.
+          </p>
+        )}
       </section>
 
       <section>
@@ -300,6 +321,11 @@ export const App = () => {
           />
         )}
         <div className="dialog-actions">
+          {keyProvider && keySaved && (
+            <button type="button" onClick={() => void handleApiKeyRemove(keyProvider)}>
+              Remove key
+            </button>
+          )}
           {keyProvider && API_KEY_PAGES[keyProvider] && (
             <button type="button" onClick={() => void chrome.tabs.create({ url: API_KEY_PAGES[keyProvider] })}>
               Get API Key

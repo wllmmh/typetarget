@@ -362,3 +362,62 @@ describe("session badge over the destination", () => {
     expect(badge()).toBeNull();
   });
 });
+
+describe("a new-file box kept after Stop typing", () => {
+  it("stays on the page with its text, marked as no longer typed into", () => {
+    openNewFile();
+    destinationSession.insert("said so far", " ");
+
+    expect(destinationSession.clearDestination(true)).toBeNull();
+
+    expect(document.getElementById(NEW_FILE_FIELD_ID)).toHaveValue("said so far");
+    expect(badge()).toHaveTextContent("Not typing");
+    expect(destinationSession.insert("more", " ")).toBe(false);
+  });
+
+  it("keeps its outline, in the grey of its buttons", () => {
+    openNewFile();
+    destinationSession.clearDestination(true);
+    destinationSession.setIndicator(null); // the background removing the session badge must not take the outline
+
+    expect(document.getElementById(NEW_FILE_FIELD_ID)?.classList.contains("typetarget-destination")).toBe(true);
+    expect(document.getElementById("typetarget-destination-style")?.textContent).toContain("4px double #6b7280");
+    expect(controls()?.style.background).toBe(badge()?.style.background);
+  });
+
+  it("keeps its X when the background then removes the session badge", () => {
+    openNewFile();
+    destinationSession.clearDestination(true);
+
+    destinationSession.setIndicator(null);
+
+    expect(page().getByRole("button", { name: "Close" })).toBeVisible();
+  });
+
+  it("is removed by its X, without involving the background", () => {
+    const onStopTypingRequested = vi.fn();
+    destinationSession.onStopTypingRequested = onStopTypingRequested;
+    openNewFile();
+    destinationSession.clearDestination(true);
+
+    page().getByRole("button", { name: "Close" }).click();
+
+    expect(document.getElementById(NEW_FILE_FIELD_ID)).toBeNull();
+    expect(badge()).toBeNull();
+    expect(document.getElementById("typetarget-destination-style")).toBeNull();
+    expect(onStopTypingRequested).not.toHaveBeenCalled();
+  });
+
+  it("becomes the output again, text and all, when Type to new file is chosen", () => {
+    openNewFile();
+    destinationSession.insert("said so far", " ");
+    destinationSession.clearDestination(true);
+
+    destinationSession.openNewFileField();
+    destinationSession.setIndicator({ state: "stopped" }); // what the background sends once it hears of the pick
+    destinationSession.insert("and then", " ");
+
+    expect(document.getElementById(NEW_FILE_FIELD_ID)).toHaveValue("said so far and then");
+    expect(page().getByRole("button", { name: "Stop typing here" })).toBeVisible();
+  });
+});

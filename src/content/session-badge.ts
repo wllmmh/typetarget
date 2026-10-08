@@ -17,6 +17,10 @@ import { formatElapsed } from "../domain/elapsed";
 import type { SessionIndicator } from "../domain/messages";
 import { DESTINATION_COLOR, setDestinationColor } from "./highlight";
 
+/** What the badge shows: the background's session state, or — local to this frame — a "Type to
+ * new file" box kept on the page after Stop typing, which is no longer the output. */
+export type BadgeIndicator = SessionIndicator | { state: "not-typing" };
+
 export const SESSION_BADGE_ID = "typetarget-session-badge";
 export const SESSION_BADGE_CONTROLS_ID = "typetarget-session-badge-controls";
 
@@ -29,13 +33,16 @@ export type BadgeActions = {
   windowControls?: { minimized: boolean; onToggleMinimize: () => void; onOpenInTab: () => void };
   /** Only in the editor tab (see src/editor/main.ts). */
   onMoveBack?: () => void;
+  /** The X's label, when it does more than stop typing (e.g. closes a kept new-file box). */
+  closeLabel?: string;
 };
 
-const COLOR: Record<SessionIndicator["state"], string> = {
+const COLOR: Record<BadgeIndicator["state"], string> = {
   listening: "#1f9d55",
   paused: "#6b7280",
   reconnecting: "#6b7280",
   stopped: DESTINATION_COLOR,
+  "not-typing": "#6b7280",
 };
 
 const MAX_NAME_LENGTH = 48;
@@ -49,11 +56,12 @@ type IconShape = { tag: "path" | "rect"; attrs: Record<string, string> };
 
 /** Shapes on the same 12x12 grid as the popup's icons: play while listening, pause bars when
  * paused, a cross while reconnecting, a square when stopped. The badge is only this and the timer. */
-const ICON_SHAPES: Record<SessionIndicator["state"], IconShape> = {
+const ICON_SHAPES: Record<BadgeIndicator["state"], IconShape> = {
   listening: { tag: "path", attrs: { d: "M2 1.2 L10.5 6 L2 10.8 Z", fill: "currentColor" } },
   paused: { tag: "path", attrs: { d: "M1.5 1 H4.5 V11 H1.5 Z M7.5 1 H10.5 V11 H7.5 Z", fill: "currentColor" } },
   reconnecting: { tag: "path", attrs: { d: "M2.5 2.5 L9.5 9.5 M9.5 2.5 L2.5 9.5", stroke: "currentColor", "stroke-width": "2", fill: "none" } },
   stopped: { tag: "rect", attrs: { x: "1.5", y: "1.5", width: "9", height: "9", fill: "currentColor" } },
+  "not-typing": { tag: "rect", attrs: { x: "1.5", y: "1.5", width: "9", height: "9", fill: "currentColor" } },
 };
 
 const CLOSE_SHAPE: IconShape = { tag: "path", attrs: { d: "M2.5 2.5 L9.5 9.5 M9.5 2.5 L2.5 9.5", stroke: "currentColor", "stroke-width": "1.75", fill: "none" } };
@@ -92,7 +100,7 @@ const createSvg = (shape: IconShape, style: string): SVGElement => {
   return svg;
 };
 
-const createIcon = (state: SessionIndicator["state"]): SVGElement =>
+const createIcon = (state: BadgeIndicator["state"]): SVGElement =>
   createSvg(ICON_SHAPES[state], "display: inline-block; vertical-align: -1px; margin-right: 4px");
 
 /** `all: initial` first, so page styles for `div` can't reshape it. */
@@ -168,10 +176,10 @@ const createControls = (): HTMLElement => {
 };
 
 /** Which buttons the controls hold, so they are rebuilt only when that changes. */
-const controlsLayout = ({ windowControls, onMoveBack }: BadgeActions): string =>
-  windowControls ? (windowControls.minimized ? "minimized" : "new-file") : onMoveBack ? "editor" : "plain";
+const controlsLayout = ({ windowControls, onMoveBack, closeLabel }: BadgeActions): string =>
+  `${windowControls ? (windowControls.minimized ? "minimized" : "new-file") : onMoveBack ? "editor" : "plain"}:${closeLabel ?? ""}`;
 
-const fillControls = (el: HTMLElement, { windowControls, onMoveBack }: BadgeActions): void => {
+const fillControls = (el: HTMLElement, { windowControls, onMoveBack, closeLabel }: BadgeActions): void => {
   el.replaceChildren(
     createButton("Save as .txt", SAVE_SHAPE, () => actions?.onSave()),
     ...(windowControls
@@ -183,7 +191,7 @@ const fillControls = (el: HTMLElement, { windowControls, onMoveBack }: BadgeActi
         ]
       : []),
     ...(onMoveBack ? [createButton("Move back to page", MOVE_BACK_SHAPE, () => actions?.onMoveBack?.())] : []),
-    createButton("Stop typing here", CLOSE_SHAPE, () => actions?.onClose()),
+    createButton(closeLabel ?? "Stop typing here", CLOSE_SHAPE, () => actions?.onClose()),
   );
 };
 
@@ -191,27 +199,30 @@ let badge: HTMLElement | null = null;
 let controls: HTMLElement | null = null;
 let actions: BadgeActions | null = null;
 let anchor: Element | null = null;
-let indicator: SessionIndicator | null = null;
+let indicator: BadgeIndicator | null = null;
 let ticker: ReturnType<typeof setInterval> | null = null;
 let frame: number | null = null;
 let clippers: Element[] = [];
 /** Last position written, so the per-frame loop touches the style only when the element moved. */
 let placed = "";
 /** The badge's icon is rebuilt only when the state changes, not on each tick. */
-let shownState: SessionIndicator["state"] | null = null;
+let shownState: BadgeIndicator["state"] | null = null;
 let labelNode: Text | null = null;
 let shownLayout: string | null = null;
 
 const render = (): void => {
   if (!badge || !anchor || !indicator) return;
-  const elapsed = indicator.state === "stopped" ? 0 : Date.now() - indicator.since;
   if (shownState !== indicator.state || !labelNode) {
     shownState = indicator.state;
     labelNode = document.createTextNode("");
     badge.replaceChildren(createIcon(indicator.state), labelNode);
   }
-  const timer = formatElapsed(elapsed);
-  labelNode.data = indicator.state === "stopped" ? timer : `${truncate(indicator.tabName)} ${timer}`;
+  labelNode.data =
+    indicator.state === "not-typing"
+      ? "Not typing"
+      : indicator.state === "stopped"
+        ? formatElapsed(0)
+        : `${truncate(indicator.tabName)} ${formatElapsed(Date.now() - indicator.since)}`;
   badge.style.background = COLOR[indicator.state];
   if (controls) controls.style.background = COLOR[indicator.state];
   setDestinationColor(COLOR[indicator.state]); // the outline always matches the label's color
@@ -326,7 +337,7 @@ const remove = (): void => {
 };
 
 /** Shows the timer and the buttons on `el`, or removes them when either of the first two is null. */
-export const setSessionBadge = (el: Element | null, next: SessionIndicator | null, nextActions: BadgeActions): void => {
+export const setSessionBadge = (el: Element | null, next: BadgeIndicator | null, nextActions: BadgeActions): void => {
   anchor = el;
   indicator = next;
   actions = nextActions;

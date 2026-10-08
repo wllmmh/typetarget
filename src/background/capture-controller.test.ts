@@ -246,3 +246,57 @@ describe("CaptureController.stop", () => {
     await expect(controller.stop()).resolves.toBeUndefined();
   });
 });
+
+describe("CaptureController.reattach", () => {
+  const stubCaptureStatus = (capturing: boolean, paused = false) => {
+    fake.runtime.getContexts.mockResolvedValue([{ contextType: "OFFSCREEN_DOCUMENT" }]);
+    fake.runtime.sendMessage.mockImplementation(async (msg: unknown) =>
+      isEnvelope<BackgroundToOffscreen>(msg) && msg.payload.kind === "get-capture-status"
+        ? envelope({ kind: "capture-status", capturing, paused })
+        : envelope({ kind: "ok" }),
+    );
+  };
+
+  it("picks up a capture the offscreen document is still running, and watches its tab again", async () => {
+    stubCaptureStatus(true, true);
+    fake.tabs.get.mockResolvedValue({ id: 42 });
+    const onSourceTabClosed = vi.fn();
+    const controller = new CaptureController({ onSourceTabClosed });
+
+    await expect(controller.reattach(42)).resolves.toEqual({ paused: true });
+    expect(controller.currentSourceTabId).toBe(42);
+    expect(fake.tabs.onRemoved.addListener).toHaveBeenCalled();
+  });
+
+  it("reports nothing to resume when there is no offscreen document", async () => {
+    fake.runtime.getContexts.mockResolvedValue([]);
+    const controller = new CaptureController({ onSourceTabClosed: vi.fn() });
+
+    await expect(controller.reattach(42)).resolves.toBeNull();
+    expect(controller.currentSourceTabId).toBeNull();
+    expect(fake.runtime.sendMessage).not.toHaveBeenCalled();
+  });
+
+  it("reports nothing to resume when the offscreen document is not capturing", async () => {
+    stubCaptureStatus(false);
+    const controller = new CaptureController({ onSourceTabClosed: vi.fn() });
+
+    await expect(controller.reattach(42)).resolves.toBeNull();
+    expect(controller.currentSourceTabId).toBeNull();
+  });
+
+  it("stops a capture whose source tab has gone", async () => {
+    stubCaptureStatus(true);
+    fake.tabs.get.mockRejectedValue(new Error("No tab with id"));
+    const sent: string[] = [];
+    const answer = fake.runtime.sendMessage.getMockImplementation();
+    fake.runtime.sendMessage.mockImplementation(async (msg: unknown) => {
+      if (isEnvelope<BackgroundToOffscreen>(msg)) sent.push(msg.payload.kind);
+      return answer?.(msg);
+    });
+    const controller = new CaptureController({ onSourceTabClosed: vi.fn() });
+
+    await expect(controller.reattach(42)).resolves.toBeNull();
+    expect(sent).toEqual(["get-capture-status", "stop-capture"]);
+  });
+});
