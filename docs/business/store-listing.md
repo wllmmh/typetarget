@@ -11,7 +11,7 @@ package, see "Releasing" in [CONTRIBUTING.md](../../CONTRIBUTING.md).
 **Summary** (the manifest `description`, 113/132 characters):
 Live-transcribe any tab's audio straight into any text field, with your choice of AI model. Free and open source.
 
-**Category:** Productivity. (Accessibility also fits, for captioning audio; pick one.)
+**Category:** Productivity → Tools. (Accessibility also fits, for captioning audio.)
 
 **Language:** English
 
@@ -23,15 +23,18 @@ podcast — and types what is said, live, into any text field you choose, in any
 
 Take notes from a lecture straight into your doc. Caption a meeting into a chat box. Pull a
 transcript of a video into a form, an email or a note-taking app. Or type into TypeTarget's own
-text box and save the result as a .txt file.
+text box and save to your own device as a .txt file.
 
 HOW IT WORKS
-1. Open TypeTarget on the tab you want to transcribe and click Start listening.
-2. Click Select field and click any text box, in that tab or another one.
-3. Transcribed text appears there as people speak. Pause, resume or switch fields any time.
+1. Right-click anywhere on the tab you want to transcribe and choose TypeTarget → Listen to
+   this tab.
+2. Right-click anywhere on a page and choose TypeTarget → Type to new file, for a text box
+   right there on the page. Or right-click any existing text field already on the page and
+   choose TypeTarget → Type to this field.
+3. Transcribed text appears there as people speak. Choose Stop typing or Stop listening from
+   the same menu, or switch fields any time.
 
-Everything is also in the right-click menu: Listen to this tab, Type to this field, Type to new
-file and Stop typing.
+The toolbar popup has the same controls, plus the model picker, API keys and chunk length.
 
 CHOOSE YOUR TRANSCRIPTION MODEL
 • Groq (Whisper Large v3 / v3 Turbo) — fast and accurate on any computer. Uses your own Groq
@@ -46,7 +49,8 @@ PRIVATE BY DESIGN
 • API keys are stored on your device only.
 • Free and open source (MIT): https://github.com/wllmmh/typetarget
 
-English transcription only.
+Gemini and Groq's Whisper transcribe dozens of languages. The Local Whisper models in the list are
+English-only. TypeTarget's own interface is in English.
 ```
 
 **Graphic assets** (none exist yet):

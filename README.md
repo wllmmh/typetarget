@@ -21,15 +21,16 @@ Then open `chrome://extensions`, turn on Developer mode, click "Load unpacked" a
 
 ## Using it
 
-1. On the tab you want transcribed, click the TypeTarget toolbar button and press
-   **Start listening**. The popup listens to the tab it was opened on.
-2. Click **Select field**, then click any text box, in that tab or another one.
-3. Text appears there as people speak. **Pause**, **Stop listening** and **Stop typing** are
-   in the popup.
+1. Right-click anywhere on the tab you want transcribed and choose **TypeTarget → Listen to
+   this tab**.
+2. Right-click anywhere on a page and choose **TypeTarget → Type to new file**, for a text box
+   over the bottom third of the page. Or right-click any existing text field already on the
+   page, in that tab or another one, and choose **TypeTarget → Type to this field**.
+3. Text appears there as people speak. **Stop typing** and **Stop listening** are in the same
+   menu.
 
-Everything is also in the page's right-click menu under **TypeTarget**: Listen to this tab,
-Stop listening, Type to this field, Type to new file (a text box over the bottom third of the
-page) and Stop typing.
+The toolbar popup has the same controls (**Start listening**, **Select field**, **Pause**),
+plus the model picker, API keys and chunk length.
 
 The output box gets a colored outline with the source tab's name and a timer. Its buttons
 save the text as a `.txt` file and stop typing. A "new file" box can also be minimized or
@@ -54,6 +55,9 @@ The popup's Model dropdown lists every supported model, grouped by provider:
   finished utterance is uploaded to Groq as a short WAV file. Optional; requires your own
   Groq API key and sends captured audio to Groq. Groq bills every request as at least 10
   seconds of audio.
+
+**Languages**: Gemini and Groq's Whisper models cover dozens of languages; the Local Whisper models
+listed are English-only. TypeTarget's interface is in English.
 
 **Chunk length** (3–25 s, default 3 s) caps how long one utterance can grow before it is
 transcribed anyway; a pause in speech finalizes it sooner. A longer chunk helps local

@@ -17,10 +17,10 @@ import pkg from "./package.json";
 // groq-engine.ts); everything else relies on activeTab.
 export default defineManifest({
   manifest_version: 3,
-  name: "TypeTarget — Directed Transcriber",
+  name: "TypeTarget — Speech to text anywhere",
   version: pkg.version,
   description:
-    "Live-transcribe any tab's audio straight into any text field, with your choice of AI model. Free and open source.",
+    "Transcribe browser tab audio directly into any text field, with your choice of AI model for free.",
   icons: {
     16: "public/icons/icon16.png",
     48: "public/icons/icon48.png",
