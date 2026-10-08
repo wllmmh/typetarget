@@ -1,18 +1,13 @@
 /**
- * Turns a sequence of overlapping partial-hypothesis strings (each one Whisper's
- * best guess for the current rolling audio window, which grows/changes as more
- * audio arrives) into partial/final TranscriptEvents without ever emitting
- * duplicated text downstream. Per AGENTS.md "Streaming transcription":
+ * Turns a sequence of overlapping hypotheses for one utterance (each a provider's best
+ * guess so far) into partial/final TranscriptEvents without duplicating text downstream:
  *
  *   partial "The quarterly"
  *   partial "The quarterly revenue"
- *   partial "The quarterly revenue numbers"
- *   -> destination receives "The quarterly revenue numbers", not the concatenation
- *      of all three.
+ *   final   "The quarterly revenue numbers"
+ *   -> destination receives "The quarterly revenue numbers", not the concatenation.
  *
- * This module is intentionally ignorant of audio/VAD/Whisper — it only knows about
- * strings coming in and TranscriptEvents going out (AGENTS.md "Keep transcript
- * generation independent from DOM insertion").
+ * Knows nothing about audio, VAD or any engine: strings in, events out.
  */
 import type { TranscriptEvent } from "../domain/transcript";
 
@@ -59,10 +54,8 @@ export class TranscriptStabilizer {
   }
 
   /**
-   * Call when VAD/the caller decides the current utterance is complete. Emits a
-   * single "final" event for the stabilized text (deduplicated against whatever was
-   * last reported as partial, per the rule above) and resets partial tracking for
-   * the next utterance.
+   * Call when the current utterance is complete. Emits one "final" event, which replaces
+   * (is never appended to) the utterance's partials, and resets partial tracking.
    */
   onFinal(text: string, timestamp: number): TranscriptEvent | null {
     const trimmed = text.trim();
@@ -77,12 +70,8 @@ export class TranscriptStabilizer {
 }
 
 /**
- * Utility for callers that want to know just the "delta" text between two
- * consecutive hypotheses (e.g. to log/debug what actually changed). Not used by the
- * stabilizer's own dedup logic above (which always emits the full current
- * hypothesis, matching how a UI's "live partial preview" should just replace its
- * displayed text) — provided because a common failure mode this module exists to
- * prevent is naively concatenating consecutive partials instead of replacing.
+ * The text `next` adds to `previous`, or all of `next` when it is a different guess rather
+ * than a refinement. The stabilizer itself always emits the full hypothesis.
  */
 export const hypothesisDelta = (previous: string, next: string, options: StabilizerOptions = DEFAULT_STABILIZER_OPTIONS): string => {
   const prefixLen = commonPrefixLength(previous, next);

@@ -143,7 +143,7 @@ describe("createTranscriptRouter", () => {
     await router.handle(final("one"));
     await router.handle(final("two"));
 
-    // A rejected link used to poison the chain, dropping every later final silently.
+    // One failed insertion must not drop every later final.
     expect(state.transcript).toEqual({ finals: 2, inserted: 1 });
     expect(state.lastError).toEqual({ code: "insert-failed", message: "tab gone" });
   });

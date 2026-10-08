@@ -92,8 +92,7 @@ describe("CaptureController.start", () => {
   });
 
   it("hands saved API keys to the offscreen document before loading the model", async () => {
-    // Regression: keys saved while idle never reached a freshly created offscreen
-    // document, so the Gemini engine loaded with no key and failed.
+    // A fresh offscreen document has no keys, and a network engine reads its key when it loads.
     fake.tabs.get.mockResolvedValue({ id: 42 });
     stubStreamId("stream-1");
     const sent: string[] = [];

@@ -1,10 +1,7 @@
 /**
- * Simple energy-based VAD, per AGENTS.md: "If a reliable local VAD implementation
- * creates excessive complexity for V1, implement a simple energy-based VAD first
- * behind an interface, but structure the code so it can later be replaced by Silero
- * VAD or another model." This implements VoiceActivityDetector (domain/vad.ts) and
- * knows nothing about Whisper or the audio pipeline beyond "a frame of samples in,
- * an event out."
+ * Simple energy-based VAD behind the VoiceActivityDetector interface (domain/vad.ts), so a
+ * model-based VAD can replace it. Knows nothing beyond "a frame of samples in, an event
+ * out."
  *
  * Algorithm: track RMS energy per frame; declare speech-start once energy has stayed
  * above threshold for `speechHoldMs`, and speech-end once energy has stayed below

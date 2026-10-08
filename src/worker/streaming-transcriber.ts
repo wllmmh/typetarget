@@ -38,7 +38,7 @@ export type StreamingOptions = {
   maxUtteranceMs: number;
 };
 
-/** Placeholders — not benchmarked; see AGENTS.md "Performance targets" before tuning or claiming latency. */
+/** Not tuned by measurement; benchmark on target hardware before claiming latency (see docs/devlog/). */
 export const DEFAULT_STREAMING_OPTIONS: StreamingOptions = {
   enablePartials: false,
   preRollMs: 300,

@@ -4,7 +4,7 @@ TypeTarget ships the following third-party software. Each is listed with its lic
 
 ## whisper.cpp
 
-https://github.com/ggml-org/whisper.cpp — MIT. Compiled to WebAssembly and shipped as whisper/libmain.js (see docs/whisper-wasm-provenance.md).
+https://github.com/ggml-org/whisper.cpp — MIT. Compiled to WebAssembly and shipped as whisper/libmain.js (see docs/specs/whisper-wasm-provenance.md).
 
 ```
 MIT License

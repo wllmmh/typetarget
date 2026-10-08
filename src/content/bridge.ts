@@ -7,9 +7,8 @@
  * re-enters selection mode every time they choose an output. Without this guard a
  * frame accumulates one DestinationSession and one onMessage listener per injection,
  * and every one of them that still holds a live element inserts the same final into
- * the page — which is the "text arrives twice, or three times" bug. The flag lives on
- * the isolated world's global object, which every execution of the script in this
- * frame shares.
+ * the page. The flag lives on the isolated world's global object, which every
+ * execution of the script in this frame shares.
  */
 import { isEnvelope, envelope, type BackgroundToContent, type ContentToBackground, type DestinationTextReply, type ReleaseReply } from "../domain/messages";
 import { destinationSession } from "./destination-session";

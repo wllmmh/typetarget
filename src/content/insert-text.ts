@@ -1,18 +1,16 @@
 /**
- * Inserts finalized transcript text into the destination element. Two separate
- * paths per AGENTS.md "Destination implementation":
+ * Inserts finalized transcript text into the destination element. Two paths:
  *  - textarea/input: write through the native value setter (bypassing any
  *    framework-patched setter on the instance) so React/Vue/Angular controlled
  *    inputs notice the change, then dispatch `input`/`change`.
  *  - contenteditable: the browser's own `insertText` editing command, so rich-text
  *    editors (ProseMirror, Lexical, Slate...) see a native beforeinput/input and update
- *    their model. A bare DOM mutation was verified to be silently reverted by Lexical
- *    (2026-09-24) while still counting as "inserted". The DOM path stays as a fallback.
+ *    their model; a bare DOM mutation gets reverted by editors like Lexical. The DOM path
+ *    stays as a fallback (docs/adr/0011-contenteditable-insertion-through-execcommand.md).
  *
- * Insertion is boundary-based, not "overwrite the whole field": each element gets an
- * internal insertion offset (see insertion-boundary.ts) that only ever advances by
- * what this module just inserted, so concurrent user edits elsewhere in the field are
- * never clobbered by re-reading a stale full value.
+ * Insertion is boundary-based, not "overwrite the whole field": the caller tracks an
+ * insertion offset (see destination-session.ts) that only ever advances by what this
+ * module inserted, so the user's own edits elsewhere in the field are never clobbered.
  */
 import { isContentEditableElement } from "./eligible-elements";
 
@@ -112,12 +110,10 @@ const insertWithDomRange = (el: HTMLElement, text: string): void => {
   const selection = window.getSelection();
   const range = document.createRange();
 
-  // Always insert at the end of the element's content. Tracking a precise DOM
-  // offset boundary across contenteditable's mutable node tree (text nodes can
-  // split/merge under the user's own edits) is materially harder than for a plain
-  // input's string value; anchoring to "end of content" is documented as the V1
-  // behavior here and is the append semantics AGENTS.md's insertion-semantics
-  // section asks for, without touching whatever the user typed before it.
+  // Always insert at the end of the element's content. Tracking a precise DOM offset
+  // across contenteditable's mutable node tree (text nodes split and merge under the
+  // user's own edits) is much harder than for an input's string value, and appending
+  // leaves whatever the user typed before it untouched.
   range.selectNodeContents(el);
   range.collapse(false);
 
@@ -137,9 +133,9 @@ export type InsertionTarget =
   | { kind: "content-editable"; element: HTMLElement };
 
 /**
- * Inserts text with a separator, per AGENTS.md "Transcript insertion semantics":
- * append at the tracked boundary, never overwrite existing content. Returns the new
- * boundary offset for text-field targets (meaningless/unused for contenteditable).
+ * Inserts text at the tracked boundary, preceded by `separator` unless the boundary is at
+ * the very start; never overwrites existing content. Returns the new boundary offset
+ * (meaningless for contenteditable, which always appends).
  */
 export const insertTranscriptText = (target: InsertionTarget, text: string, separator: string, atOffset: number): number => {
   const combined = atOffset === 0 ? text : separator + text;

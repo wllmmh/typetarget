@@ -8,9 +8,7 @@
  * the id via getUserMedia.
  *
  * `targetTabId` requires the extension to hold activeTab on that tab, which is why
- * capture must be started from a user gesture in the popup (see AGENTS.md "Capture
- * flow": "The extension must require an explicit user action before starting
- * capture.").
+ * capture can only start from a user action (the popup or the right-click menu).
  */
 /**
  * Chrome's own wording for a missing activeTab grant ("Extension has not been invoked for

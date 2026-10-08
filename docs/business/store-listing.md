@@ -1,20 +1,8 @@
 # Chrome Web Store listing
 
 Copy-paste material for the Chrome Web Store Developer Dashboard, field by field. Keep it in
-step with the manifest and [PRIVACY.md](../PRIVACY.md) when either changes.
-
-## Package
-
-Build with `npm run build` and zip the **contents** of `dist/`, not the folder itself, so
-`manifest.json` sits at the root of the zip:
-
-```sh
-npm run build && (cd dist && zip -r ../typetarget-0.1.0.zip .)
-```
-
-Before zipping, check `dist/whisper/libmain.js` exists. The build only warns when it is missing
-(see docs/whisper-wasm-provenance.md), and without it Whisper models can't transcribe.
-`LICENSE` and `THIRD_PARTY_NOTICES.md` are copied into `dist/` by the build.
+step with the manifest and [PRIVACY.md](../../PRIVACY.md) when either changes. To build the
+package, see "Releasing" in [CONTRIBUTING.md](../../CONTRIBUTING.md).
 
 ## Store listing tab
 
@@ -49,7 +37,7 @@ CHOOSE YOUR TRANSCRIPTION MODEL
 • Groq (Whisper Large v3 / v3 Turbo) — fast and accurate on any computer. Uses your own Groq
   API key.
 • Gemini 3.5 Transcribe (Live) — Google's streaming transcription. Uses your own Gemini API key.
-• Whisper in your browser — no key, no account, and audio never leaves your device. Keeps up
+• Local Whisper, in your browser — no key, no account, and audio never leaves your device. Keeps up
   live only on fast computers; TypeTarget tells you when it is falling behind.
 
 PRIVATE BY DESIGN
@@ -74,7 +62,7 @@ Screenshot shot list:
 
 1. A video playing in one tab, its transcript appearing in a Google Doc in another, with the
    popup open showing "Listening to" and "Typing to".
-2. The popup's model picker opened, showing the Whisper, Gemini and Groq groups.
+2. The popup's model picker opened, showing the Local Whisper, Gemini and Groq groups.
 3. The right-click TypeTarget submenu on a text box.
 4. The "Type to new file" box over a page, with the green listening badge and Save button.
 5. The API Keys dialog, with "Stored on this device only".
@@ -107,8 +95,9 @@ whisper.cpp ship in the package. Whisper model files downloaded from Hugging Fac
 weights (data), not executable code.
 
 **Data usage.** The dashboard asks which data types the extension "collects", which includes
-data sent to third parties. These are the honest answers given that audio and keys go to Groq
-or Google when the user chooses them. Review them yourself before submitting:
+data sent to third parties. These are ticked because of the hosted models: when the user picks
+any model other than Local Whisper (Groq's hosted Whisper or Gemini), audio and that
+provider's API key go to the provider. Local Whisper models send nothing.
 
 | Data type | Tick? | Why |
 | --- | --- | --- |
@@ -120,13 +109,12 @@ or Google when the user chooses them. Review them yourself before submitting:
 Certify all three statements: data is not sold to third parties; not used or transferred for
 purposes unrelated to the single purpose; not used to determine creditworthiness or for lending.
 
-**Privacy policy URL:** a public URL for [PRIVACY.md](../PRIVACY.md), for example
-`https://github.com/wllmmh/typetarget/blob/main/PRIVACY.md`. This only works if the
-repository is public; otherwise host the file elsewhere (e.g. GitHub Pages).
+**Privacy policy URL:** the public address where [PRIVACY.md](../../PRIVACY.md) is hosted.
 
 ## Before submitting
 
 - Load the zipped build unpacked in a clean Chrome profile and run each model once.
-- Make sure the repository URL in the description and privacy policy is public.
+- Make sure the repository URL in the description and the privacy policy's contact link is public.
+- Re-host PRIVACY.md whenever it changes, so the hosted copy matches the submitted build.
 - The listing names Groq and Google only to say which services it can use. Don't use their
   logos in the screenshots or promo tiles.

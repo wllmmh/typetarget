@@ -1,9 +1,7 @@
 /**
- * Voice activity detection contract. Deliberately decoupled from both the audio
- * pipeline and the ASR engine (AGENTS.md "Voice activity detection": "Do not make
- * VAD tightly coupled to the Whisper implementation" / "must be replaceable") so a
- * future Silero VAD (or any other model) can implement this same interface without
- * touching the audio worklet or the transcription worker.
+ * Voice activity detection contract, independent of both the audio pipeline and the ASR
+ * engine, so a model-based VAD (e.g. Silero) can replace the energy VAD without touching
+ * either.
  */
 export type VadState = "silence" | "speech";
 

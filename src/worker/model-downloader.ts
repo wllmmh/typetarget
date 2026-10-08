@@ -1,8 +1,6 @@
 /**
- * Downloads a model file with progress reporting, then hands it to model-cache.ts
- * for persistence. Kept separate from model-cache.ts because "fetch bytes from the
- * network with progress" and "persist bytes locally" are different concerns (one
- * network-shaped, one storage-shaped) — AGENTS.md "Separate these concerns."
+ * Downloads a model file with progress reporting, then hands it to model-cache.ts for
+ * persistence. Fetching and storing are kept in separate modules.
  */
 import type { WhisperModelId } from "../domain/models";
 import { getCachedModel, putCachedModel, isModelCached } from "./model-cache";

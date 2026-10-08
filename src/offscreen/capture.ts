@@ -1,9 +1,8 @@
 /**
  * Owns the tab-capture MediaStream and the single long-lived AudioContext for the
- * offscreen document's audio pipeline. Per AGENTS.md "Audio pipeline" / "Audio
- * playback": the AudioContext is created once and reused across start/stop cycles
- * (recreating one per capture is expensive and unnecessary), and the captured stream
- * is always fanned out to the real speakers so the source tab never goes silent.
+ * offscreen document's audio pipeline. The AudioContext is created once and reused across
+ * start/stop cycles, and the captured stream is always played back to the speakers so the
+ * source tab never goes silent.
  *
  * This module knows nothing about Whisper/VAD/ASR — it only exposes the raw
  * (resampled-later) audio graph. Processing hooks in via `onAudioReady`.

@@ -4,6 +4,10 @@ title: Speech to Text - GroqDocs
 image: https://console.groq.com/og_cloudv5.jpg
 ---
 
+> Snapshot of Groq's speech-to-text documentation, saved before the Groq engine was built
+> (2026-09-29). `src/worker/groq-engine.ts` was written against it. Check Groq's live docs
+> before relying on prices or limits.
+
 # Speech to Text
 
 Groq API is designed to provide fast speech-to-text solution available, offering OpenAI-compatible endpoints that enable near-instant transcriptions and translations. With Groq API, you can integrate high-quality audio processing into your applications at speeds that rival human interaction.

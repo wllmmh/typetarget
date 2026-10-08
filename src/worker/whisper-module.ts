@@ -1,31 +1,12 @@
 /**
- * Type contract for whisper.cpp's compiled WASM module (Emscripten + Embind), as
- * confirmed against the exact source of examples/whisper.wasm/emscripten.cpp:
- * https://github.com/ggml-org/whisper.cpp/blob/master/examples/whisper.wasm/emscripten.cpp
+ * Type contract for whisper.cpp's compiled WASM module (Emscripten + Embind), from
+ * examples/whisper.wasm/emscripten.cpp. `full_default` returns a status code, not text:
+ * segment text arrives on the `print` handler (stdout) and completion is signalled on
+ * `printErr` (stderr). Both handlers are read once, at runtime startup, so they can only
+ * be supplied as load-time overrides.
  *
- *   size_t init(const std::string & path_model)
- *   void   free(size_t index)
- *   int    full_default(size_t index, const emscripten::val & audio, const std::string & lang, int nthreads, bool translate)
- *
- * `full_default` does not return transcript text — it starts inference on a
- * background std::thread and returns immediately (0 on success). Segment text
- * arrives via whisper.cpp's internal per-segment printf (params.print_realtime=true),
- * a plain stdout printf routed to the `print` handler supplied at load time (see
- * whisper-line-parser.ts). Completion of that background
- * thread is separately signaled through `Module.printErr` (stderr), because
- * whisper_print_timings() — the last call the thread makes — goes through
- * whisper.cpp's default log callback, which writes to stderr, not stdout (see
- * whisper-cpp-engine.ts for exactly how this is used as a completion marker).
- *
- * `print`/`printErr` are read by Emscripten exactly once, at runtime startup
- * (`if (Module["print"]) out = Module["print"]`), so they can only be supplied as
- * load-time overrides — reassigning them on the module afterwards has no effect.
- *
- * The actual libmain.js glue + libmain.wasm binary are not npm packages — they are
- * build output from whisper.cpp's own CMake/Emscripten build
- * (examples/whisper.wasm/CMakeLists.txt) and must be vendored under
- * third_party/whisper-wasm/ (see docs/whisper-wasm-provenance.md). This module only
- * declares the shape; it does not embed or fetch the actual files.
+ * The glue (third_party/whisper-wasm/libmain.js, wasm embedded) is our own build, not an
+ * npm package; this module only declares its shape. See docs/specs/whisper-wasm-provenance.md.
  */
 
 export type WhisperModule = {
@@ -67,12 +48,10 @@ export type WhisperModuleFactory = (overrides: WhisperModuleOverrides) => Promis
  * One runtime per worker: the script is imported once, and every call returns that
  * same module. Overrides passed on the first call are the ones that stay in effect.
  *
- * The vendored build is single-threaded on purpose (`-s USE_PTHREADS=0`), so it needs no
- * `SharedArrayBuffer` and therefore no cross-origin isolation. That is not a detail:
- * COOP/COEP puts extension pages in their own render process, and a tabCapture stream id
- * can only be consumed in the same process as the service worker that created it — with
- * isolation on, capture failed with "Error starting tab capture". See
- * docs/whisper-wasm-provenance.md.
+ * The vendored build is single-threaded on purpose (`-s USE_PTHREADS=0`): pthreads need
+ * cross-origin isolation, which puts extension pages in a different render process from the
+ * service worker, and a tabCapture stream id can only be consumed in the caller's process.
+ * See docs/adr/0001-single-threaded-whisper-build-to-keep-tab-capture.md.
  */
 export const loadWhisperModuleFactory = async (glueScriptUrl: string): Promise<WhisperModuleFactory> => {
   let loaded: Promise<WhisperModule> | null = null;

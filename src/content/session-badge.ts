@@ -1,12 +1,11 @@
 /**
  * The listening timer, drawn as a small tab sitting on top of the destination's double
  * outline (see highlight.ts), which takes on its color: green while listening, the app icon's
- * red when stopped, grey while paused or while a lost connection is being re-established. Fixed-positioned at the document root
- * rather than inserted beside the element, so the page's layout and `overflow: hidden`
- * containers can't move or clip it. It is re-placed on every animation frame, not just on
- * scroll/resize: chat boxes grow as text is typed and pages shift layout without firing
- * either, which left it floating away from the outline until the next tick. Only ever one,
- * for the one destination. Reads: state icon, the source tab's name (none when stopped), the timer.
+ * red when stopped, grey while paused or while a lost connection is being re-established.
+ * Fixed-positioned at the document root rather than inserted beside the element, so the
+ * page's layout and `overflow: hidden` containers can't move or clip it. It is re-placed on
+ * every animation frame, not just on scroll/resize: chat boxes grow as text is typed and
+ * pages shift layout without firing either event. Only ever one, for the one destination. Reads: state icon, the source tab's name (none when stopped), the timer.
  *
  * A second tab of the same color sits on the outline's top right with the output's buttons:
  * Save (downloads the box's text as .txt) and X (the same as the right-click menu's Stop typing).

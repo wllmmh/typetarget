@@ -1,7 +1,6 @@
 /**
  * TranscriptionEngine implementation backed by Google's Gemini Live API (persistent
- * WebSocket, not the batch Files-API alternative — see HANDOFF.md "Gemini Live" for
- * why). This is the *only* module allowed to know about @google/genai's Live session
+ * WebSocket; see docs/adr/0005-gemini-live-api-via-official-sdk.md). This is the *only* module allowed to know about @google/genai's Live session
  * shape — everything above it talks to TranscriptionEngine (domain/models.ts) plus the
  * narrow streaming shape engine-router.ts also expects of it (pushAudio/flush/setOptions),
  * same boundary whisper-cpp-engine.ts draws around whisper.cpp.
@@ -11,9 +10,9 @@
  * exists only to satisfy the TranscriptionEngine interface — engine-router.ts routes
  * pushAudio() directly for this provider and never calls it.
  *
- * Utterance boundaries are marked by *this* client, not Gemini's server-side detection.
- * Measured against the real API (2026-09-23, HANDOFF.md "Gemini Live"): with automatic
- * detection, speech after each detected end was ignored for seconds at a time, losing
+ * Utterance boundaries are marked by *this* client, not Gemini's server-side detection
+ * (docs/adr/0006-client-side-utterance-boundaries-for-gemini-live.md). Measured against
+ * the real API: with automatic detection, speech after each detected end was ignored for seconds at a time, losing
  * most of a continuous talk; and the server never sends `turnComplete` for transcription,
  * only `inputTranscription` per utterance. What proved lossless: automatic detection off,
  * `TURN_INCLUDES_ALL_INPUT`, `activityEnd` at a local pause (or the chunk-length cap), and
@@ -41,8 +40,7 @@ import { EnergyVad } from "./energy-vad";
 import { float32ToPcm16Base64 } from "./pcm16-encode";
 
 /** The Live API model id for dedicated transcription (distinct from the batch
- * "gemini-3.5-transcribe" model) — verified against Google's own docs, see
- * HANDOFF.md "Gemini Live". Fixed here rather than exposed as an option: there is
+ * "gemini-3.5-transcribe" model), as named in Google's own docs. Fixed here rather than exposed as an option: there is
  * exactly one Live+transcription model this engine knows how to talk to. */
 const LIVE_TRANSCRIBE_MODEL = "gemini-3.5-transcribe-live";
 
@@ -51,8 +49,7 @@ const LIVE_TRANSCRIBE_MODEL = "gemini-3.5-transcribe-live";
  * injected via `connect` below rather than importing the SDK directly here — same DI
  * reasoning as whisper-cpp-engine.ts's `loadModuleFactory`: tests supply a fake session
  * instead of opening a real network connection. Matches the SDK's real
- * `sendRealtimeInput`/`close` methods (verified against the SDK's shipped .d.ts, not
- * scraped docs — see HANDOFF.md).
+ * `sendRealtimeInput`/`close` methods (as declared in the SDK's shipped .d.ts).
  */
 export type LiveSessionLike = {
   sendRealtimeInput: (
@@ -229,9 +226,8 @@ export class GeminiLiveEngine implements TranscriptionEngine {
 
   /**
    * Closes the session so nothing from before the reset can surface afterwards — the same
-   * intent as StreamingTranscriber's generation counter (HANDOFF.md: "audio from the last
-   * session was transcribed and typed into the next one"), just via connection lifecycle
-   * instead of a counter, since there is no local queue here to invalidate.
+   * intent as StreamingTranscriber's generation counter, through the connection lifecycle,
+   * since there is no local queue here to invalidate.
    *
    * Deliberately does not reconnect: Stop resets, and Stop must cut the connection. Every
    * caller that wants one again (Start, a model load) follows the reset with load(). A
@@ -518,7 +514,7 @@ export class GeminiLiveEngine implements TranscriptionEngine {
 }
 
 /** The SDK's types name this field `voiceActivityType`, but v2.24.0 delivers the wire
- * name `type` at runtime (observed against the real API, 2026-09-23); accept either. */
+ * name `type` at runtime (observed against the real API); accept either. */
 const voiceActivityTypeOf = (activity: VoiceActivity | undefined): string | undefined => {
   if (!activity) return undefined;
   if (activity.voiceActivityType) return activity.voiceActivityType;
@@ -526,10 +522,9 @@ const voiceActivityTypeOf = (activity: VoiceActivity | undefined): string | unde
 };
 
 /**
- * Production `connect` for GeminiLiveEngineConfig, using the real @google/genai
- * browser SDK (see HANDOFF.md "Gemini Live" for why this SDK and not a hand-rolled
- * WebSocket client — its shipped types are the source of truth this file is written
- * against). `inputAudioTranscription: {}` requests transcription of the audio *we*
+ * Production `connect` for GeminiLiveEngineConfig, using the @google/genai browser SDK,
+ * whose shipped types are the source of truth this file is written against.
+ * `inputAudioTranscription: {}` requests transcription of the audio *we*
  * send with default settings (auto language detection, VERBATIM mode) — this engine
  * only cares about transcribing input, never about a spoken model reply, so
  * `responseModalities` (which controls the model's own audio/text reply) is

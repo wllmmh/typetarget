@@ -2,9 +2,9 @@
 /**
  * Serves the repo root with COOP/COEP headers, required for SharedArrayBuffer /
  * crossOriginIsolated (needed to benchmark bench/libmain-threaded.js — see
- * HANDOFF.md "Lever 1"). A plain static server does not set these headers, and without
+ * bench/README.md). A plain static server does not set these headers, and without
  * them a pthreads build fails at runtime the same way it does in the real extension when
- * the manifest keys are missing (see docs/whisper-wasm-provenance.md).
+ * the manifest keys are missing (see docs/specs/whisper-wasm-provenance.md).
  *
  * Usage: from the repo root, `node bench/serve.mjs [port]` (default 8000), then open
  * http://localhost:<port>/bench/whisper-bench.html

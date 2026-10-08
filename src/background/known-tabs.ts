@@ -1,12 +1,13 @@
 /**
- * The set of tabs TypeTarget may capture: those the popup has been opened on.
+ * The set of tabs TypeTarget may capture: those it has been invoked on (popup or
+ * right-click menu).
  *
  * Two Chrome constraints force this. Without the `tabs` permission,
  * `chrome.tabs.query` returns only `{id, audible}` — no titles to show. And
  * `tabCapture.getMediaStreamId` accepts a target tab only if `activeTab` was granted
- * for it, which happens when the user invokes the extension on that tab. So opening the
- * popup on a tab is exactly what makes it both labellable and capturable, and recording
- * that moment gives an honest list instead of a wall of "Untitled tab".
+ * for it, which happens when the user invokes the extension on that tab. So that moment
+ * is exactly when a tab becomes both labellable and capturable
+ * (docs/adr/0008-source-tab-is-the-tab-typetarget-was-invoked-on.md).
  *
  * Pure functions over a list; the service worker owns the chrome.tabs wiring.
  */
@@ -59,7 +60,7 @@ export const sameKnownTabs = (a: readonly CapturableTab[], b: readonly Capturabl
 export const removeKnownTab = (known: readonly CapturableTab[], tabId: number): CapturableTab[] =>
   known.filter((t) => t.tabId !== tabId);
 
-/** Drops tabs that no longer exist, so the dropdown can't offer a closed tab. */
+/** Drops tabs that no longer exist, so a closed tab can't be shown as the source. */
 export const pruneKnownTabs = (known: readonly CapturableTab[], openTabIds: readonly number[]): CapturableTab[] => {
   const open = new Set(openTabIds);
   return known.filter((t) => open.has(t.tabId));

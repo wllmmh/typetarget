@@ -37,8 +37,8 @@ Which transcription model you select decides where your audio goes:
 
 | Model | Where the audio goes |
 | --- | --- |
-| Whisper (the default) | Nowhere. It is transcribed inside your browser. |
-| Groq | Each finished utterance is uploaded to Groq (`api.groq.com`) as a short audio file, using your API key. |
+| Local Whisper (the default) | Nowhere. It is transcribed inside your browser. |
+| Groq (hosted Whisper) | Each finished utterance is uploaded to Groq (`api.groq.com`) as a short audio file, using your API key. |
 | Gemini | Captured audio is streamed to Google (`generativelanguage.googleapis.com`), using your API key. |
 
 When you use Groq or Gemini, that provider's own privacy policy and terms apply to the audio
@@ -47,7 +47,7 @@ you send, under your account with them:
 - Groq: <https://groq.com/privacy-policy/>
 - Google Gemini API: <https://ai.google.dev/gemini-api/terms>
 
-**Model downloads.** The first time you use a Whisper model, TypeTarget downloads the model file
+**Model downloads.** The first time you use a Local Whisper model, TypeTarget downloads the model file
 from Hugging Face (`huggingface.co`) and caches it in your browser. This is an ordinary file
 download: Hugging Face sees the request (including your IP address), but no audio or text is
 sent.

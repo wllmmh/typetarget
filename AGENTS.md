@@ -1,6 +1,6 @@
 # Base Agent Conventions (TypeScript)
 
-Shared across all repos. Each repo adds a `CONVENTIONS.repo.md` addendum.
+Shared across all repos. Each repo adds an addendum; this repo's is the last section of this file.
 
 ## 0. Precedence
 
@@ -9,7 +9,7 @@ Shared across all repos. Each repo adds a `CONVENTIONS.repo.md` addendum.
 3. **Established patterns in the repo**: if the codebase consistently does X, do X, even if this file says otherwise.
 4. **Defaults in this file**: apply only when 2 and 3 are silent.
 
-If the addendum is missing or silent on something you need, use §9 (Discovery) and list every assumption in your final report.
+If the addendum is missing or silent on something you need, use §10 (Discovery) and list every assumption in your final report.
 
 ## 1. Hard Rules
 
@@ -19,7 +19,7 @@ If the addendum is missing or silent on something you need, use §9 (Discovery) 
 - Never delete, skip, loosen, or `.only` a failing test to get green. If you believe the test is wrong, say why and ask.
 - Never claim a check passed unless you ran it and saw it pass. If you couldn't run it, say so.
 - Never invent internal APIs, props, env vars, routes, or library behavior. Find the definition or installed version first.
-- Never run destructive or irreversible commands without explicit approval (see §7).
+- Never run destructive or irreversible commands without explicit approval (see §8).
 - Never use `any`, `as any`, `@ts-ignore`, or `eslint-disable` to silence an error. `@ts-expect-error` is allowed only at a third-party boundary, with a one-line reason.
 
 ## 2. Scope Discipline
@@ -121,3 +121,15 @@ End every task with:
 - **Not verified:** checks skipped and why
 - **Assumptions:** anything inferred rather than read from the addendum or code
 - **Follow-ups:** issues noticed but deliberately left alone
+
+## Repo addendum: TypeTarget
+
+- Never commit. The user commits manually.
+- `dist/` is committed, so a build shows up as changes there. Don't revert or clean it.
+- Read [ARCHITECTURE.md](ARCHITECTURE.md) first, and keep its invariants. Before touching
+  the whisper.cpp engine, read [docs/specs/whisper-wasm-provenance.md](docs/specs/whisper-wasm-provenance.md).
+- Testing in Chrome has traps (stale injected content scripts, stale `dist/`, no `activeTab`
+  under Playwright). See "Testing in Chrome" in [CONTRIBUTING.md](CONTRIBUTING.md).
+- Record work where the docs layout says: user-facing changes in `CHANGELOG.md`, decisions in
+  `docs/adr/`, bugs in `docs/postmortems/`, open items in `TODO.md`. Code comments explain why
+  the code is there, not how it used to be.

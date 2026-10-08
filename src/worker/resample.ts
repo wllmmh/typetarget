@@ -1,12 +1,9 @@
 /**
- * Resamples mono float32 PCM to Whisper's required 16 kHz (AGENTS.md "Audio
- * pipeline": "mono, 16 kHz, PCM float32"). Tab-captured audio typically arrives at
- * the AudioContext's native rate (usually 44.1/48 kHz), so this always runs.
+ * Resamples mono float32 PCM to the 16 kHz every engine expects. Tab-captured audio
+ * arrives at the AudioContext's native rate (usually 44.1/48 kHz), so this always runs.
  *
- * Linear interpolation, not a proper polyphase/sinc resampler: adequate for speech
- * recognition (Whisper's own training data includes plenty of resampled/compressed
- * audio) and avoids pulling in a DSP dependency for V1. AGENTS.md's "no new
- * dependency if ~20 lines of local code covers it" — this is that.
+ * Linear interpolation, not a polyphase/sinc resampler: adequate for speech recognition,
+ * and ~20 lines instead of a DSP dependency.
  */
 export const resampleTo16kHz = (input: Float32Array, inputSampleRate: number): Float32Array => {
   const targetRate = 16_000;

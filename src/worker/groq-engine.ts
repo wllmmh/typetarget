@@ -1,7 +1,7 @@
 /**
  * TranscriptionEngine backed by Groq's hosted Whisper (OpenAI-compatible
- * `/audio/transcriptions` endpoint — see GROQ.md in the repo root, a snapshot of Groq's
- * docs). Same discrete shape as WhisperCppEngine: one transcribe(chunk) call per utterance,
+ * `/audio/transcriptions` endpoint — see docs/specs/groq-speech-to-text.md, a snapshot of
+ * Groq's docs). Same discrete shape as WhisperCppEngine: one transcribe(chunk) call per utterance,
  * scheduled by a StreamingTranscriber's VAD/chunk-length logic, so it needs no streaming
  * shape of its own (contrast gemini-live-engine.ts).
  *
@@ -15,7 +15,7 @@ import { SAMPLE_RATE } from "./streaming-transcriber";
 
 export const GROQ_TRANSCRIPTIONS_URL = "https://api.groq.com/openai/v1/audio/transcriptions";
 
-/** TypeTarget's model ids → Groq's own model ids (GROQ.md "Supported Models"). Prefixed on
+/** TypeTarget's model ids → Groq's own model ids (Groq docs, "Supported Models"). Prefixed on
  * our side so they can't be confused with the local whisper.cpp models in the picker. */
 const GROQ_MODEL_IDS: Partial<Record<ModelId, string>> = {
   "groq-whisper-large-v3-turbo": "whisper-large-v3-turbo",

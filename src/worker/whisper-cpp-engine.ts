@@ -1,11 +1,7 @@
 /**
- * TranscriptionEngine implementation backed by whisper.cpp's WASM build. This is the
- * *only* module in the codebase allowed to know about whisper.cpp's specific API
- * shape (init/free/full_default, stdout-based results) — everything above it
- * (worker message handling, streaming/stabilization, UI) talks to the
- * TranscriptionEngine interface in domain/models.ts, per AGENTS.md "Model
- * abstraction": "The rest of the application must not depend directly on
- * whisper.cpp internals."
+ * TranscriptionEngine implementation backed by whisper.cpp's WASM build. The only module
+ * that knows whisper.cpp's API shape (init/free/full_default, stdout-based results);
+ * everything above it talks to the TranscriptionEngine interface in domain/models.ts.
  */
 import type { EngineStatus, ModelId, TranscriptionEngine, TranscriptionOptions, TranscriptionResult, WhisperModelId } from "../domain/models";
 import { MODEL_CATALOG } from "../domain/models";
@@ -138,23 +134,11 @@ export class WhisperCppEngine implements TranscriptionEngine {
     const module = this.module;
     this.stdoutSink = (line) => capturedStdout.push(line);
 
-    // Completion signal. The vendored build runs inference *synchronously* (see
-    // third_party/whisper-wasm/single-thread.patch: upstream detaches a std::thread, which
-    // aborts without pthreads), so by the time full_default() returns the marker below has
-    // already been printed and the poll resolves on its first tick. The marker is still
-    // what's waited on rather than the return value, because it is the one signal that holds
-    // for both the synchronous and upstream-threaded builds.
-    //
-    // whisper_print_timings() is the last call either way, and its first line is
-    // unconditionally
-    // "whisper_print_timings:     load time = ..." (confirmed in whisper.cpp's
-    // source, src/whisper.cpp, whisper_print_timings()/whisper_log_callback_default()).
-    // That goes through whisper.cpp's *default* log callback, which writes to
-    // stderr (fputs(text, stderr)) — Emscripten routes stderr through the exported
-    // `printErr` runtime method, not `print` (stdout, used only by the plain
-    // printf() segment lines). Watching for that marker on printErr is therefore a
-    // real signal tied to the actual last statement of the background thread, not a
-    // guessed delay.
+    // Completion signal: the first line of whisper_print_timings(), the last thing inference
+    // prints, which goes to stderr (printErr). The vendored build runs inference
+    // synchronously, so the marker is already there when full_default() returns; it is still
+    // what's waited on because it also holds for upstream's threaded build, where
+    // full_default() returns immediately. See docs/specs/whisper-wasm-provenance.md.
     let inferenceFinished = false;
     this.stderrSink = (line) => {
       if (line.includes("whisper_print_timings")) inferenceFinished = true;

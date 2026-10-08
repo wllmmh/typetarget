@@ -11,23 +11,25 @@ const pad = (n: number) => String(n).padStart(2, "0");
 
 const MAX_TAB_NAME_LENGTH = 50;
 
-/** A tab title as a file-name part: no path/reserved characters, whitespace collapsed, capped. */
+/** A tab title as a file-name part: no path/reserved characters, whitespace collapsed to "_", capped. */
 const fileNamePart = (tabName: string): string =>
   tabName
     .replace(/[\\/:*?"<>|\p{Cc}]/gu, " ")
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, MAX_TAB_NAME_LENGTH)
-    .trim();
+    .trim()
+    .replaceAll(" ", "_");
 
 /**
- * e.g. typetarget-2026-10-08-1730.txt in local time, or with the source tab's title,
- * typetarget-My Video-2026-10-08-1730.txt. A title with nothing usable in it is left out.
+ * e.g. TypeTarget-2026-10-08T17-30-05.txt (ISO 8601 in local time, with "-" for ":" since
+ * Windows file names can't hold colons), or with the source tab's title,
+ * TypeTarget-My_Video-2026-10-08T17-30-05.txt. A title with nothing usable in it is left out.
  */
 export const textFileName = (date: Date, tabName?: string): string => {
-  const stamp = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}`;
+  const stamp = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}-${pad(date.getMinutes())}-${pad(date.getSeconds())}`;
   const name = tabName ? fileNamePart(tabName) : "";
-  return `typetarget-${name ? `${name}-` : ""}${stamp}.txt`;
+  return `TypeTarget-${name ? `${name}-` : ""}${stamp}.txt`;
 };
 
 /**

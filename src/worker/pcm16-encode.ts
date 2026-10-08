@@ -2,7 +2,7 @@
  * Converts float32 PCM samples (as already produced by src/worker/resample.ts — mono,
  * 16 kHz, [-1, 1] normalized) to 16-bit signed PCM, little-endian: base64-encoded raw for
  * Gemini's Live API (LiveClientRealtimeInput.audio = { data, mimeType:
- * "audio/pcm;rate=16000" } — see HANDOFF.md "Gemini Live"), or wrapped in a WAV header for
+ * "audio/pcm;rate=16000" }), or wrapped in a WAV header for
  * Groq's file-upload endpoint. No new dependency: this is the "~20 lines of local code"
  * case, same reasoning as resample.ts.
  */

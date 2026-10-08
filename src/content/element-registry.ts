@@ -2,8 +2,7 @@
  * Tracks the currently-selected destination element by an opaque id, scoped to this
  * frame. The background service worker only ever holds { tabId, frameId, elementId }
  * (see domain/messages.ts DestinationRef) — never a DOM node reference, since a node
- * only has meaning inside the frame that owns it (AGENTS.md "Destination selection
- * across tabs"). This module is the one place that translates an elementId back to
+ * only has meaning inside the frame that owns it. This module is the one place that translates an elementId back to
  * a live element, and it's the one place that notices the element going away.
  */
 

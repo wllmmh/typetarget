@@ -1,8 +1,6 @@
 /**
- * IndexedDB-backed cache for downloaded GGML model files. Per AGENTS.md "Model
- * storage": "download once, persist locally, survive extension popup closure, be
- * reloadable, have a clear delete-cache option" and "Do not redownload the model
- * every time the extension starts."
+ * IndexedDB-backed cache for downloaded GGML model files, so each model is downloaded
+ * once rather than on every start (docs/adr/0003-models-downloaded-at-runtime-and-cached.md).
  *
  * Deliberately generic (ModelId -> ArrayBuffer) — knows nothing about whisper.cpp's
  * on-disk model format, only that it's storing/retrieving bytes under an id.

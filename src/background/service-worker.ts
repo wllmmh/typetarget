@@ -1,8 +1,7 @@
 /**
- * Extension service worker: coordination, state, and message routing only.
- * Per AGENTS.md "Offscreen document" / "Worker architecture", the actual audio
- * pipeline and ASR run in the offscreen document + worker, not here, because MV3
- * service workers are non-persistent and unsuitable for a long-lived real-time stream.
+ * Extension service worker: coordination, state, and message routing only. The audio
+ * pipeline and ASR run in the offscreen document and its worker, because MV3 service
+ * workers are non-persistent and unsuitable for a long-lived real-time stream.
  */
 import {
   envelope,
@@ -388,13 +387,6 @@ const pickFromContextMenu = async (pick: () => Promise<void>): Promise<void> => 
   }
 };
 
-/**
- * Each item does what the matching popup control does. Choosing any menu item grants
- * activeTab for the tab it's in, which is what lets "Select field" pick there — and,
- * same as registerActiveTab for the popup, is what first makes this tab labellable and
- * capturable at all. Recording it here means the first right-click that starts capture
- * doesn't also require a separate popup visit just to make the tab "known".
- */
 /** Starts capturing `tabId` from the menu. Works mid-capture too: the tab already being
  * captured is left alone, any other is switched to. */
 const listenTo = async (tabId: number): Promise<void> => {
@@ -405,6 +397,12 @@ const listenTo = async (tabId: number): Promise<void> => {
   await startCapture(tabId);
 };
 
+/**
+ * Each item does what the matching popup control does. Choosing any menu item grants
+ * activeTab for the tab it's in, which is what lets Type to this field pick there and,
+ * as registerActiveTab does for the popup, makes the tab labellable and capturable.
+ * Recording it here means starting capture from the menu needs no separate popup visit.
+ */
 const handleMenuClick = async (info: chrome.contextMenus.OnClickData, tab: chrome.tabs.Tab | undefined): Promise<void> => {
   await captureReattached;
   if (tab) {

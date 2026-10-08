@@ -1,15 +1,12 @@
 /**
  * Dispatches between transcription providers by MODEL_CATALOG[modelId].provider,
  * presenting one object that satisfies both shapes asr-worker-controller.ts depends on
- * (TranscriptionEngine for status tracking; StreamingTranscriber's narrow streaming
- * shape for audio-in/event-out) — see HANDOFF.md "Core design" for why this keeps the
- * controller itself completely unchanged.
+ * (TranscriptionEngine for status; StreamingTranscriber's narrow streaming shape for
+ * audio in, events out), so the controller doesn't know which provider is active.
  *
- * Each provider supplies its own `engine` (TranscriptionEngine) and `transcriber`
- * (the streaming shape); for whisper-cpp today that's two different objects
- * (WhisperCppEngine + StreamingTranscriber) wrapping one instrumented engine, exactly
- * as main.ts already builds them. For gemini-live it's the *same* GeminiLiveEngine
- * instance in both roles, since that class implements both shapes itself.
+ * Each provider supplies an `engine` and a `transcriber`. For whisper-cpp and groq these
+ * are an instrumented engine and the StreamingTranscriber around it (see main.ts); for
+ * gemini-live both are the same GeminiLiveEngine, which implements both shapes.
  */
 import { MODEL_CATALOG, type EngineProvider, type EngineStatus, type ModelId, type TranscriptionEngine, type TranscriptionOptions, type TranscriptionResult } from "../domain/models";
 import type { StreamingOptions, StreamingTranscriber } from "./streaming-transcriber";

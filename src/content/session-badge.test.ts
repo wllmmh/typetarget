@@ -254,7 +254,7 @@ describe("session badge over the destination", () => {
     page().getByRole("button", { name: "Save as .txt" }).click();
 
     expect(downloads).toHaveLength(1);
-    expect(downloads[0]).toMatch(/^typetarget-\d{4}-\d{2}-\d{2}-\d{4}\.txt blob:typetarget-test$/);
+    expect(downloads[0]).toMatch(/^TypeTarget-\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}\.txt blob:typetarget-test$/);
     expect(await Promise.all(blobs.map(readBlob))).toEqual(["Hello from the meeting"]);
   });
 

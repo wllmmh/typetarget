@@ -8,9 +8,8 @@ export type TranscriptionStatus =
   | "paused"
   | "error";
 
-/** Internal event model per AGENTS.md "Transcript event model". Transcript generation
- * (this file's producers, in `src/worker` and `src/offscreen`) stays independent of
- * DOM insertion (`src/content`) — they only communicate through these events. */
+/** Transcript generation (`src/worker`, `src/offscreen`) and DOM insertion (`src/content`)
+ * only communicate through these events. */
 export type TranscriptEvent =
   | { type: "partial"; text: string; timestamp: number }
   | { type: "final"; text: string; timestamp: number }

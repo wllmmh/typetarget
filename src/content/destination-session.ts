@@ -1,9 +1,8 @@
 /**
  * Owns the content script's live view of "the current destination": selection mode
- * (hover/click to pick), and once picked, the insertion boundary for that element
- * (AGENTS.md "Destination cursor behavior": capture position at selection time,
- * then only ever advance forward from there — never re-derive from the live
- * selection/cursor, which the user may have moved).
+ * (hover/click to pick), and once picked, the insertion boundary for that element. The
+ * boundary is set at pick time and only ever advances by what TypeTarget inserts; it is
+ * never re-derived from the live caret, which the user may have moved.
  */
 import { findEligibleAncestor } from "./eligible-elements";
 import { setHighlighted, clearHighlight, setDestinationMarker } from "./highlight";

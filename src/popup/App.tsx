@@ -30,8 +30,8 @@ const ENGINE_LABEL: Record<string, string> = {
 const QUIET_LEVEL = 0.02;
 
 /**
- * A first model download is ~75-142 MB and can take a minute or more; without the byte
- * counts "Loading model" is indistinguishable from a hang (which is exactly how it read).
+ * A first model download is tens to hundreds of MB and can take a minute or more; without
+ * the byte counts "Loading model" is indistinguishable from a hang.
  */
 const statusText = (state: PublicAppState): string => {
   const label = STATUS_LABEL[state.status] ?? state.status;
@@ -68,7 +68,7 @@ const sessionCaption = (state: PublicAppState): string => {
 };
 
 /**
- * Minimal inline icons (no asset files, no icon library — three shapes at 12x12).
+ * Minimal inline icons (no asset files, no icon library).
  * `currentColor` so they follow the button's text color in both themes.
  */
 const PlayIcon = () => (

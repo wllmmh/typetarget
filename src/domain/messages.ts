@@ -43,9 +43,8 @@ export type SessionIndicator =
   | { state: "stopped" };
 
 /**
- * Serializable view of background/state.ts's AppState, sent to the popup. Excludes
- * anything not needed for rendering (no raw DOM refs, no internal-only fields) per
- * AGENTS.md "Don't pass whole DB records to client components."
+ * Serializable view of background/state.ts's AppState, sent to the popup. Holds only what
+ * the popup renders: no destination refs and never the API keys themselves.
  */
 export type PublicAppState = {
   status: TranscriptionStatus;

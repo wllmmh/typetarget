@@ -18,12 +18,11 @@
 <body>
 <h1>whisper.cpp WASM inference benchmark</h1>
 <p>
-  Manual dev tool, not part of the extension build (Phase 7 known gap: "no benchmarking
-  harness in the repo"). Loads the vendored <code>third_party/whisper-wasm/libmain.js</code>
+  Manual dev tool, not part of the extension build. Loads the vendored <code>third_party/whisper-wasm/libmain.js</code>
   glue directly in a plain page — the same approach used to verify the real binary (see
-  <code>docs/whisper-wasm-provenance.md</code>) — and times repeated <code>full_default</code>
+  <code>docs/specs/whisper-wasm-provenance.md</code>) — and times repeated <code>full_default</code>
   calls on synthetic silence. Inference cost is dominated by Whisper's fixed 30&nbsp;s encoder
-  window (see HANDOFF.md), so silence is representative of timing; it is not useful for
+  window (see docs/devlog/2026-09-23-local-whisper-performance.md), so silence is representative of timing; it is not useful for
   checking transcript correctness.
 </p>
 <p>
@@ -39,11 +38,11 @@
   <legend>0. Glue build</legend>
   <label for="glue-url">
     Which <code>libmain.js</code> to load. Reload the page before switching — the Emscripten
-    runtime can only be imported once per page load (see docs/whisper-wasm-provenance.md).
+    runtime can only be imported once per page load (see docs/specs/whisper-wasm-provenance.md).
   </label>
   <select id="glue-url">
     <option value="../third_party/whisper-wasm/libmain.js">production: single-threaded (third_party/whisper-wasm/libmain.js)</option>
-    <option value="libmain-threaded.js">experimental: pthreads, built this session for Lever 1 — needs bench/serve.mjs (bench/libmain-threaded.js)</option>
+    <option value="libmain-threaded.js">experimental: pthreads — needs bench/serve.mjs (bench/libmain-threaded.js)</option>
   </select>
   <p id="glue-warning" style="display:none;" class="warn"></p>
 </fieldset>
@@ -66,7 +65,7 @@
   <label for="call-count">Number of calls (first call is a warm-up, excluded from the mean)</label>
   <input id="call-count" type="number" value="4" min="1" step="1" style="width: 6rem;" />
   <label for="nthreads">Threads (only takes effect with the threaded glue build above — the
-    production build forces 1 regardless of this value; see HANDOFF.md "Lever 1")</label>
+    production build forces 1 regardless of this value; see bench/README.md)</label>
   <input id="nthreads" type="number" value="4" min="1" step="1" style="width: 6rem;" />
   <div style="margin-top: 0.5rem;">
     <button id="run-btn" disabled>Run</button>
@@ -133,7 +132,7 @@
 
   /** Loads (or re-loads) the whisper.cpp glue script as a classic global-`Module` build,
    * matching src/worker/whisper-module.ts's loadWhisperModuleFactory. print/printErr are
-   * read once at startup (documented in docs/whisper-wasm-provenance.md), so they are
+   * read once at startup (documented in docs/specs/whisper-wasm-provenance.md), so they are
    * fixed forwarders here too; only the module factory itself is reloaded per model swap,
    * mirroring what the extension's worker does (one module per worker in production; here,
    * one module per page load — reload the page between models if the glue script itself
@@ -156,7 +155,7 @@
       const glueUrl = glueSelect.value;
       const script = document.createElement("script");
       script.src = glueUrl;
-      script.onerror = () => reject(new Error(`Failed to load ${glueUrl}. Is the vendored/threaded build present (see docs/whisper-wasm-provenance.md and HANDOFF.md "Lever 1")?`));
+      script.onerror = () => reject(new Error(`Failed to load ${glueUrl}. Is the vendored/threaded build present (see docs/specs/whisper-wasm-provenance.md and bench/README.md)?`));
       document.head.appendChild(script);
     });
 
@@ -204,7 +203,7 @@
 
   /** Runs one full_default call and resolves with its wall-clock duration, waiting for the
    * same stderr completion marker the real engine watches for (see
-   * src/worker/whisper-cpp-engine.ts and docs/whisper-wasm-provenance.md). */
+   * src/worker/whisper-cpp-engine.ts and docs/specs/whisper-wasm-provenance.md). */
   const runOnce = (audio, nthreads) =>
     new Promise((resolve, reject) => {
       let finished = false;

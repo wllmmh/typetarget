@@ -4,7 +4,7 @@ import react from "@vitejs/plugin-react";
 import { crx } from "@crxjs/vite-plugin";
 import manifest from "./manifest.config";
 
-// Ships the vendored whisper.cpp glue (see docs/whisper-wasm-provenance.md) as
+// Ships the vendored whisper.cpp glue (see docs/specs/whisper-wasm-provenance.md) as
 // dist/whisper/libmain.js, the fixed path src/worker/main.ts loads it from. The file is
 // gitignored, so a fresh clone still builds — with a warning, and ASR fails at runtime.
 const whisperGlue = (): Plugin => ({
@@ -13,7 +13,7 @@ const whisperGlue = (): Plugin => ({
   generateBundle() {
     const source = "third_party/whisper-wasm/libmain.js";
     if (!existsSync(source)) {
-      this.warn(`${source} not found; the extension will build but cannot transcribe. See docs/whisper-wasm-provenance.md.`);
+      this.warn(`${source} not found; the extension will build but cannot transcribe. See docs/specs/whisper-wasm-provenance.md.`);
       return;
     }
     this.emitFile({ type: "asset", fileName: "whisper/libmain.js", source: readFileSync(source) });

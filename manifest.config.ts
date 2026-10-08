@@ -1,29 +1,20 @@
 import { defineManifest, defineDynamicResource } from "@crxjs/vite-plugin";
 import pkg from "./package.json";
 
-// Permission rationale (see README "Permissions" section for the user-facing version):
-// - tabCapture: capture audio from the user-selected source tab. Core to the feature.
-// - activeTab: lets the popup act on the current tab without a persistent host permission,
-//   and grants the temporary scripting access needed to inject the destination-picker
-//   content script into whatever tab the user is looking at when they click "Select destination".
-// - scripting: inject/remove the destination content script programmatically (activeTab-scoped),
-//   instead of declaring a persistent <all_urls> content_scripts entry.
-// - storage: persist small bits of state (selected model id, destination binding, and — since
-//   the Gemini engine — API keys the user pastes in) — not history, not audio, not transcripts
-//   (see README "Privacy"). Keys are stored locally only and read solely to authenticate
-//   requests to the provider they belong to.
+// Permission rationale (README "Permissions" has the user-facing version):
+// - tabCapture: capture audio from the source tab. Core to the feature.
+// - activeTab: act on the tab where the popup was opened or a menu item chosen, without a
+//   persistent host permission; also what lets tabCapture target that tab.
+// - scripting: inject the destination content script on demand (activeTab-scoped) instead
+//   of a persistent <all_urls> content_scripts entry.
+// - storage: selected model, chunk length, API keys (local, read only to authenticate to
+//   their own provider), and session-scoped tab/destination state. Never audio or transcripts.
 // - offscreen: run the long-lived Web Audio + ASR pipeline outside the non-persistent service worker.
-// - contextMenus: the "Send TypeTarget text here" item on editable fields, so an output box in any
-//   tab can be picked (choosing the item grants activeTab for that tab). No install warning.
+// - contextMenus: the "TypeTarget" right-click submenu. Choosing an item grants activeTab for
+//   its tab. No install warning.
 //
-// host_permissions is scoped to exactly two origins: Google's Gemini API, needed for the
-// optional Gemini Live transcription engine (src/worker/gemini-live-engine.ts) to open a
-// WebSocket/make requests to it from the offscreen document's worker, and Groq's API for the
-// optional Groq engine (src/worker/groq-engine.ts). These are real, user-visible permission
-// grants that did not exist before those engines — everything else
-// keeps relying on activeTab (granted only after the user clicks the extension action / a
-// popup control) plus chrome.scripting.executeScript, scoped to the single tab the user is
-// actively selecting a destination in.
+// host_permissions covers exactly the two hosted engines' APIs (gemini-live-engine.ts,
+// groq-engine.ts); everything else relies on activeTab.
 export default defineManifest({
   manifest_version: 3,
   name: "TypeTarget — Directed Transcriber",

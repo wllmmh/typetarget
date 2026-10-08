@@ -1,8 +1,7 @@
 /**
  * Owns the capture lifecycle from the service worker's side: starting/stopping tab
- * capture (via the offscreen document), and detecting source-tab closure/navigation
- * so capture doesn't silently keep running against a tab that's gone away (see
- * AGENTS.md "Resource cleanup", "Error handling").
+ * capture (via the offscreen document), and detecting source-tab closure so capture
+ * doesn't silently keep running against a tab that's gone away.
  */
 import { envelope, isEnvelope, type BackgroundToOffscreen, type OffscreenReply } from "../domain/messages";
 import type { ModelId } from "../domain/models";
@@ -50,9 +49,8 @@ export class CaptureController {
    * Starts capturing `sourceTabId`, then loads `modelId` in the background.
    *
    * Order matters: `tabCapture.getMediaStreamId` is tied to the user gesture that opened
-   * the popup, so it must be called right away. Loading the model first (as this used to)
-   * spent ~40-80s on the download before asking for the stream id, by which point the
-   * gesture was long gone. The model load is deliberately not awaited — capture is live
+   * the popup, so it must be called right away; a cold model download (~40-80 s) would
+   * outlast the gesture. The model load is deliberately not awaited — capture is live
    * immediately, the offscreen document drops audio until the engine is ready, and load
    * progress/failures reach the popup through engine-status broadcasts.
    *
@@ -158,8 +156,7 @@ export class CaptureController {
    * loaded model) running: closing it would unload the model, forcing the ~40-80s model
    * load to happen again on the next Start even when the model hasn't changed. Only a
    * model change (which requires being idle first, see service-worker.ts's setModel)
-   * should pay that cost, and EngineRouter already scopes the unload/reload to just that
-   * case — see AGENTS.md "Model abstraction".
+   * should pay that cost, and EngineRouter scopes the unload/reload to just that case.
    */
   async stop(): Promise<void> {
     chrome.tabs.onRemoved.removeListener(this.onTabRemoved);

@@ -2,7 +2,7 @@
  * ASR worker entry. Must be built as a *classic* (IIFE) script, not an ES module:
  * whisper.cpp's Emscripten glue spawns each pthread as `new Worker(self.location.href,
  * { name: "em-pthread" })`, i.e. it re-runs *this same script* in every pthread worker.
- * Those instances must do nothing except load the glue (see docs/whisper-wasm-provenance.md).
+ * Those instances must do nothing except load the glue (see docs/specs/whisper-wasm-provenance.md).
  */
 import { EnergyVad } from "./energy-vad";
 import { TranscriptStabilizer } from "./stabilizer";
@@ -34,8 +34,7 @@ if (self.name === "em-pthread") {
   );
   // Created once for the life of the worker, not once per load: the glue script may only
   // be importScripts()'d once per global scope (a second import fails with
-  // "Identifier 'EmscriptenEH' has already been declared"), which is exactly what happened
-  // when a second Start re-loaded the model.
+  // "Identifier 'EmscriptenEH' has already been declared").
   const moduleFactory = loadWhisperModuleFactory(WHISPER_GLUE_URL);
   const engine = new WhisperCppEngine({
     loadModuleFactory: () => moduleFactory,

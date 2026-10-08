@@ -1,9 +1,9 @@
 /**
- * Owns destination selection/binding from the service worker's side. Per AGENTS.md
- * "Content script permissions": destination pages are arbitrary and unknown ahead of
- * time, so rather than a persistent <all_urls> content_scripts entry, the content
- * script is injected on demand via chrome.scripting, scoped to activeTab (the tab the
- * user is looking at when they click "Select destination").
+ * Owns destination selection/binding from the service worker's side. Destination pages
+ * are arbitrary and unknown ahead of time, so rather than a persistent <all_urls>
+ * content_scripts entry, the content script is injected on demand via chrome.scripting,
+ * into tabs TypeTarget holds activeTab for (where the popup was opened or a menu item
+ * chosen).
  */
 import { envelope, isEnvelope, type BackgroundToContent, type BackgroundResponse, type DestinationRef, type DestinationTextReply, type ReleaseReply, type SessionIndicator } from "../domain/messages";
 // `?script&iife` is @crxjs/vite-plugin's mechanism for content scripts that are only
@@ -104,7 +104,7 @@ export class DestinationController {
   }
 
   /**
-   * Picks the text box the user right-clicked, via the right-click menu's TypeTarget → "Select field".
+   * Picks the text box the user right-clicked, via the right-click menu's "Type to this field".
    * Choosing a menu item grants activeTab for its tab — the same grant opening the popup
    * gives — so this works in any tab or window, not just the one "Select field" was
    * clicked in. Injected into only the clicked frame; the pick then arrives through
