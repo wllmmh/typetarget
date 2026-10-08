@@ -29,7 +29,7 @@ export default defineManifest({
   name: "TypeTarget — Directed Transcriber",
   version: pkg.version,
   description:
-    "Captures a browser tab's audio and transcribes it — locally with Whisper by default, or optionally via Google's Gemini or Groq's API using your own key. Local mode uploads nothing.",
+    "Live-transcribe any tab's audio straight into any text field, in any browser tab, with your choice of AI model. Free and open source.",
   icons: {
     16: "public/icons/icon16.png",
     48: "public/icons/icon48.png",
