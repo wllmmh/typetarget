@@ -32,8 +32,31 @@ const licenseFiles = (): Plugin => ({
   },
 });
 
+// Websites must not be able to tell TypeTarget is installed (docs/adr/0012-websites-cannot-detect-typetarget.md),
+// so nothing is web-accessible: a listed file can be fetched from any page at a URL fixed by the
+// extension id. crx lists the dynamically injected content script on all http(s) sites, and its
+// manifest has no option to stop that, so the entry is removed after crx writes the manifest.
+// The script doesn't need it: it is one self-contained IIFE, and executeScript({ files }) reads it
+// from the package directly. Build only; the dev server's HMR needs crx's entries.
+const noWebAccessibleResources = (): Plugin => ({
+  name: "typetarget-no-web-accessible-resources",
+  apply: "build",
+  generateBundle: {
+    order: "post",
+    handler(_options, bundle) {
+      const asset = bundle["manifest.json"];
+      if (asset?.type !== "asset") {
+        this.error("manifest.json was not in the bundle, so web_accessible_resources could not be removed.");
+      }
+      const built: Record<string, unknown> = JSON.parse(asset.source.toString());
+      delete built.web_accessible_resources;
+      asset.source = `${JSON.stringify(built, null, 2)}\n`;
+    },
+  },
+});
+
 export default defineConfig({
-  plugins: [react(), crx({ manifest }), whisperGlue(), licenseFiles()],
+  plugins: [react(), crx({ manifest }), whisperGlue(), licenseFiles(), noWebAccessibleResources()],
   server: {
     // crx's HMR client connects on a fixed port; avoid clashing with other local dev servers.
     port: 5175,

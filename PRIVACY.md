@@ -62,6 +62,11 @@ TypeTarget types into it, just as it could read text you typed yourself. The sam
 "Type to new file" box, which TypeTarget adds to the page you are on. Only pick fields on sites
 you trust with the transcript.
 
+That website can also see TypeTarget's outline, timer and buttons around the field, but not
+which tab you are listening to. Turning off **Show indicators on the page** in the popup removes
+them; the website can still see the text arrive. Websites you don't use TypeTarget on can't tell
+it is installed.
+
 ## What the developer receives
 
 Nothing. TypeTarget has no backend. The developer does not collect, sell or share any user data,

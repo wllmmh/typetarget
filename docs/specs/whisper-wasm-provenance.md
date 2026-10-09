@@ -90,10 +90,12 @@ Downloaded at runtime ([ADR 0003](../adr/0003-models-downloaded-at-runtime-and-c
 the mirror whisper.cpp's own `models/download-ggml-model.sh` uses:
 
 ```
-https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-<model>.bin
+https://huggingface.co/ggerganov/whisper.cpp/resolve/<commit>/ggml-<model>.bin
 ```
 
-The supported models and their URLs are in `src/worker/model-urls.ts`, with sizes in
+The URLs are pinned to commit `5359861c739e955e79d9a303bcbc70fb988958b1`, and each download is
+checked against its SHA-256. The supported models, their URLs and hashes are in
+`src/worker/model-urls.ts`, with sizes in
 `MODEL_CATALOG` (`src/domain/models.ts`). The WASM heap tops out near 2 GB (512 MB initial,
 growable to ~1.94 GiB), which rules out full-precision `medium.en` and every large model.
 

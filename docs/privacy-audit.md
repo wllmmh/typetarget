@@ -8,9 +8,10 @@ stored, sent and exposed, done against the source at this date. The user-facing 
 
 No telemetry, analytics, remote logging or developer-side collection exists. Audio leaves the
 device only for the selected hosted provider. One issue was fixed during the audit (API keys
-were readable from the content script), and a missing "Remove key" control was added. Four
-issues remain open, the most significant being that the badge shows a different tab's title
-inside the destination page's DOM.
+were readable from the content script), and a missing "Remove key" control was added. The four
+issues left open, and a fifth found in a follow-up review (finding 7), were fixed the same day.
+None remain open. Websites can no longer detect that TypeTarget is installed
+([ADR 0012](adr/0012-websites-cannot-detect-typetarget.md)).
 
 ## What was checked
 
@@ -19,7 +20,7 @@ inside the destination page's DOM.
 | Logging | grep for `console.*` in `src/` | Two `console.warn`s (context-menu update failure, storage access-level failure). Neither includes user data. |
 | Network | grep for `fetch`, `WebSocket`, `XMLHttpRequest`, `sendBeacon`, URLs | Only: Hugging Face model downloads (`model-downloader.ts`), Groq (`groq-engine.ts`), Gemini via `@google/genai` (`gemini-live-engine.ts`). Host permissions cover only the two API origins. |
 | What providers receive | Read `groq-engine.ts`, `createGeminiLiveConnect` | Groq: one WAV per utterance, plus model id, `language`, `response_format`, `temperature`. Gemini: realtime audio and activity start/end markers. No page content, tab titles or transcripts are sent. |
-| Persistent storage | grep for `chrome.storage`, `indexedDB`, `localStorage` | `storage.local`: model, chunk length, API keys. `storage.session`: known tabs (title, URL, favicon), pending source, destination ref and label, running capture. IndexedDB: downloaded model files. No audio or transcripts are stored. |
+| Persistent storage | grep for `chrome.storage`, `indexedDB`, `localStorage` | `storage.local`: model, chunk length, page-indicator setting (added after the audit), API keys. `storage.session`: known tabs (title, URL, favicon), pending source, destination ref and label, running capture. IndexedDB: downloaded model files. No audio or transcripts are stored. |
 | External messaging | Manifest `externally_connectable`, grep for `onMessageExternal`, window `message` listeners | None. Web pages cannot message the extension. |
 | Message trust | `domain/sender.ts` and its call sites | Offscreen → background messages are checked against the offscreen document's URL; editor-page messages against the editor URL; destination actions against the destination's own tab and frame. |
 | Content script reach | `destination-controller.ts`, manifest | Injected on demand through `activeTab` + `scripting`, never declared for all sites. |
@@ -41,38 +42,51 @@ on every start (`restrictLocalStorageToExtension` in `background/persisted-state
 field. Fixed: a "Remove key" button in the API Keys dialog clears it (the background already
 treated an empty key as "clear").
 
-### Open
-
-**3. The badge shows the source tab's title inside the destination page (medium).** The
+**3. The badge showed the source tab's title inside the destination page (medium).** The
 listening badge above the output field is an ordinary element in the host page's DOM, and its
-label is the title of the tab being listened to. That tab is usually a different site, so the
-destination site's scripts can read which video, meeting or page the user is listening to.
-*Recommendation:* render the badge (and its buttons) inside a closed shadow root, or drop the
-tab title from the label and keep it only in the popup.
+label was the title of the tab being listened to. That tab is usually a different site, so the
+destination site's scripts could read which video, meeting or page the user was listening to.
+Fixed: the title no longer reaches the content script at all. `SessionIndicator` carries no
+tab name, the badge reads "TypeTarget 1:05", and the Save button's file is named only by date
+and time. Only the popup shows the source tab's title.
 
-**4. The extension is detectable by any website (low).** `src/content/main.js` is listed in
+**4. The extension was detectable by any website (low).** `src/content/main.js` was listed in
 `web_accessible_resources` for all `http`/`https` pages with `use_dynamic_url: false`, so any site
-can probe `chrome-extension://<id>/src/content/main.js` to learn TypeTarget is installed (a
-fingerprinting signal). The script is injected with `chrome.scripting.executeScript({ files })`,
-which does not itself need the resource to be web-accessible; the entry comes from
-`@crxjs/vite-plugin`'s dynamic-script support. *Recommendation:* set `use_dynamic_url: true` in
-`defineDynamicResource`, or drop the entry if crxjs builds without it; verify injection still
-works in Chrome either way.
+could probe `chrome-extension://<id>/src/content/main.js` to learn TypeTarget is installed (a
+fingerprinting signal). `@crxjs/vite-plugin` adds that entry for every dynamically injected
+script, whatever the manifest declares. Fixed: the `noWebAccessibleResources` build plugin in
+`vite.config.ts` removes it, so the built manifest has no `web_accessible_resources`.
+`executeScript({ files })` doesn't need the entry, and the script is a self-contained IIFE.
+Injection without it has not yet been checked in Chrome (tracked in [TODO.md](../TODO.md)).
 
-**5. Page scripts can operate the badge's buttons and selection mode (low).** Click handlers on
-the badge buttons and the destination picker do not check `event.isTrusted`, so page JavaScript
-can dispatch synthetic clicks: stop typing (X), trigger a `.txt` download of the field's text
-(Save), move the output to the editor tab, or pick a field during selection mode. None of these
-sends data off the device or to the page beyond what it can already read. *Recommendation:*
-ignore events where `isTrusted` is false.
+**5. Page scripts could operate the badge's buttons and selection mode (low).** Click handlers
+on the badge buttons and the destination picker did not check `event.isTrusted`, so page
+JavaScript could dispatch synthetic clicks: stop typing (X), trigger a `.txt` download of the
+field's text (Save), move the output to the editor tab, or pick a field during selection mode.
+Fixed: both ignore events whose `isTrusted` is false (`isUserEvent` in
+`src/content/user-event.ts`).
 
-**6. Downloaded models are not integrity-checked (low).** Model files from Hugging Face are
-cached and loaded without a pinned hash. A tampered file would be parsed by whisper.cpp inside
-the WASM sandbox, with no extension API access. *Recommendation:* pin SHA-256 hashes in
-`model-urls.ts` and verify after download.
+**6. Downloaded models were not integrity-checked (low).** Model files were fetched from the
+mutable `main` branch on Hugging Face and cached without a hash check. A tampered file would have
+been parsed by whisper.cpp inside the WASM sandbox, with no extension API access. Fixed:
+`model-urls.ts` pins the URLs to one repository commit and lists each file's SHA-256 (its Git LFS
+object id). `model-downloader.ts` hashes each download and rejects a mismatch before it reaches
+the cache.
+
+**7. Any extension context could send popup requests (low).** The service worker took
+`PopupRequest`s (save an API key, change the model, start capture...) without checking the
+sender. Web pages can't message the extension, but TypeTarget's content script can, and it runs
+inside arbitrary pages, so a compromised content script could have replaced a key. Found in a
+follow-up review the same day. Fixed: popup requests are accepted only from the popup page
+(`isFromExtensionPage(sender, "src/popup/index.html")`).
 
 ### Accepted by design (disclosed in PRIVACY.md)
 
+- **A page TypeTarget is used on can see it there**: the outline, the badge and its buttons,
+  and the "Type to new file" box are in that page's DOM while it holds the output. Pages
+  TypeTarget is not used on see nothing ([ADR 0012](adr/0012-websites-cannot-detect-typetarget.md)).
+  "Show indicators on the page" (off) removes them from the page's own text boxes; the inserted
+  text still shows ([ADR 0013](adr/0013-option-to-hide-indicators-on-the-page.md)).
 - **Destination pages can read what is typed into them**, including the "Type to new file" box,
   which lives in the page's DOM. This is inherent to typing into a page. A closed shadow root
   would hide the new-file box from page scripts if that becomes a goal.

@@ -34,12 +34,14 @@ HOW IT WORKS
 3. Transcribed text appears there as people speak. Choose Stop typing or Stop listening from
    the same menu, or switch fields any time.
 
-The toolbar popup has the same controls, plus the model picker, API keys and chunk length.
+The toolbar popup has the same controls, plus the model picker, API keys and chunk length. Turn
+off "Show indicators on the page" to type without any outline or buttons on the site; the
+toolbar icon shows REC instead.
 
 CHOOSE YOUR TRANSCRIPTION MODEL
 • Groq (Whisper Large v3 / v3 Turbo) — fast and accurate on any computer. Uses your own Groq
   API key.
-• Gemini 3.5 Transcribe (Live) — Google's streaming transcription. Uses your own Gemini API key.
+• Gemini 3.5 Transcribe Live (Google) — Google's streaming transcription. Uses your own Gemini API key.
 • Local Whisper, in your browser — no key, no account, and audio never leaves your device. Keeps up
   live only on fast computers; TypeTarget tells you when it is falling behind.
 
@@ -66,7 +68,7 @@ Screenshot shot list:
 
 1. A video playing in one tab, its transcript appearing in a Google Doc in another, with the
    popup open showing "Listening to" and "Typing to".
-2. The popup's model picker opened, showing the Local Whisper, Gemini and Groq groups.
+2. The popup's model picker opened, showing the Local, Google and Groq groups.
 3. The right-click TypeTarget submenu on a text box.
 4. The "Type to new file" box over a page, with the green listening badge and Save button.
 5. The API Keys dialog, with "Stored on this device only".
@@ -88,7 +90,7 @@ TypeTarget transcribes the audio of a browser tab the user chooses and types the
 | `tabCapture` | Captures the audio of the tab the user chooses to transcribe. This is the extension's core function. |
 | `activeTab` | Gives one-time access to the tab where the user opened the popup or chose a right-click menu item, so that tab can be captured or its text box picked, without broad host permissions. |
 | `scripting` | Injects the text-field picker and text-insertion script into the tab the user is picking a field in, only after they act on that tab. |
-| `storage` | Saves the user's settings (model, chunk length), their own API keys for hosted models, and the current source tab and field for the browser session. |
+| `storage` | Saves the user's settings (model, chunk length, whether to show indicators on the page), their own API keys for hosted models, and the current source tab and field for the browser session. |
 | `offscreen` | Runs audio capture and transcription in an offscreen document, because the service worker can be stopped at any time and can't hold a media stream. |
 | `contextMenus` | Adds the TypeTarget right-click menu: listen to this tab, type to this field, type to a new box, stop typing. |
 | Host: `https://generativelanguage.googleapis.com/*` | Sends captured audio to Google's Gemini API for transcription, only when the user selects a Gemini model and supplies their own key. |

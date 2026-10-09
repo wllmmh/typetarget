@@ -37,8 +37,22 @@ describe("persistState / restorePersistedState", () => {
     state.pendingSourceTabId = 3;
     await persistState(state);
 
-    expect(Object.keys(fake.storage.local.data).sort()).toEqual(["apiKeys", "chunkMs", "selectedModel"]);
+    expect(Object.keys(fake.storage.local.data).sort()).toEqual(["apiKeys", "chunkMs", "selectedModel", "showPageIndicators"]);
     expect(Object.keys(fake.storage.session.data)).toEqual(["binding"]);
+  });
+
+  it("round-trips the page indicators setting, and keeps the default (on) for a junk value", async () => {
+    const saved = createInitialState();
+    saved.showPageIndicators = false;
+    await persistState(saved);
+    const restored = createInitialState();
+    await restorePersistedState(restored);
+    expect(restored.showPageIndicators).toBe(false);
+
+    fake.storage.local.data.showPageIndicators = "no";
+    const junk = createInitialState();
+    await restorePersistedState(junk);
+    expect(junk.showPageIndicators).toBe(true);
   });
 
   it("round-trips a stored API key", async () => {

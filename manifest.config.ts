@@ -1,4 +1,4 @@
-import { defineManifest, defineDynamicResource } from "@crxjs/vite-plugin";
+import { defineManifest } from "@crxjs/vite-plugin";
 import pkg from "./package.json";
 
 // Permission rationale (README "Permissions" has the user-facing version):
@@ -7,7 +7,7 @@ import pkg from "./package.json";
 //   persistent host permission; also what lets tabCapture target that tab.
 // - scripting: inject the destination content script on demand (activeTab-scoped) instead
 //   of a persistent <all_urls> content_scripts entry.
-// - storage: selected model, chunk length, API keys (local, read only to authenticate to
+// - storage: selected model, chunk length, page-indicator setting, API keys (local, read only to authenticate to
 //   their own provider), and session-scoped tab/destination state. Never audio or transcripts.
 // - offscreen: run the long-lived Web Audio + ASR pipeline outside the non-persistent service worker.
 // - contextMenus: the "TypeTarget" right-click submenu. Choosing an item grants activeTab for
@@ -47,14 +47,9 @@ export default defineManifest({
     "contextMenus"
   ],
   host_permissions: ["https://generativelanguage.googleapis.com/*", "https://api.groq.com/*"],
-  // The destination content script (src/content/main.ts) is only ever injected
-  // dynamically via chrome.scripting.executeScript, never declared in
-  // content_scripts, so it needs no host_permissions grant; @crxjs/vite-plugin still
-  // registers its built file as a web-accessible resource (required for the dynamic
-  // script's own nested imports/CSS, if any are added later) — scoped explicitly here
-  // rather than left at the plugin's wide-open default, even though destinations are
-  // arbitrary user-chosen pages by design.
-  web_accessible_resources: [defineDynamicResource({ matches: ["http://*/*", "https://*/*"] })],
+  // No web_accessible_resources: any page could probe for a listed file and learn TypeTarget is
+  // installed. crx adds one for the dynamically injected content script anyway, and vite.config.ts
+  // strips it (noWebAccessibleResources); see docs/adr/0012-websites-cannot-detect-typetarget.md.
   // MV3's default extension-pages CSP (script-src 'self'; object-src 'self';) does
   // not permit WebAssembly compilation. 'wasm-unsafe-eval' is the MV3-supported
   // directive for this (the older, non-standard 'wasm-eval' was MV2-only and has

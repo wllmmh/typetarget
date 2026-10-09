@@ -32,18 +32,6 @@
     "https://generativelanguage.googleapis.com/*",
     "https://api.groq.com/*"
   ],
-  "web_accessible_resources": [
-    {
-      "matches": [
-        "http://*/*",
-        "https://*/*"
-      ],
-      "resources": [
-        "src/content/main.js"
-      ],
-      "use_dynamic_url": false
-    }
-  ],
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
   },

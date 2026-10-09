@@ -5,15 +5,6 @@ describe("textFileName", () => {
   it("names the file after the local date and time, zero-padded", () => {
     expect(textFileName(new Date(2026, 0, 5, 9, 7, 3))).toBe("TypeTarget-2026-01-05T09-07-03.txt");
   });
-
-  it("includes the source tab's title, without characters a file name can't hold", () => {
-    expect(textFileName(new Date(2026, 0, 5, 9, 7, 3), "Talk: A/B  Testing?")).toBe("TypeTarget-Talk_A_B_Testing-2026-01-05T09-07-03.txt");
-  });
-
-  it("caps a long title and leaves out one with nothing usable", () => {
-    expect(textFileName(new Date(2026, 0, 5, 9, 7, 3), "x".repeat(80))).toBe(`TypeTarget-${"x".repeat(50)}-2026-01-05T09-07-03.txt`);
-    expect(textFileName(new Date(2026, 0, 5, 9, 7, 3), "?/")).toBe("TypeTarget-2026-01-05T09-07-03.txt");
-  });
 });
 
 describe("textOf", () => {

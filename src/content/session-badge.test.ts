@@ -3,6 +3,10 @@ import { destinationSession } from "./destination-session";
 import { within } from "@testing-library/react";
 import { SESSION_BADGE_CONTROLS_ID, SESSION_BADGE_ID } from "./session-badge";
 import { NEW_FILE_FIELD_ID } from "./new-file-field";
+import { isUserEvent } from "./user-event";
+
+// jsdom never makes a trusted event, so these tests' clicks stand in for the user's own.
+vi.mock("./user-event", () => ({ isUserEvent: vi.fn(() => true) }));
 
 const badge = () => document.getElementById(SESSION_BADGE_ID);
 const controls = () => document.getElementById(SESSION_BADGE_CONTROLS_ID);
@@ -43,6 +47,65 @@ afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
+  destinationSession.setShowIndicators(true);
+});
+
+describe("with indicators on the page turned off", () => {
+  const outlined = (el: Element) => el.classList.contains("typetarget-destination");
+
+  it("draws no outline, badge or buttons on a picked field, even while listening", () => {
+    destinationSession.setShowIndicators(false);
+    const textarea = pickTextarea();
+    destinationSession.setIndicator({ since: Date.now(), state: "listening" });
+
+    expect(outlined(textarea)).toBe(false);
+    expect(badge()).toBeNull();
+    expect(controls()).toBeNull();
+    expect(document.getElementById("typetarget-destination-style")).toBeNull();
+  });
+
+  it("still types into the field", () => {
+    destinationSession.setShowIndicators(false);
+    const textarea = pickTextarea();
+
+    destinationSession.insert("hello", " ");
+
+    expect(textarea).toHaveValue("hello");
+  });
+
+  it("removes the outline and badge from the current output when turned off, and brings them back when turned on", () => {
+    const textarea = pickTextarea();
+    destinationSession.setIndicator({ since: Date.now(), state: "listening" });
+
+    destinationSession.setShowIndicators(false);
+    expect(outlined(textarea)).toBe(false);
+    expect(badge()).toBeNull();
+
+    destinationSession.setShowIndicators(true);
+    expect(outlined(textarea)).toBe(true);
+    expect(badge()?.textContent).toBe("TypeTarget 0:00");
+  });
+
+  it("doesn't highlight fields under the pointer while picking", () => {
+    destinationSession.setShowIndicators(false);
+    const textarea = document.createElement("textarea");
+    document.body.append(textarea);
+    destinationSession.startSelecting();
+
+    textarea.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+
+    expect(textarea.classList.contains("typetarget-highlight-candidate")).toBe(false);
+    destinationSession.stopSelecting();
+  });
+
+  it("keeps the Type to new file box's outline and buttons, since the box is TypeTarget's own", () => {
+    destinationSession.setShowIndicators(false);
+    openNewFile();
+    destinationSession.setIndicator({ state: "stopped" });
+
+    expect(outlined(document.getElementById(NEW_FILE_FIELD_ID) as Element)).toBe(true);
+    expect(page().getByRole("button", { name: "Stop typing here" })).toBeVisible();
+  });
 });
 
 describe("session badge over the destination", () => {
@@ -50,34 +113,34 @@ describe("session badge over the destination", () => {
     vi.useFakeTimers({ now: 100_000 });
     pickTextarea();
 
-    destinationSession.setIndicator({ tabName: "Meeting", since: 100_000 - 65_000, state: "listening" });
-    expect(badge()?.textContent).toBe("Meeting 1:05");
+    destinationSession.setIndicator({ since: 100_000 - 65_000, state: "listening" });
+    expect(badge()?.textContent).toBe("TypeTarget 1:05");
     expect(badge()?.style.left).toBe("40px");
     expect(badge()?.style.background).toBe("rgb(31, 157, 85)");
     expect(document.getElementById("typetarget-destination-style")?.textContent).toContain("#1f9d55");
 
     vi.advanceTimersByTime(2_000);
-    expect(badge()?.textContent).toBe("Meeting 1:07");
+    expect(badge()?.textContent).toBe("TypeTarget 1:07");
   });
 
   it("sits with its bottom 1px inside the element's top edge and flush with its left edge (the outline is drawn inside the element)", () => {
     pickTextarea(); // laid out at (40, 100); jsdom badges have no height of their own
 
-    destinationSession.setIndicator({ tabName: "Meeting", since: Date.now(), state: "listening" });
+    destinationSession.setIndicator({ since: Date.now(), state: "listening" });
 
     expect(badge()?.style.top).toBe("101px");
     expect(badge()?.style.left).toBe("40px");
   });
 
-  it("shows a square and 0:00, with no tab name, in a red badge while a destination is picked but nothing is listening", () => {
+  it("shows a square and TypeTarget 0:00 in a red badge while a destination is picked but nothing is listening", () => {
     vi.useFakeTimers({ now: 50_000 });
     pickTextarea();
 
-    destinationSession.setIndicator({ tabName: "Meeting", since: 50_000, state: "listening" });
+    destinationSession.setIndicator({ since: 50_000, state: "listening" });
     destinationSession.setIndicator({ state: "stopped" });
     vi.advanceTimersByTime(5_000);
 
-    expect(badge()?.textContent).toBe("0:00");
+    expect(badge()?.textContent).toBe("TypeTarget 0:00");
     expect(badge()?.style.background).toBe("rgb(226, 39, 38)");
     expect(document.getElementById("typetarget-destination-style")?.textContent).toContain("#e22726");
   });
@@ -86,31 +149,23 @@ describe("session badge over the destination", () => {
     pickTextarea();
     const icon = () => badge()?.querySelector("svg > *")?.outerHTML ?? null;
 
-    destinationSession.setIndicator({ tabName: "Meeting", since: Date.now(), state: "listening" });
+    destinationSession.setIndicator({ since: Date.now(), state: "listening" });
     expect(icon()).toContain('d="M2 1.2 L10.5 6 L2 10.8 Z"');
 
-    destinationSession.setIndicator({ tabName: "Meeting", since: Date.now(), state: "reconnecting" });
+    destinationSession.setIndicator({ since: Date.now(), state: "reconnecting" });
     expect(icon()).toContain("M2.5 2.5 L9.5 9.5 M9.5 2.5 L2.5 9.5");
 
     destinationSession.setIndicator({ state: "stopped" });
     expect(icon()).toMatch(/^<rect/);
 
-    destinationSession.setIndicator({ tabName: "Meeting", since: Date.now(), state: "paused" });
+    destinationSession.setIndicator({ since: Date.now(), state: "paused" });
     expect(icon()).toContain("M1.5 1 H4.5 V11 H1.5 Z");
-    expect(badge()?.textContent).toBe("Meeting 0:00");
-  });
-
-  it("truncates a long tab name", () => {
-    vi.useFakeTimers({ now: 10_000 });
-    pickTextarea();
-
-    destinationSession.setIndicator({ tabName: "A very long page title that goes on and on, and then some more", since: 10_000, state: "listening" });
-    expect(badge()?.textContent).toBe("A very long page title that goes on and on, and… 0:00"); // 48 characters with the ellipsis
+    expect(badge()?.textContent).toBe("TypeTarget 0:00");
   });
 
   it("stays on the outline when the element moves without a scroll or resize (e.g. a chat box growing)", async () => {
     const textarea = pickTextarea();
-    destinationSession.setIndicator({ tabName: "Meeting", since: Date.now(), state: "listening" });
+    destinationSession.setIndicator({ since: Date.now(), state: "listening" });
     expect(badge()?.style.top).toBe("101px");
 
     textarea.getBoundingClientRect = () => new DOMRect(60, 40, 200, 120);
@@ -125,11 +180,11 @@ describe("session badge over the destination", () => {
     vi.useFakeTimers({ now: 10_000 });
     pickTextarea();
 
-    destinationSession.setIndicator({ tabName: "Meeting", since: 10_000, state: "reconnecting" });
-    expect(badge()?.textContent).toBe("Meeting 0:00");
+    destinationSession.setIndicator({ since: 10_000, state: "reconnecting" });
+    expect(badge()?.textContent).toBe("TypeTarget 0:00");
 
-    destinationSession.setIndicator({ tabName: "Meeting", since: 10_000, state: "paused" });
-    expect(badge()?.textContent).toBe("Meeting 0:00");
+    destinationSession.setIndicator({ since: 10_000, state: "paused" });
+    expect(badge()?.textContent).toBe("TypeTarget 0:00");
   });
 
   it("gives the destination's outline the badge's color, and restores it afterwards", () => {
@@ -137,11 +192,11 @@ describe("session badge over the destination", () => {
     const outline = () => document.getElementById("typetarget-destination-style")?.textContent;
     expect(outline()).toContain("#e22726");
 
-    destinationSession.setIndicator({ tabName: "Meeting", since: Date.now(), state: "reconnecting" });
+    destinationSession.setIndicator({ since: Date.now(), state: "reconnecting" });
     expect(outline()).toContain("#6b7280");
     expect(badge()?.style.background).toBe("rgb(107, 114, 128)");
 
-    destinationSession.setIndicator({ tabName: "Meeting", since: Date.now(), state: "paused" });
+    destinationSession.setIndicator({ since: Date.now(), state: "paused" });
     expect(outline()).toContain("#6b7280");
 
     destinationSession.setIndicator(null);
@@ -151,12 +206,12 @@ describe("session badge over the destination", () => {
 
   it("is removed when capture ends or the destination is deselected", () => {
     pickTextarea();
-    destinationSession.setIndicator({ tabName: "Meeting", since: Date.now(), state: "listening" });
+    destinationSession.setIndicator({ since: Date.now(), state: "listening" });
 
     destinationSession.setIndicator(null);
     expect(badge()).toBeNull();
 
-    destinationSession.setIndicator({ tabName: "Meeting", since: Date.now(), state: "listening" });
+    destinationSession.setIndicator({ since: Date.now(), state: "listening" });
     destinationSession.clearDestination();
     expect(badge()).toBeNull();
   });
@@ -172,7 +227,7 @@ describe("session badge over the destination", () => {
     textarea.focus();
     destinationSession.pickFocused();
 
-    destinationSession.setIndicator({ tabName: "Meeting", since: Date.now(), state: "listening" });
+    destinationSession.setIndicator({ since: Date.now(), state: "listening" });
 
     expect(badge()?.style.top).toBe("107px"); // 106 + 1, not 100 + 1
     expect(badge()?.style.left).toBe("40px"); // the textarea still starts right of the row's left edge
@@ -189,7 +244,7 @@ describe("session badge over the destination", () => {
     textarea.focus();
     destinationSession.pickFocused();
 
-    destinationSession.setIndicator({ tabName: "Meeting", since: Date.now(), state: "listening" });
+    destinationSession.setIndicator({ since: Date.now(), state: "listening" });
 
     expect(badge()?.style.display).toBe("none");
   });
@@ -200,7 +255,7 @@ describe("session badge over the destination", () => {
     document.documentElement.append(stale);
     pickTextarea();
 
-    destinationSession.setIndicator({ tabName: "Meeting", since: Date.now(), state: "listening" });
+    destinationSession.setIndicator({ since: Date.now(), state: "listening" });
 
     expect(document.querySelectorAll(`#${SESSION_BADGE_ID}`)).toHaveLength(1);
     expect(stale.isConnected).toBe(false);
@@ -210,7 +265,7 @@ describe("session badge over the destination", () => {
   it("puts the Save and X buttons on the outline's top right, in the badge's color", () => {
     pickTextarea(); // laid out at (40, 100), 200 wide
 
-    destinationSession.setIndicator({ tabName: "Meeting", since: Date.now(), state: "listening" });
+    destinationSession.setIndicator({ since: Date.now(), state: "listening" });
 
     expect(page().getByRole("button", { name: "Save as .txt" })).toBeVisible();
     expect(page().getByRole("button", { name: "Stop typing here" })).toBeVisible();
@@ -231,6 +286,18 @@ describe("session badge over the destination", () => {
     page().getByRole("button", { name: "Stop typing here" }).click();
 
     expect(onStopTypingRequested).toHaveBeenCalledTimes(1);
+  });
+
+  it("ignores a click on X that a page script dispatched", () => {
+    const onStopTypingRequested = vi.fn();
+    destinationSession.onStopTypingRequested = onStopTypingRequested;
+    pickTextarea();
+    destinationSession.setIndicator({ state: "stopped" });
+    vi.mocked(isUserEvent).mockReturnValueOnce(false);
+
+    page().getByRole("button", { name: "Stop typing here" }).click();
+
+    expect(onStopTypingRequested).not.toHaveBeenCalled();
   });
 
   it("downloads the destination's text as a .txt file when Save is clicked", async () => {
@@ -342,7 +409,7 @@ describe("session badge over the destination", () => {
     destinationSession.setIndicator({ state: "stopped" });
 
     textarea.getBoundingClientRect = () => new DOMRect(0, 0, 0, 0);
-    destinationSession.setIndicator({ tabName: "Meeting", since: Date.now(), state: "listening" });
+    destinationSession.setIndicator({ since: Date.now(), state: "listening" });
 
     expect(controls()?.style.display).toBe("none");
     expect(page().queryByRole("button", { name: "Save as .txt" })).toBeNull();
@@ -358,7 +425,7 @@ describe("session badge over the destination", () => {
   });
 
   it("shows nothing when no destination is picked in this frame", () => {
-    destinationSession.setIndicator({ tabName: "Meeting", since: Date.now(), state: "listening" });
+    destinationSession.setIndicator({ since: Date.now(), state: "listening" });
     expect(badge()).toBeNull();
   });
 });

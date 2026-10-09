@@ -134,6 +134,13 @@ body {
   margin: 0;
 }
 
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
 .hint {
   font-size: 11px;
   opacity: 0.7;
@@ -145,7 +152,10 @@ body {
   font-size: 12px;
 }
 
+/* The select menu's colors rather than the popup's, so the dialog stands out from the page behind it. */
 .popup dialog {
+  background: Field;
+  color: FieldText;
   width: 260px;
   padding: 14px 16px;
   border: none;

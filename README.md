@@ -32,9 +32,14 @@ Then open `chrome://extensions`, turn on Developer mode, click "Load unpacked" a
 The toolbar popup has the same controls (**Start listening**, **Select field**, **Pause**),
 plus the model picker, API keys and chunk length.
 
-The output box gets a colored outline with the source tab's name and a timer. Its buttons
-save the text as a `.txt` file and stop typing. A "new file" box can also be minimized or
+The output box gets a colored outline, a "TypeTarget" timer and buttons that save the text as
+a `.txt` file and stop typing. The page you type into is never told which tab you are
+listening to; only the popup shows that. A "new file" box can also be minimized or
 opened in a new tab.
+
+To keep the site you type into from seeing TypeTarget, turn off **Show indicators on the page**
+in the popup. The field then gets no outline or buttons, the toolbar icon shows **REC** while
+typing, and "Type to new file" opens in a new tab. The site can still see the text arrive.
 
 ## Models
 
@@ -48,7 +53,7 @@ The popup's Model dropdown lists every supported model, grouped by provider:
   `medium.en-q5_0`/`-q8_0`, and full-precision `small.en` (42–785 MB), from the same mirror.
   Larger models are more accurate but much slower; the full-precision `medium.en` and the
   large models don't fit in the bundled WASM build's ~2 GB memory.
-- **Gemini** (`3.5 Transcribe (Live)`) — Google's Gemini Live API, a persistent
+- **Google** (`Gemini 3.5 Transcribe Live`) — Google's Gemini Live API, a persistent
   streaming connection. Optional; requires your own Gemini API key and sends captured audio
   to Google.
 - **Groq** (`Whisper Large v3 Turbo`, `Whisper Large v3`) — Whisper hosted by Groq. Each
@@ -74,7 +79,7 @@ and takes effect immediately. Remove key deletes it.
 | `tabCapture` | Capture the audio of the tab you choose. |
 | `activeTab` | Act on the tab where you opened the popup or used the right-click menu, without broad host permissions. |
 | `scripting` | Inject the field picker into that tab, on demand, instead of a content script on every site. |
-| `storage` | Remember the model, chunk length, API keys, and the current source tab and field. |
+| `storage` | Remember the model, chunk length, page-indicator setting, API keys, and the current source tab and field. |
 | `offscreen` | Run audio capture and transcription outside the service worker, which Chrome can stop at any time. |
 | `contextMenus` | The TypeTarget right-click menu. |
 | `generativelanguage.googleapis.com`, `api.groq.com` | Reach Gemini and Groq, only while one of their models is selected and listening. |

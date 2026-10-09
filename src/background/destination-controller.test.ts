@@ -24,7 +24,7 @@ describe("DestinationController.beginSelection", () => {
     expect(fake.scripting.executeScript).toHaveBeenCalledWith(
       expect.objectContaining({ target: { tabId: 5, allFrames: true } }),
     );
-    expect(fake.tabs.sendMessage).toHaveBeenCalledWith(5, envelope({ kind: "enter-selection-mode" }));
+    expect(fake.tabs.sendMessage).toHaveBeenCalledWith(5, envelope({ kind: "enter-selection-mode", showIndicators: true }));
     expect(controller.isSelecting).toBe(true);
   });
 
@@ -55,7 +55,7 @@ describe("DestinationController.pickFromContextMenu", () => {
 
     expect(fake.tabs.sendMessage).toHaveBeenCalledWith(5, envelope({ kind: "exit-selection-mode" }));
     expect(fake.scripting.executeScript).toHaveBeenLastCalledWith(expect.objectContaining({ target: { tabId: 9, frameIds: [2] } }));
-    expect(fake.tabs.sendMessage).toHaveBeenLastCalledWith(9, envelope({ kind: "pick-focused-element" }), { frameId: 2 });
+    expect(fake.tabs.sendMessage).toHaveBeenLastCalledWith(9, envelope({ kind: "pick-focused-element", showIndicators: true }), { frameId: 2 });
     controller.handlePicked(9, 2, "el-1", "div");
     expect(onPicked).toHaveBeenCalledWith({ tabId: 9, frameId: 2, elementId: "el-1" }, "div");
   });
@@ -107,7 +107,7 @@ describe("DestinationController.followTo", () => {
 
     await expect(controller.followTo(9)).resolves.toBe(true);
     expect(fake.scripting.executeScript).toHaveBeenLastCalledWith(expect.objectContaining({ target: { tabId: 9, allFrames: true } }));
-    expect(fake.tabs.sendMessage).toHaveBeenLastCalledWith(9, envelope({ kind: "enter-selection-mode" }));
+    expect(fake.tabs.sendMessage).toHaveBeenLastCalledWith(9, envelope({ kind: "enter-selection-mode", showIndicators: true }));
 
     controller.handlePicked(9, 0, "el-1", "textarea");
 
@@ -239,5 +239,29 @@ describe("DestinationController.insertText / checkAlive", () => {
     await controller.insertText({ tabId: 5, frameId: 0, elementId: "el-1" }, "hello", " ");
 
     expect(onUnavailable).not.toHaveBeenCalled();
+  });
+});
+
+describe("DestinationController page indicators", () => {
+  it("tells the page the indicators setting with each message that can lead to a pick", async () => {
+    fake.tabs.query.mockResolvedValue([{ id: 5 }]);
+    const controller = new DestinationController({ onPicked: vi.fn(), onUnavailable: vi.fn(), showPageIndicators: () => false });
+
+    await controller.beginSelection();
+    expect(fake.tabs.sendMessage).toHaveBeenLastCalledWith(5, envelope({ kind: "enter-selection-mode", showIndicators: false }));
+
+    await controller.pickFromContextMenu(9, 2);
+    expect(fake.tabs.sendMessage).toHaveBeenLastCalledWith(9, envelope({ kind: "pick-focused-element", showIndicators: false }), { frameId: 2 });
+  });
+
+  it("sends a changed setting to the output's own frame and to tabs still picking", async () => {
+    fake.tabs.query.mockResolvedValue([{ id: 5 }]);
+    const controller = new DestinationController({ onPicked: vi.fn(), onUnavailable: vi.fn() });
+    await controller.beginSelection();
+
+    await controller.setPageIndicators({ tabId: 7, frameId: 3, elementId: "el-1" }, false);
+
+    expect(fake.tabs.sendMessage).toHaveBeenCalledWith(7, envelope({ kind: "set-page-indicators", show: false }), { frameId: 3 });
+    expect(fake.tabs.sendMessage).toHaveBeenCalledWith(5, envelope({ kind: "set-page-indicators", show: false }));
   });
 });

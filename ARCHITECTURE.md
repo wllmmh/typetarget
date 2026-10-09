@@ -83,7 +83,7 @@ and types the text into a text box the user picked, which may be in another tab.
 
 | Area | Contents |
 | --- | --- |
-| `storage.local` (restricted to extension pages) | selected model, chunk length, API keys |
+| `storage.local` (restricted to extension pages) | selected model, chunk length, "Show indicators on the page", API keys |
 | `storage.session` | known tabs, pending source tab, destination and its label, running capture |
 | IndexedDB (worker) | downloaded model files |
 
@@ -114,7 +114,18 @@ Breaking any of these has caused a real failure before. The postmortems have the
   Offscreen documents get only part of `chrome.runtime` (no `getManifest`), so the service
   worker is recognised structurally.
 - **API keys never reach the popup or a content script**
-  ([ADR 0007](docs/adr/0007-api-keys-in-local-extension-storage.md)).
+  ([ADR 0007](docs/adr/0007-api-keys-in-local-extension-storage.md)). Popup requests, which
+  can set them, are accepted only from the popup page.
+- **Websites can't detect TypeTarget.** Nothing is web-accessible (`vite.config.ts` strips the
+  entry crx adds), the source tab's title never reaches a content script, and content-script
+  click handlers ignore untrusted events
+  ([ADR 0012](docs/adr/0012-websites-cannot-detect-typetarget.md)).
+- **With "Show indicators on the page" off, nothing is drawn on the page's own text boxes**, not
+  even for a moment. The setting travels with every message that can lead to a pick
+  ([ADR 0013](docs/adr/0013-option-to-hide-indicators-on-the-page.md)).
+- **Model files are pinned and hash-checked.** Each download must match its SHA-256 in
+  `model-urls.ts` before it is cached
+  ([ADR 0003](docs/adr/0003-models-downloaded-at-runtime-and-cached.md)).
 - **The `?script&iife` import** in `destination-controller.ts` is how @crxjs builds the
   dynamically injected content script. Tests alias it to `src/test/content-script-stub.ts`.
 

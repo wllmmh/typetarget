@@ -63,7 +63,6 @@ const syncContextMenu = () => {
 let shownIndicator: { destination: DestinationRef; indicator: SessionIndicator } | null = null;
 
 /** Only if the captured tab somehow dropped out of the known list (it is recorded before capture can start). */
-const UNKNOWN_SOURCE_TAB = "Unknown tab";
 
 const sameFrame = (a: DestinationRef, b: DestinationRef) => a.tabId === b.tabId && a.frameId === b.frameId;
 
@@ -76,15 +75,11 @@ const sameFrame = (a: DestinationRef, b: DestinationRef) => a.tabId === b.tabId 
  */
 const syncSessionIndicator = () => {
   const { destination, session } = state;
-  // Named from the tab actually being captured, and only while it is: once stopped, the
-  // badge names no tab, since nothing is being listened to.
-  const sourceTab = state.knownTabs.find((tab) => tab.tabId === state.sourceTabId);
-  const tabName = sourceTab ? sourceTab.title.trim() || sourceTab.url : UNKNOWN_SOURCE_TAB;
   const next = destination
     ? {
         destination,
         indicator: (session
-          ? { tabName, since: session.since, state: session.reconnecting ? "reconnecting" : state.status === "paused" ? "paused" : "listening" }
+          ? { since: session.since, state: session.reconnecting ? "reconnecting" : state.status === "paused" ? "paused" : "listening" }
           : { state: "stopped" }) satisfies SessionIndicator,
       }
     : null;
@@ -97,14 +92,41 @@ const syncSessionIndicator = () => {
   if (next) void destinationController.showSessionIndicator(next.destination, next.indicator);
 };
 
-/** Every state change the popup sees is broadcast, so this also keeps the right-click menu
- * and the destination's timer badge in step. */
+/** What the toolbar icon's badge last showed, so only a change calls chrome.action. */
+let shownToolbarBadge: string | null = null;
+
+/**
+ * With "Show indicators on the page" off, the toolbar icon stands in for the badge on the page,
+ * since websites can't see it: "REC" in green while capturing into an output, "II" or "..." in
+ * grey while paused or reconnecting, and nothing otherwise. With them on, the page's badge
+ * already shows this.
+ */
+const syncToolbarBadge = () => {
+  const { destination, session } = state;
+  const badge =
+    !state.showPageIndicators && destination && session
+      ? session.reconnecting
+        ? { text: "...", color: "#6b7280" }
+        : state.status === "paused"
+          ? { text: "II", color: "#6b7280" }
+          : { text: "REC", color: "#1f9d55" }
+      : null;
+  const key = JSON.stringify(badge);
+  if (key === shownToolbarBadge) return;
+  shownToolbarBadge = key;
+  void chrome.action.setBadgeText({ text: badge?.text ?? "" }).catch(() => {});
+  if (badge) void chrome.action.setBadgeBackgroundColor({ color: badge.color }).catch(() => {});
+};
+
+/** Every state change the popup sees is broadcast, so this also keeps the right-click menu,
+ * the destination's timer badge and the toolbar badge in step. */
 const broadcastState = () => {
   void chrome.runtime.sendMessage(envelope<BackgroundResponse>({ kind: "state", state: toPublicState(state) }))
     // No popup may be open to receive this; that's expected, not an error.
     .catch(() => {});
   syncContextMenu();
   syncSessionIndicator();
+  syncToolbarBadge();
 };
 
 /** Broadcasts *and* persists: use after changing a field persisted-state.ts stores. */
@@ -124,6 +146,7 @@ const captureController = new CaptureController({
 });
 
 const destinationController = new DestinationController({
+  showPageIndicators: () => state.showPageIndicators,
   onPicked: (ref, label) => {
     // A pick in the same frame replaces its own outline (and carries a new-file box's text
     // itself); one elsewhere (another tab, window or frame) must be told to drop the old
@@ -319,6 +342,15 @@ const setChunkMs = async (chunkMs: number): Promise<BackgroundResponse> => {
   return { kind: "ok" };
 };
 
+/** "Show indicators on the page": takes effect at once on the current output and any tab
+ * still picking, not just on the next pick. */
+const setShowPageIndicators = (show: boolean): BackgroundResponse => {
+  state.showPageIndicators = show;
+  commitState();
+  void destinationController.setPageIndicators(state.destination, show);
+  return { kind: "ok" };
+};
+
 /**
  * Unlike the model choice, an API key can be entered or changed at any time — see
  * domain/api-key.ts — and, like chunk length, is forwarded to a running session
@@ -437,6 +469,11 @@ const handleMenuClick = async (info: chrome.contextMenus.OnClickData, tab: chrom
     // The new box opens with the current output's text, as Open in new tab and Type to this
     // field carry it. Copied from a page's own text box (which keeps it); moved from a new-file box.
     const text = state.destination ? await destinationController.takeText(state.destination) : null;
+    if (!state.showPageIndicators) {
+      // The box would itself show TypeTarget to the page, so it opens as an editor tab instead.
+      await pickFromContextMenu(async () => openInNewTab(text ?? "", tabId));
+      return;
+    }
     await pickFromContextMenu(() => destinationController.openNewFileField(tabId, text?.trim() ? text : undefined));
     return;
   }
@@ -538,6 +575,8 @@ const handlePopupRequest = async (req: PopupRequest): Promise<BackgroundResponse
       return setModel(req.modelId);
     case "set-chunk-ms":
       return setChunkMs(req.chunkMs);
+    case "set-show-page-indicators":
+      return setShowPageIndicators(req.show);
     case "set-api-key":
       return setApiKey(req.provider, req.apiKey);
     case "set-source-tab":
@@ -570,6 +609,9 @@ const CONTENT_MESSAGE_KINDS = new Set<ContentToBackground["kind"]>([
 /** The page "Open in new tab" opens (src/editor); registered as a build input in vite.config.ts. */
 const EDITOR_PAGE_PATH = "src/editor/index.html";
 
+/** The popup (manifest `action.default_popup`), the only sender of PopupRequests. */
+const POPUP_PAGE_PATH = "src/popup/index.html";
+
 /** What each editor tab opens with, until it asks for it ("editor-ready"). */
 const editorTexts = new Map<number, { text: string; originTabId: number }>();
 /** The editor tab being created. Its page can ask for its text before tabs.create resolves
@@ -594,7 +636,9 @@ const adoptEditorTab = async (tabId: number): Promise<EditorReply> => {
   const opened = editorTexts.get(tabId);
   editorTexts.delete(tabId);
   await destinationController.adoptEditorTab(tabId);
-  return { kind: "editor-text", text: opened?.text ?? "", originTabId: opened?.originTabId ?? null };
+  // No Move back to page while page indicators are off: it would put the box on that page.
+  const originTabId = state.showPageIndicators ? opened?.originTabId ?? null : null;
+  return { kind: "editor-text", text: opened?.text ?? "", originTabId };
 };
 
 /** The editor tab's Move back to page: the "Type to new file" box reopens on the page it came
@@ -602,6 +646,11 @@ const adoptEditorTab = async (tabId: number): Promise<EditorReply> => {
  * the editor tab closed. If the page is gone (or navigated, ending TypeTarget's access), the
  * editor stays the output and the popup says why. */
 const moveBackToPage = async (editorTabId: number, originTabId: number, text: string): Promise<void> => {
+  if (!state.showPageIndicators) {
+    state.lastError = { code: "move-back-failed", message: "Turn on \"Show indicators on the page\" to move the text back to the page." };
+    broadcastState();
+    return;
+  }
   try {
     await destinationController.openNewFileField(originTabId, text);
   } catch {
@@ -733,7 +782,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return undefined;
   }
 
-  if (!isEnvelope<PopupRequest>(message)) return undefined;
+  // Popup requests change keys, models and capture, so they are taken only from the popup page:
+  // content scripts can message the background too, and theirs run inside arbitrary pages.
+  if (!isEnvelope<PopupRequest>(message) || !isFromExtensionPage(sender, POPUP_PAGE_PATH)) return undefined;
 
   handlePopupRequest(message.payload)
     .then((response) => sendResponse(envelope(response)))

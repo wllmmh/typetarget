@@ -27,6 +27,9 @@ export type AppState = {
   destinationLabel: string | null;
   selectedModel: ModelId;
   chunkMs: number;
+  /** The popup's "Show indicators on the page": off, nothing is drawn on the page's own text
+   * boxes and the toolbar icon shows the state instead (docs/adr/0013-option-to-hide-indicators-on-the-page.md). */
+  showPageIndicators: boolean;
   isSelectingDestination: boolean;
   lastError: { code: string; message: string } | null;
   /** Non-null while capturing; drives the listening timer (see domain/messages.ts). */
@@ -49,6 +52,7 @@ export const createInitialState = (): AppState => ({
   destinationLabel: null,
   selectedModel: DEFAULT_MODEL,
   chunkMs: CHUNK_MS_DEFAULT,
+  showPageIndicators: true,
   isSelectingDestination: false,
   lastError: null,
   session: null,
@@ -69,6 +73,7 @@ export const toPublicState = (state: AppState): PublicAppState => ({
   destinationLabel: state.destinationLabel,
   selectedModel: state.selectedModel,
   chunkMs: state.chunkMs,
+  showPageIndicators: state.showPageIndicators,
   isSelectingDestination: state.isSelectingDestination,
   lastError: state.lastError,
   session: state.session,

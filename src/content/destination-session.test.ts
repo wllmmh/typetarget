@@ -2,6 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { within } from "@testing-library/react";
 import { destinationSession } from "./destination-session";
 import { NEW_FILE_FIELD_ID } from "./new-file-field";
+import { isUserEvent } from "./user-event";
+
+// jsdom never makes a trusted event, so these tests' clicks stand in for the user's own.
+vi.mock("./user-event", () => ({ isUserEvent: vi.fn(() => true) }));
 
 describe("destinationSession", () => {
   let textarea: HTMLTextAreaElement;
@@ -28,6 +32,19 @@ describe("destinationSession", () => {
 
     expect(onPicked).toHaveBeenCalledTimes(1);
     expect(onPicked).toHaveBeenCalledWith(expect.objectContaining({ label: "textarea" }));
+  });
+
+  it("ignores a click a page script dispatched while selecting, and keeps selecting", () => {
+    const onPicked = vi.fn();
+    destinationSession.onPicked = onPicked;
+    destinationSession.startSelecting();
+    vi.mocked(isUserEvent).mockReturnValueOnce(false);
+
+    textarea.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    expect(onPicked).not.toHaveBeenCalled();
+
+    textarea.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    expect(onPicked).toHaveBeenCalledTimes(1);
   });
 
   it("does not pick anything when not in selection mode", () => {

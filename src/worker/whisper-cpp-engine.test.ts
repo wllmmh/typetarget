@@ -1,15 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { WhisperCppEngine } from "./whisper-cpp-engine";
 import type { ModelSource } from "./model-downloader";
-import { MODEL_URLS as REAL_MODEL_URLS } from "./model-urls";
+import { MODEL_FILES as REAL_MODEL_FILES } from "./model-urls";
 import type { WhisperModule, WhisperModuleFactory, WhisperModuleOverrides } from "./whisper-module";
 
-/** Every model needs a URL; the ones these tests download point at example.com. */
-const MODEL_URLS: ModelSource = {
-  ...REAL_MODEL_URLS,
-  "tiny.en": "https://example.com/tiny.en.bin",
-  "tiny.en-q5_1": "https://example.com/tiny.en-q5_1.bin",
-  "base.en": "https://example.com/base.en.bin",
+/** Every model needs a file; the ones these tests download point at example.com, with the
+ * SHA-256 of the bytes the fake fetch serves ([1, 2, 3]). */
+const FAKE_MODEL_FILE = { sha256: "039058c6f2c0cb492c533b0a4d14ef77cc0f78abccced5287d84a1a2011cfb81" };
+const MODEL_FILES: ModelSource = {
+  ...REAL_MODEL_FILES,
+  "tiny.en": { ...FAKE_MODEL_FILE, url: "https://example.com/tiny.en.bin" },
+  "tiny.en-q5_1": { ...FAKE_MODEL_FILE, url: "https://example.com/tiny.en-q5_1.bin" },
+  "base.en": { ...FAKE_MODEL_FILE, url: "https://example.com/base.en.bin" },
 };
 
 /** Builds a fake WhisperModule plus the factory that loads it. Like the real build,
@@ -53,7 +55,7 @@ const createFakeModule = (options?: {
 const createEngine = ({ factory }: ReturnType<typeof createFakeModule>) =>
   new WhisperCppEngine({
     loadModuleFactory: () => Promise.resolve(factory),
-    modelUrls: MODEL_URLS,
+    modelFiles: MODEL_FILES,
   });
 
 beforeEach(() => {

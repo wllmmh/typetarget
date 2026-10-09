@@ -54,6 +54,8 @@ const sendToDestinationFrame = async (
 export type DestinationCallbacks = {
   onPicked: (ref: DestinationRef, label: string) => void;
   onUnavailable: (reason: string) => void;
+  /** The popup's "Show indicators on the page" setting; shown when absent (its default). */
+  showPageIndicators?: () => boolean;
 };
 
 export class DestinationController {
@@ -67,6 +69,10 @@ export class DestinationController {
 
   get isSelecting(): boolean {
     return this.selectingTabIds.size > 0;
+  }
+
+  private get showIndicators(): boolean {
+    return this.callbacks.showPageIndicators?.() ?? true;
   }
 
   /** Injects the content script into the active tab and puts it into selection mode. */
@@ -100,7 +106,7 @@ export class DestinationController {
       throw new DestinationError(`Could not prepare this page for destination selection. (${message})`, "injection-failed");
     });
     this.selectingTabIds.add(tabId);
-    await sendToContentScript(tabId, { kind: "enter-selection-mode" });
+    await sendToContentScript(tabId, { kind: "enter-selection-mode", showIndicators: this.showIndicators });
   }
 
   /**
@@ -111,7 +117,7 @@ export class DestinationController {
    * handlePicked like any other.
    */
   async pickFromContextMenu(tabId: number, frameId: number): Promise<void> {
-    await this.pickInFrame(tabId, frameId, { kind: "pick-focused-element" });
+    await this.pickInFrame(tabId, frameId, { kind: "pick-focused-element", showIndicators: this.showIndicators });
   }
 
   /**
@@ -185,6 +191,16 @@ export class DestinationController {
       .sendMessage(destination.tabId, envelope<BackgroundToContent>({ kind: "clear-destination", keepNewFileField }), { frameId: destination.frameId })
       .catch(() => null);
     return isEnvelope<ReleaseReply>(raw) && raw.payload.kind === "released" ? raw.payload.carriedText : null;
+  }
+
+  /** The "Show indicators on the page" setting changed: the output's frame and any tab still
+   * picking redraw or remove their outline and badge. Best effort, like release(). */
+  async setPageIndicators(destination: DestinationRef | null, show: boolean): Promise<void> {
+    const msg: BackgroundToContent = { kind: "set-page-indicators", show };
+    await Promise.all([
+      ...(destination ? [sendToDestinationFrame(destination, msg).catch(() => {})] : []),
+      ...[...this.selectingTabIds].map((tabId) => sendToContentScript(tabId, msg).catch(() => {})),
+    ]);
   }
 
   /** Shows the listening timer above the destination (null removes it). Best effort, like release(). */

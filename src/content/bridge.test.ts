@@ -5,6 +5,9 @@ import { installFakeChrome, type FakeChrome } from "../test/fake-chrome";
 import { CONTENT_BRIDGE_FLAG, installContentBridge } from "./bridge";
 import { destinationSession } from "./destination-session";
 
+// jsdom never makes a trusted event, so these tests' clicks stand in for the user's own.
+vi.mock("./user-event", () => ({ isUserEvent: vi.fn(() => true) }));
+
 let fake: FakeChrome;
 
 /** The new-file box and the badge are attached to <html>, outside <body> where `screen` looks. */
@@ -19,7 +22,7 @@ const deliver = (msg: BackgroundToContent) => {
 };
 
 const pick = (el: HTMLElement) => {
-  deliver({ kind: "enter-selection-mode" });
+  deliver({ kind: "enter-selection-mode", showIndicators: true });
   el.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
 };
 
@@ -32,6 +35,7 @@ beforeEach(() => {
 afterEach(() => {
   destinationSession.stopSelecting();
   destinationSession.clearDestination();
+  destinationSession.setShowIndicators(true);
   destinationSession.onPicked = null;
   document.body.innerHTML = "";
   delete (globalThis as Record<string, unknown>)[CONTENT_BRIDGE_FLAG];
@@ -57,7 +61,7 @@ describe("installContentBridge", () => {
     const reply = vi.fn();
 
     for (const [listener] of fake.runtime.onMessage.addListener.mock.calls) {
-      (listener as (m: unknown, s: unknown, r: (v: unknown) => void) => void)(envelope({ kind: "pick-focused-element" }), {}, reply);
+      (listener as (m: unknown, s: unknown, r: (v: unknown) => void) => void)(envelope({ kind: "pick-focused-element", showIndicators: true }), {}, reply);
     }
 
     expect(reply).toHaveBeenCalledWith(envelope({ kind: "ok" }));
@@ -71,7 +75,7 @@ describe("installContentBridge", () => {
     const reply = vi.fn();
 
     for (const [listener] of fake.runtime.onMessage.addListener.mock.calls) {
-      (listener as (m: unknown, s: unknown, r: (v: unknown) => void) => void)(envelope({ kind: "pick-focused-element" }), {}, reply);
+      (listener as (m: unknown, s: unknown, r: (v: unknown) => void) => void)(envelope({ kind: "pick-focused-element", showIndicators: true }), {}, reply);
     }
 
     expect(reply).toHaveBeenCalledWith(envelope(expect.objectContaining({ kind: "error", code: "no-focused-text-box" })));
@@ -113,11 +117,30 @@ describe("installContentBridge", () => {
     vi.restoreAllMocks();
   });
 
+  it("draws nothing on the picked field when told indicators are off, and draws them when turned back on", () => {
+    installContentBridge();
+    deliver({ kind: "enter-selection-mode", showIndicators: false });
+    textarea.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+
+    expect(textarea.classList.contains("typetarget-destination")).toBe(false);
+    deliver({ kind: "set-page-indicators", show: true });
+    expect(textarea.classList.contains("typetarget-destination")).toBe(true);
+  });
+
+  it("keeps the editor tab's indicators whatever the setting, since websites can't see it", () => {
+    installContentBridge(undefined, { alwaysShowIndicators: true });
+    deliver({ kind: "enter-selection-mode", showIndicators: false });
+    textarea.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    deliver({ kind: "set-page-indicators", show: false });
+
+    expect(textarea.classList.contains("typetarget-destination")).toBe(true);
+  });
+
   it("ignores messages from senders it wasn't told to accept", () => {
     // The editor page runs the bridge and also hears the popup's own "clear-destination" request.
     installContentBridge((sender) => sender.id === "background");
     const listener = fake.runtime.onMessage.addListener.mock.calls[0]?.[0] as (m: unknown, s: unknown, r: (v: unknown) => void) => void;
-    listener(envelope({ kind: "enter-selection-mode" }), { id: "background" }, () => {});
+    listener(envelope({ kind: "enter-selection-mode", showIndicators: true }), { id: "background" }, () => {});
     textarea.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
     const reply = vi.fn();
 

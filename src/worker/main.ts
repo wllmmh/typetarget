@@ -14,7 +14,7 @@ import { createInstrumentedEngine } from "./instrumented-engine";
 import { EngineRouter } from "./engine-router";
 import { createGeminiLiveConnect, GeminiLiveEngine } from "./gemini-live-engine";
 import { GroqEngine } from "./groq-engine";
-import { MODEL_URLS } from "./model-urls";
+import { MODEL_FILES } from "./model-urls";
 import { createDownloadProgressReporter } from "./download-progress-reporter";
 import type { ModelId } from "../domain/models";
 import type { AsrWorkerEvent, AsrWorkerRequest } from "./worker-protocol";
@@ -38,7 +38,7 @@ if (self.name === "em-pthread") {
   const moduleFactory = loadWhisperModuleFactory(WHISPER_GLUE_URL);
   const engine = new WhisperCppEngine({
     loadModuleFactory: () => moduleFactory,
-    modelUrls: MODEL_URLS,
+    modelFiles: MODEL_FILES,
     onDownloadProgress: reportProgress,
   });
   // Wrapped so the popup can tell "inference never runs" from "inference is slower than

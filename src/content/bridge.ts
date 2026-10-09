@@ -27,8 +27,17 @@ const sendToBackground = (msg: ContentToBackground) => {
  * filters by sender: an extension page (src/editor) running the bridge also hears the
  * runtime.sendMessage traffic of the popup, whose requests share some kinds (e.g.
  * "clear-destination"); a content script only ever hears chrome.tabs.sendMessage.
+ *
+ * `alwaysShowIndicators` (the editor tab) ignores the "Show indicators on the page" setting:
+ * websites can't see an extension page, so hiding there would only cost the user the buttons.
  */
-export const installContentBridge = (acceptFrom: (sender: chrome.runtime.MessageSender) => boolean = () => true): boolean => {
+export const installContentBridge = (
+  acceptFrom: (sender: chrome.runtime.MessageSender) => boolean = () => true,
+  { alwaysShowIndicators = false } = {},
+): boolean => {
+  const setShowIndicators = (show: boolean) => {
+    if (!alwaysShowIndicators) destinationSession.setShowIndicators(show);
+  };
   const world = globalThis as GuardedGlobal;
   if (world[CONTENT_BRIDGE_FLAG]) return false;
   world[CONTENT_BRIDGE_FLAG] = true;
@@ -59,6 +68,7 @@ export const installContentBridge = (acceptFrom: (sender: chrome.runtime.Message
 
     switch (msg.kind) {
       case "enter-selection-mode":
+        setShowIndicators(msg.showIndicators);
         destinationSession.startSelecting();
         sendResponse(envelope({ kind: "ok" } as const));
         return undefined;
@@ -75,6 +85,7 @@ export const installContentBridge = (acceptFrom: (sender: chrome.runtime.Message
         return undefined;
       }
       case "pick-focused-element":
+        setShowIndicators(msg.showIndicators);
         // A successful pick reports itself through onPicked, like a click in selection mode.
         sendResponse(
           envelope(
@@ -94,6 +105,10 @@ export const installContentBridge = (acceptFrom: (sender: chrome.runtime.Message
         return undefined;
       case "take-destination-text":
         sendResponse(envelope<DestinationTextReply>({ kind: "destination-text", text: destinationSession.takeDestinationText() }));
+        return undefined;
+      case "set-page-indicators":
+        setShowIndicators(msg.show);
+        sendResponse(envelope({ kind: "ok" } as const));
         return undefined;
       case "set-session-indicator":
         destinationSession.setIndicator(msg.indicator);

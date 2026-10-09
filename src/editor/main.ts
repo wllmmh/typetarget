@@ -11,7 +11,7 @@ import { destinationSession } from "../content/destination-session";
 import { envelope, isEnvelope, type EditorReply, type EditorToBackground } from "../domain/messages";
 import { isFromServiceWorker } from "../domain/sender";
 
-installContentBridge(isFromServiceWorker);
+installContentBridge(isFromServiceWorker, { alwaysShowIndicators: true });
 
 const start = async (field: HTMLTextAreaElement): Promise<void> => {
   const raw: unknown = await chrome.runtime.sendMessage(envelope<EditorToBackground>({ kind: "editor-ready" }));

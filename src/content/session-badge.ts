@@ -5,7 +5,8 @@
  * Fixed-positioned at the document root rather than inserted beside the element, so the
  * page's layout and `overflow: hidden` containers can't move or clip it. It is re-placed on
  * every animation frame, not just on scroll/resize: chat boxes grow as text is typed and
- * pages shift layout without firing either event. Only ever one, for the one destination. Reads: state icon, the source tab's name (none when stopped), the timer.
+ * pages shift layout without firing either event. Only ever one, for the one destination. Reads: state icon, "TypeTarget", the timer.
+ * Never the source tab's name: this is the destination page's DOM, which its scripts can read.
  *
  * A second tab of the same color sits on the outline's top right with the output's buttons:
  * Save (downloads the box's text as .txt) and X (the same as the right-click menu's Stop typing).
@@ -15,6 +16,7 @@
 import { formatElapsed } from "../domain/elapsed";
 import type { SessionIndicator } from "../domain/messages";
 import { DESTINATION_COLOR, setDestinationColor } from "./highlight";
+import { isUserEvent } from "./user-event";
 
 /** What the badge shows: the background's session state, or — local to this frame — a "Type to
  * new file" box kept on the page after Stop typing, which is no longer the output. */
@@ -43,11 +45,6 @@ const COLOR: Record<BadgeIndicator["state"], string> = {
   stopped: DESTINATION_COLOR,
   "not-typing": "#6b7280",
 };
-
-const MAX_NAME_LENGTH = 48;
-
-/** Tab titles can be long; the badge only needs enough to recognize the tab. */
-const truncate = (name: string): string => (name.length > MAX_NAME_LENGTH ? `${name.slice(0, MAX_NAME_LENGTH - 1).trimEnd()}…` : name);
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -151,7 +148,9 @@ const createButton = (label: string, shape: IconShape, onClick: () => void): HTM
   button.addEventListener("mouseleave", highlight(false));
   button.addEventListener("focus", highlight(true));
   button.addEventListener("blur", highlight(false));
-  button.addEventListener("click", onClick);
+  button.addEventListener("click", (e) => {
+    if (isUserEvent(e)) onClick(); // a page script's synthetic click must not operate the output
+  });
   return button;
 };
 
@@ -219,9 +218,7 @@ const render = (): void => {
   labelNode.data =
     indicator.state === "not-typing"
       ? "Not typing"
-      : indicator.state === "stopped"
-        ? formatElapsed(0)
-        : `${truncate(indicator.tabName)} ${formatElapsed(Date.now() - indicator.since)}`;
+      : `TypeTarget ${formatElapsed(indicator.state === "stopped" ? 0 : Date.now() - indicator.since)}`;
   badge.style.background = COLOR[indicator.state];
   if (controls) controls.style.background = COLOR[indicator.state];
   setDestinationColor(COLOR[indicator.state]); // the outline always matches the label's color

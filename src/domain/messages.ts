@@ -30,16 +30,12 @@ export type ListeningSession = {
   reconnecting: { attempt: number; reason: string } | null;
 };
 
-/** What the badge over the destination's outline shows (see content/session-badge.ts). */
+/** What the badge over the destination's outline shows (see content/session-badge.ts). It never
+ * names the source tab: the badge lives in the destination page's DOM, where that page's scripts
+ * could read it. Only the popup shows the source tab's title. */
 export type SessionIndicator =
-  | {
-      state: "listening" | "paused" | "reconnecting";
-      /** Title of the tab being transcribed (the source tab). */
-      tabName: string;
-      since: number;
-    }
-  /** A destination is picked but nothing is being transcribed, so there is no tab to name;
-   * the timer reads 0:00. */
+  | { state: "listening" | "paused" | "reconnecting"; since: number }
+  /** A destination is picked but nothing is being transcribed; the timer reads 0:00. */
   | { state: "stopped" };
 
 /**
@@ -64,6 +60,8 @@ export type PublicAppState = {
   selectedModel: ModelId;
   /** Cap on how long one utterance grows before it is transcribed (see domain/tuning.ts). */
   chunkMs: number;
+  /** "Show indicators on the page" (see background/state.ts). */
+  showPageIndicators: boolean;
   isSelectingDestination: boolean;
   lastError: { code: string; message: string } | null;
   /** Non-null while capturing. */
@@ -90,6 +88,7 @@ export type PopupRequest =
   | { kind: "clear-destination" }
   | { kind: "set-model"; modelId: ModelId }
   | { kind: "set-chunk-ms"; chunkMs: number }
+  | { kind: "set-show-page-indicators"; show: boolean }
   | { kind: "load-model" }
   | { kind: "download-model" }
   /** Sets or clears (empty apiKey) the stored key for a network provider. */
@@ -147,9 +146,11 @@ export type EditorToBackground =
  * opened from; the editor keeps it, so moving back still works after a service-worker restart. */
 export type EditorReply = { kind: "editor-text"; text: string; originTabId: number | null };
 
-/** Background -> content script */
+/** Background -> content script. `showIndicators` is the popup's "Show indicators on the page"
+ * setting, sent with each message that can lead to a pick so the content script knows it before
+ * drawing anything (see docs/adr/0013-option-to-hide-indicators-on-the-page.md). */
 export type BackgroundToContent =
-  | { kind: "enter-selection-mode" }
+  | { kind: "enter-selection-mode"; showIndicators: boolean }
   | { kind: "exit-selection-mode" }
   | { kind: "insert-text"; text: string; separator: string }
   | { kind: "check-destination-alive" }
@@ -157,7 +158,10 @@ export type BackgroundToContent =
    * `keepNewFileField` (Stop typing) leaves a "Type to new file" box on the page, no longer the output. */
   | { kind: "clear-destination"; keepNewFileField?: boolean }
   /** From the right-click menu: pick the text box that was right-clicked (which is focused). */
-  | { kind: "pick-focused-element" }
+  | { kind: "pick-focused-element"; showIndicators: boolean }
+  /** The setting changed while this frame holds the output (or is picking): redraw or remove
+   * the outline and badge to match. */
+  | { kind: "set-page-indicators"; show: boolean }
   /** From the right-click menu's "Type to new file": open a text box over the bottom third of
    * the page and pick it (see content/new-file-field.ts). */
   | { kind: "open-new-file-field"; text?: string; minimized?: boolean }

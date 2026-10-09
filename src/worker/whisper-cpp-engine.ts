@@ -50,8 +50,8 @@ export type WhisperCppEngineConfig = {
    * a fake module without a Worker environment.
    */
   loadModuleFactory: () => Promise<WhisperModuleFactory>;
-  /** Where to download each model's .bin file from, if not already cached. */
-  modelUrls: ModelSource;
+  /** Where to download each model's .bin file from, if not already cached, and its hash. */
+  modelFiles: ModelSource;
   onDownloadProgress?: (progress: { modelId: ModelId; receivedBytes: number; totalBytes: number }) => void;
 };
 
@@ -78,7 +78,7 @@ export class WhisperCppEngine implements TranscriptionEngine {
 
     this.status = { state: "loading", modelId };
     try {
-      const modelBytes = await ensureModelDownloaded(modelId, this.config.modelUrls, (progress) =>
+      const modelBytes = await ensureModelDownloaded(modelId, this.config.modelFiles, (progress) =>
         this.config.onDownloadProgress?.({ modelId, ...progress }),
       );
 

@@ -278,7 +278,6 @@ export const App = () => {
             <KeyIcon />
           </button>
         </div>
-        {sendsAudio && <p className="hint">Captured audio is sent to {providerName} using your API key.</p>}
         {fallingBehind && (
           <p className="error">
             This computer is transcribing slower than real time with this model. A Groq or Gemini model keeps up on any
@@ -309,6 +308,7 @@ export const App = () => {
         ) : (
           <p className="hint">No API key required</p>
         )}
+        {sendsAudio && <p className="hint">Captured audio is sent to {providerName} using your API key.</p>}
         {apiKeyError && <p className="error">{apiKeyError}</p>}
         {keyProvider && (
           // Keyed by provider so a half-typed key never carries over into another provider's field.
@@ -389,6 +389,14 @@ export const App = () => {
             <TargetIcon /> Select field
           </button>
         </div>
+        <label className="toggle-row">
+          <input
+            type="checkbox"
+            checked={state.showPageIndicators}
+            onChange={(e) => void sendToBackground({ kind: "set-show-page-indicators", show: e.target.checked })}
+          />
+          Show outline
+        </label>
       </section>
 
       <section>

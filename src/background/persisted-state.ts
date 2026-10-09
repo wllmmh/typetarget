@@ -19,6 +19,7 @@ import type { AppState } from "./state";
 
 const MODEL_KEY = "selectedModel";
 const CHUNK_KEY = "chunkMs";
+const PAGE_INDICATORS_KEY = "showPageIndicators";
 const API_KEYS_KEY = "apiKeys";
 const SESSION_KEY = "binding";
 
@@ -106,9 +107,10 @@ export const restrictLocalStorageToExtension = async (): Promise<void> => {
  */
 export const restorePersistedState = async (state: AppState): Promise<PersistedCapture | null> => {
   try {
-    const [local, chunk, apiKeys, session] = await Promise.all([
+    const [local, chunk, pageIndicators, apiKeys, session] = await Promise.all([
       chrome.storage.local.get(MODEL_KEY),
       chrome.storage.local.get(CHUNK_KEY),
+      chrome.storage.local.get(PAGE_INDICATORS_KEY),
       chrome.storage.local.get(API_KEYS_KEY),
       chrome.storage.session.get(SESSION_KEY),
     ]);
@@ -118,6 +120,9 @@ export const restorePersistedState = async (state: AppState): Promise<PersistedC
 
     const storedChunk = chunk[CHUNK_KEY];
     if (typeof storedChunk === "number") state.chunkMs = clampChunkMs(storedChunk);
+
+    const storedPageIndicators = pageIndicators[PAGE_INDICATORS_KEY];
+    if (typeof storedPageIndicators === "boolean") state.showPageIndicators = storedPageIndicators;
 
     state.apiKeys = parseApiKeys(apiKeys[API_KEYS_KEY]);
 
@@ -148,7 +153,12 @@ export const persistState = async (state: AppState): Promise<void> => {
   };
   try {
     await Promise.all([
-      chrome.storage.local.set({ [MODEL_KEY]: state.selectedModel, [CHUNK_KEY]: state.chunkMs, [API_KEYS_KEY]: state.apiKeys }),
+      chrome.storage.local.set({
+        [MODEL_KEY]: state.selectedModel,
+        [CHUNK_KEY]: state.chunkMs,
+        [PAGE_INDICATORS_KEY]: state.showPageIndicators,
+        [API_KEYS_KEY]: state.apiKeys,
+      }),
       chrome.storage.session.set({ [SESSION_KEY]: binding }),
     ]);
   } catch {

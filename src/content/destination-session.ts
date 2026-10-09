@@ -11,6 +11,7 @@ import { insertTranscriptText, toInsertionTarget } from "./insert-text";
 import { setSessionBadge, type BadgeActions } from "./session-badge";
 import { createNewFileField, setNewFileFieldMinimized } from "./new-file-field";
 import { saveTextFile, textOf } from "./save-text-file";
+import { isUserEvent } from "./user-event";
 import type { SessionIndicator } from "../domain/messages";
 
 export type PickedDestination = {
@@ -34,6 +35,25 @@ class DestinationSession {
   private newFileTextHandedOver = false;
   /** The new-file box is still on the page after Stop typing, but is no longer the output. */
   private newFileDetached = false;
+  /** Off, TypeTarget draws nothing on the page's own text boxes: no outline, badge or hover
+   * highlight, so the page can't see it there. The "Type to new file" box is TypeTarget's own
+   * element, visible anyway, so it keeps its outline and buttons (its X is the only way to
+   * close a kept box). */
+  private showIndicators = true;
+
+  private showsIndicatorsOn(el: Element): boolean {
+    return this.showIndicators || el === this.newFileField;
+  }
+
+  setShowIndicators(show: boolean): void {
+    if (this.showIndicators === show) return;
+    this.showIndicators = show;
+    if (!show) clearHighlight();
+    const el = this.pickedElementId ? getRegisteredElement(this.pickedElementId) : null;
+    if (!el || el === this.newFileField) return;
+    setDestinationMarker(show ? el : null);
+    setSessionBadge(show ? el : null, this.indicator, this.badgeActionsFor(el));
+  }
 
   /** The buttons beside the badge; the "Type to new file" box also gets Minimize and Open in new tab. */
   private badgeActionsFor(el: Element | null): BadgeActions {
@@ -81,10 +101,12 @@ class DestinationSession {
   private readonly onPointerLeave = () => this.onPointerOverDestination?.(false);
 
   private readonly onMouseOver = (e: MouseEvent) => {
+    if (!this.showIndicators) return;
     setHighlighted(findEligibleAncestor(e.target));
   };
 
   private readonly onClick = (e: MouseEvent) => {
+    if (!isUserEvent(e)) return; // a page script can't pick the output for the user
     const el = findEligibleAncestor(e.target);
     if (!el) return;
     e.preventDefault();
@@ -100,8 +122,9 @@ class DestinationSession {
     this.pickedElementId = registerElement(el);
     this.insertionOffset = this.currentValueLength(el);
     if (carried) this.insert(carried, " ");
-    setDestinationMarker(el);
-    setSessionBadge(el, this.indicator, this.badgeActionsFor(el)); // a replacement pick in this frame keeps the running timer
+    const shown = this.showsIndicatorsOn(el) ? el : null;
+    setDestinationMarker(shown);
+    setSessionBadge(shown, this.indicator, this.badgeActionsFor(el)); // a replacement pick in this frame keeps the running timer
     this.trackPointer(el);
     this.onPicked?.({ elementId: this.pickedElementId, label: describeElement(el) });
     // Picking by click or right-click leaves the pointer already inside, so no pointerenter will
@@ -211,12 +234,10 @@ class DestinationSession {
     });
   }
 
-  /** Downloads the destination's current text (what was transcribed and typed) as a .txt file, named after the source tab. */
+  /** Downloads the destination's current text (what was transcribed and typed) as a .txt file. */
   saveToFile(): void {
     const el = this.pickedElementId ? getRegisteredElement(this.pickedElementId) : null;
-    // The source tab is only known while capturing; once stopped the file gets the plain name.
-    const tabName = this.indicator?.state === "stopped" ? undefined : this.indicator?.tabName;
-    if (el instanceof HTMLElement) saveTextFile(textOf(el), tabName);
+    if (el instanceof HTMLElement) saveTextFile(textOf(el));
   }
 
   /**
@@ -269,7 +290,7 @@ class DestinationSession {
       this.showDetachedBadge();
       return;
     }
-    setSessionBadge(el, indicator, this.badgeActionsFor(el));
+    setSessionBadge(el && this.showsIndicatorsOn(el) ? el : null, indicator, this.badgeActionsFor(el));
   }
 
   /** Inserts finalized text at the tracked boundary. Returns false if the destination is gone. */
