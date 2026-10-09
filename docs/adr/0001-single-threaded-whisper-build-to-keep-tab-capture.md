@@ -13,8 +13,7 @@ cut one `tiny.en` inference from ~13.5 s to ~3.3 s.
 Isolation is enforced per process. Isolated extension pages get their own render process,
 while the service worker stays non-isolated (verified in Chrome 153). A `tabCapture` stream
 id can only be consumed in the same render process as the caller, so the offscreen
-document's `getUserMedia` fails with `Error starting tab capture` (see
-[the postmortem](../postmortems/2026-09-22-cross-origin-isolation-broke-tab-capture.md)).
+document's `getUserMedia` fails with `Error starting tab capture`.
 The isolation keys are all-or-nothing per manifest, an extension may only have one
 offscreen document, and a service worker cannot start a `Worker`, so isolated inference and
 non-isolated capture cannot coexist.

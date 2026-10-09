@@ -9,8 +9,7 @@ The first design relied on Gemini's server-side turn detection and emitted final
 pace, every server message logged) showed this could not work. The server never sends
 `turnComplete` for transcription. And with automatic detection on, speech after each detected
 end was ignored for seconds, so whole sentences went missing under every
-`activityHandling` / `turnCoverage` / `silenceDurationMs` variant tried (see
-[the postmortem](../postmortems/2026-09-23-gemini-live-produced-no-transcripts.md)).
+`activityHandling` / `turnCoverage` / `silenceDurationMs` variant tried.
 
 ## Decision
 

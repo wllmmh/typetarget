@@ -95,8 +95,8 @@ that provider. There are no servers, accounts, analytics or logs. See
 - [ARCHITECTURE.md](ARCHITECTURE.md): how the extension fits together
 - [CONTRIBUTING.md](CONTRIBUTING.md): setup, checks, testing in Chrome, releasing
 - [CHANGELOG.md](CHANGELOG.md) and [TODO.md](TODO.md)
-- [docs/adr/](docs/adr/) (decisions), [docs/postmortems/](docs/postmortems/) (bugs),
-  [docs/specs/](docs/specs/) (vendored whisper.cpp build, Groq API notes)
+- [docs/adr/](docs/adr/) (decisions) and [docs/specs/](docs/specs/) (vendored whisper.cpp
+  build, Groq API notes)
 
 ## License
 

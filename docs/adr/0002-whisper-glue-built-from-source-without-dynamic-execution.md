@@ -7,8 +7,7 @@
 whisper.cpp publishes a hosted demo build (`https://ggml.ai/whisper.cpp/libmain.js`). Its
 Embind glue creates call invokers with `new Function(...)`. MV3 extension pages cannot allow
 `unsafe-eval`, and the `'wasm-unsafe-eval'` the manifest does set only covers WebAssembly
-compilation. The hosted build therefore fails at runtime startup inside the extension (see
-[the postmortem](../postmortems/2026-09-18-hosted-whisper-glue-blocked-by-mv3-csp.md)). No
+compilation. The hosted build therefore fails at runtime startup inside the extension. No
 npm package ships a usable build.
 
 ## Decision

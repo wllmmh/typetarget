@@ -6,9 +6,8 @@
 
 "Select field" injects the picker through `activeTab`, which only covers the tab the popup was
 opened in. Users naturally click it on the source tab and then click a text box in another
-tab, where nothing happened (see
-[the postmortem](../postmortems/2026-09-24-select-field-did-nothing-in-other-tabs.md)). An
-all-sites host permission would fix that, but at the cost of a broad install warning.
+tab, where nothing happened. An all-sites host permission would fix that, but at the cost of
+a broad install warning.
 
 ## Decision
 

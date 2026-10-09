@@ -94,20 +94,18 @@ Popup requests, menu clicks and offscreen messages all wait for that check.
 
 ## Invariants
 
-Breaking any of these has caused a real failure before. The postmortems have the details.
+Breaking any of these has caused a real failure before.
 
 - **No COOP/COEP manifest keys** while capture uses `tabCapture`. They break capture silently
   ([ADR 0001](docs/adr/0001-single-threaded-whisper-build-to-keep-tab-capture.md)).
 - **A tab capture stream feeds one consumer.** The tap shares playback's `AudioContext` and
-  source node ([postmortem](docs/postmortems/2026-09-22-silent-audio-tap.md)).
+  source node.
 - **Get the stream id before loading the model.** `getMediaStreamId` is tied to the user
-  gesture, and a cold download outlives it
-  ([postmortem](docs/postmortems/2026-09-22-start-failed-while-loading-the-model.md)).
+  gesture, and a cold download outlives it.
 - **One whisper module factory per worker.** The glue can be imported only once per global
   scope.
 - **The content bridge installs once per frame**, however many times the script is injected,
-  and `insert-text` is addressed to the destination's `frameId`
-  ([postmortem](docs/postmortems/2026-09-22-duplicate-transcript-insertion.md)).
+  and `insert-text` is addressed to the destination's `frameId`.
 - **Nothing from before a reset is emitted after it.** `StreamingTranscriber`'s `generation`
   counter, Gemini's `lifecycle` counter and the offscreen reset on start and stop ensure this.
 - **Check who sent a message, not just its shape.** `domain/sender.ts` checks the sender.

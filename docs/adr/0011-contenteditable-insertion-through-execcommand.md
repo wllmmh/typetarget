@@ -6,8 +6,7 @@
 
 Rich-text editors (Lexical, ProseMirror, Slate) keep their own document model and reconcile
 the DOM against it. A bare DOM insertion (a `Range` plus a text node plus a synthetic `input`
-event) was silently reverted by Lexical, while the popup still counted it as inserted (see
-[the postmortem](../postmortems/2026-09-24-lexical-reverted-inserted-text.md)).
+event) was silently reverted by Lexical, while the popup still counted it as inserted.
 
 ## Decision
 
