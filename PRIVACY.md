@@ -63,7 +63,7 @@ TypeTarget types into it, just as it could read text you typed yourself. The sam
 you trust with the transcript.
 
 That website can also see TypeTarget's outline, timer and buttons around the field, but not
-which tab you are listening to. Turning off **Show indicators on the page** in the popup removes
+which tab you are listening to. Turning off **Show outline** in the popup removes
 them; the website can still see the text arrive. Websites you don't use TypeTarget on can't tell
 it is installed.
 

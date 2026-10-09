@@ -27,7 +27,7 @@ export type AppState = {
   destinationLabel: string | null;
   selectedModel: ModelId;
   chunkMs: number;
-  /** The popup's "Show indicators on the page": off, nothing is drawn on the page's own text
+  /** The popup's "Show outline": off, nothing is drawn on the page's own text
    * boxes and the toolbar icon shows the state instead (docs/adr/0013-option-to-hide-indicators-on-the-page.md). */
   showPageIndicators: boolean;
   isSelectingDestination: boolean;

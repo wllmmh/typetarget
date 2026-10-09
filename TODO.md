@@ -22,7 +22,7 @@
       check how a failed check shows in the popup.
 - [ ] Check that the badge buttons and the picker still respond to real mouse clicks, and to
       Enter and Space on a focused button, now that untrusted events are ignored.
-- [ ] With "Show indicators on the page" off (2026-10-08): pick by Select field and by the
+- [ ] With "Show outline" off (2026-10-08): pick by Select field and by the
       right-click menu and confirm nothing appears on the page (watch with a MutationObserver
       in the page's console), the toolbar badge shows REC / II / ..., toggling mid-capture
       redraws or removes the outline, and Type to new file opens an editor tab.

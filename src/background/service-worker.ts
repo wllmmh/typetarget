@@ -96,7 +96,7 @@ const syncSessionIndicator = () => {
 let shownToolbarBadge: string | null = null;
 
 /**
- * With "Show indicators on the page" off, the toolbar icon stands in for the badge on the page,
+ * With "Show outline" off, the toolbar icon stands in for the badge on the page,
  * since websites can't see it: "REC" in green while capturing into an output, "II" or "..." in
  * grey while paused or reconnecting, and nothing otherwise. With them on, the page's badge
  * already shows this.
@@ -342,7 +342,7 @@ const setChunkMs = async (chunkMs: number): Promise<BackgroundResponse> => {
   return { kind: "ok" };
 };
 
-/** "Show indicators on the page": takes effect at once on the current output and any tab
+/** "Show outline": takes effect at once on the current output and any tab
  * still picking, not just on the next pick. */
 const setShowPageIndicators = (show: boolean): BackgroundResponse => {
   state.showPageIndicators = show;
@@ -647,7 +647,7 @@ const adoptEditorTab = async (tabId: number): Promise<EditorReply> => {
  * editor stays the output and the popup says why. */
 const moveBackToPage = async (editorTabId: number, originTabId: number, text: string): Promise<void> => {
   if (!state.showPageIndicators) {
-    state.lastError = { code: "move-back-failed", message: "Turn on \"Show indicators on the page\" to move the text back to the page." };
+    state.lastError = { code: "move-back-failed", message: "Turn on \"Show outline\" to move the text back to the page." };
     broadcastState();
     return;
   }

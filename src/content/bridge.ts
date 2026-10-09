@@ -28,7 +28,7 @@ const sendToBackground = (msg: ContentToBackground) => {
  * runtime.sendMessage traffic of the popup, whose requests share some kinds (e.g.
  * "clear-destination"); a content script only ever hears chrome.tabs.sendMessage.
  *
- * `alwaysShowIndicators` (the editor tab) ignores the "Show indicators on the page" setting:
+ * `alwaysShowIndicators` (the editor tab) ignores the "Show outline" setting:
  * websites can't see an extension page, so hiding there would only cost the user the buttons.
  */
 export const installContentBridge = (

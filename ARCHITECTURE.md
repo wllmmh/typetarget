@@ -83,7 +83,7 @@ and types the text into a text box the user picked, which may be in another tab.
 
 | Area | Contents |
 | --- | --- |
-| `storage.local` (restricted to extension pages) | selected model, chunk length, "Show indicators on the page", API keys |
+| `storage.local` (restricted to extension pages) | selected model, chunk length, "Show outline", API keys |
 | `storage.session` | known tabs, pending source tab, destination and its label, running capture |
 | IndexedDB (worker) | downloaded model files |
 
@@ -120,7 +120,7 @@ Breaking any of these has caused a real failure before. The postmortems have the
   entry crx adds), the source tab's title never reaches a content script, and content-script
   click handlers ignore untrusted events
   ([ADR 0012](docs/adr/0012-websites-cannot-detect-typetarget.md)).
-- **With "Show indicators on the page" off, nothing is drawn on the page's own text boxes**, not
+- **With "Show outline" off, nothing is drawn on the page's own text boxes**, not
   even for a moment. The setting travels with every message that can lead to a pick
   ([ADR 0013](docs/adr/0013-option-to-hide-indicators-on-the-page.md)).
 - **Model files are pinned and hash-checked.** Each download must match its SHA-256 in

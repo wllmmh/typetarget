@@ -35,7 +35,7 @@ HOW IT WORKS
    the same menu, or switch fields any time.
 
 The toolbar popup has the same controls, plus the model picker, API keys and chunk length. Turn
-off "Show indicators on the page" to type without any outline or buttons on the site; the
+off "Show outline" to type without any outline or buttons on the site; the
 toolbar icon shows REC instead.
 
 CHOOSE YOUR TRANSCRIPTION MODEL
@@ -90,7 +90,7 @@ TypeTarget transcribes the audio of a browser tab the user chooses and types the
 | `tabCapture` | Captures the audio of the tab the user chooses to transcribe. This is the extension's core function. |
 | `activeTab` | Gives one-time access to the tab where the user opened the popup or chose a right-click menu item, so that tab can be captured or its text box picked, without broad host permissions. |
 | `scripting` | Injects the text-field picker and text-insertion script into the tab the user is picking a field in, only after they act on that tab. |
-| `storage` | Saves the user's settings (model, chunk length, whether to show indicators on the page), their own API keys for hosted models, and the current source tab and field for the browser session. |
+| `storage` | Saves the user's settings (model, chunk length, whether to Show outline), their own API keys for hosted models, and the current source tab and field for the browser session. |
 | `offscreen` | Runs audio capture and transcription in an offscreen document, because the service worker can be stopped at any time and can't hold a media stream. |
 | `contextMenus` | Adds the TypeTarget right-click menu: listen to this tab, type to this field, type to a new box, stop typing. |
 | Host: `https://generativelanguage.googleapis.com/*` | Sends captured audio to Google's Gemini API for transcription, only when the user selects a Gemini model and supplies their own key. |

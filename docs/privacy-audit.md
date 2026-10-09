@@ -85,7 +85,7 @@ follow-up review the same day. Fixed: popup requests are accepted only from the 
 - **A page TypeTarget is used on can see it there**: the outline, the badge and its buttons,
   and the "Type to new file" box are in that page's DOM while it holds the output. Pages
   TypeTarget is not used on see nothing ([ADR 0012](adr/0012-websites-cannot-detect-typetarget.md)).
-  "Show indicators on the page" (off) removes them from the page's own text boxes; the inserted
+  "Show outline" (off) removes them from the page's own text boxes; the inserted
   text still shows ([ADR 0013](adr/0013-option-to-hide-indicators-on-the-page.md)).
 - **Destination pages can read what is typed into them**, including the "Type to new file" box,
   which lives in the page's DOM. This is inherent to typing into a page. A closed shadow root

@@ -54,7 +54,7 @@ const sendToDestinationFrame = async (
 export type DestinationCallbacks = {
   onPicked: (ref: DestinationRef, label: string) => void;
   onUnavailable: (reason: string) => void;
-  /** The popup's "Show indicators on the page" setting; shown when absent (its default). */
+  /** The popup's "Show outline" setting; shown when absent (its default). */
   showPageIndicators?: () => boolean;
 };
 
@@ -193,7 +193,7 @@ export class DestinationController {
     return isEnvelope<ReleaseReply>(raw) && raw.payload.kind === "released" ? raw.payload.carriedText : null;
   }
 
-  /** The "Show indicators on the page" setting changed: the output's frame and any tab still
+  /** The "Show outline" setting changed: the output's frame and any tab still
    * picking redraw or remove their outline and badge. Best effort, like release(). */
   async setPageIndicators(destination: DestinationRef | null, show: boolean): Promise<void> {
     const msg: BackgroundToContent = { kind: "set-page-indicators", show };

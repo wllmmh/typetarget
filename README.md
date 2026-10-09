@@ -37,7 +37,7 @@ a `.txt` file and stop typing. The page you type into is never told which tab yo
 listening to; only the popup shows that. A "new file" box can also be minimized or
 opened in a new tab.
 
-To keep the site you type into from seeing TypeTarget, turn off **Show indicators on the page**
+To keep the site you type into from seeing TypeTarget, turn off **Show outline**
 in the popup. The field then gets no outline or buttons, the toolbar icon shows **REC** while
 typing, and "Type to new file" opens in a new tab. The site can still see the text arrive.
 

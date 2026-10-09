@@ -25,7 +25,7 @@ All notable changes to this project are documented here. The format follows
   save the text as a `.txt` file (named like `TypeTarget-2026-10-08T17-30-05.txt`) and to stop
   typing.
 - Selection follows you into other tabs while you are picking a field.
-- "Show indicators on the page" setting in the popup. Turned off, the field you type into gets no
+- "Show outline" setting in the popup. Turned off, the field you type into gets no
   outline, timer or buttons, the toolbar icon shows REC instead, and "Type to new file" opens in
   a new tab.
 - A notice in the API Keys dialog when a hosted model will receive audio, and a popup warning

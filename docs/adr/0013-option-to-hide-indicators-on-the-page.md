@@ -16,7 +16,7 @@ typing and window buttons.
 
 ## Decision
 
-Add a popup setting, **Show indicators on the page**, on by default and stored in
+Add a popup setting, **Show outline**, on by default and stored in
 `storage.local` (`showPageIndicators`).
 
 With it off:

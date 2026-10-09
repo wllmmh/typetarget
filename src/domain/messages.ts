@@ -60,7 +60,7 @@ export type PublicAppState = {
   selectedModel: ModelId;
   /** Cap on how long one utterance grows before it is transcribed (see domain/tuning.ts). */
   chunkMs: number;
-  /** "Show indicators on the page" (see background/state.ts). */
+  /** "Show outline" (see background/state.ts). */
   showPageIndicators: boolean;
   isSelectingDestination: boolean;
   lastError: { code: string; message: string } | null;
@@ -146,7 +146,7 @@ export type EditorToBackground =
  * opened from; the editor keeps it, so moving back still works after a service-worker restart. */
 export type EditorReply = { kind: "editor-text"; text: string; originTabId: number | null };
 
-/** Background -> content script. `showIndicators` is the popup's "Show indicators on the page"
+/** Background -> content script. `showIndicators` is the popup's "Show outline"
  * setting, sent with each message that can lead to a pick so the content script knows it before
  * drawing anything (see docs/adr/0013-option-to-hide-indicators-on-the-page.md). */
 export type BackgroundToContent =
