@@ -26,7 +26,3 @@ export const getRegisteredElement = (elementId: string): Element | null => {
   }
   return el;
 };
-
-export const clearRegistry = (): void => {
-  registry.clear();
-};

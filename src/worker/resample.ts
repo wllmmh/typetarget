@@ -25,20 +25,3 @@ export const resampleTo16kHz = (input: Float32Array, inputSampleRate: number): F
 
   return output;
 };
-
-/** Downmixes a multi-channel interleaved-or-planar buffer set to mono by averaging channels. */
-export const downmixToMono = (channels: Float32Array[]): Float32Array => {
-  if (channels.length === 0) return new Float32Array(0);
-  const first = channels[0];
-  if (!first) return new Float32Array(0);
-  if (channels.length === 1) return first;
-
-  const length = first.length;
-  const output = new Float32Array(length);
-  for (let i = 0; i < length; i++) {
-    let sum = 0;
-    for (const channel of channels) sum += channel[i] ?? 0;
-    output[i] = sum / channels.length;
-  }
-  return output;
-};

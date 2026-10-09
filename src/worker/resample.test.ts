@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resampleTo16kHz, downmixToMono } from "./resample";
+import { resampleTo16kHz } from "./resample";
 
 describe("resampleTo16kHz", () => {
   it("returns the input unchanged when already at 16kHz", () => {
@@ -27,22 +27,5 @@ describe("resampleTo16kHz", () => {
 
   it("does not throw on very short input", () => {
     expect(() => resampleTo16kHz(new Float32Array([0.1]), 48_000)).not.toThrow();
-  });
-});
-
-describe("downmixToMono", () => {
-  it("returns the single channel unchanged when given one channel", () => {
-    const channel = new Float32Array([0.1, 0.2, 0.3]);
-    expect(downmixToMono([channel])).toBe(channel);
-  });
-
-  it("averages two channels sample-by-sample", () => {
-    const left = new Float32Array([1, 0, -1]);
-    const right = new Float32Array([0, 1, 1]);
-    expect(Array.from(downmixToMono([left, right]))).toEqual([0.5, 0.5, 0]);
-  });
-
-  it("returns an empty array when given no channels", () => {
-    expect(downmixToMono([]).length).toBe(0);
   });
 });

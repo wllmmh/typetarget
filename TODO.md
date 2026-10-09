@@ -36,12 +36,23 @@
       Defer a cap cut to the next low-energy frame
       ([ADR 0006](docs/adr/0006-client-side-utterance-boundaries-for-gemini-live.md)).
 
-## Clean up
+## Tests
 
-- [ ] Unused code paths: the `set-source-tab` popup request (no UI sends it since the source
-      dropdown went), the `load-model` / `download-model` popup requests (answered "not
-      implemented"), `deleteCachedModel` in `model-cache.ts`, and `hypothesisDelta` in
-      `stabilizer.ts` (used only by its tests).
+- [ ] Playwright end-to-end tests against the built `dist/`, run in CI. They would turn most of
+      "Verify in a real browser" above into checks that keep passing. Start with a harness that
+      loads the extension in Chromium and drives what Playwright can reach, given the limits in
+      CONTRIBUTING.md's "Testing in Chrome" (no toolbar clicks, no native context menu, no
+      `activeTab` grant headlessly):
+  - Insertion: open `src/offscreen/index.html` as a tab and send `transcript-event` finals
+    through the real router into a test page's `<textarea>`, `contenteditable` and a Lexical
+    editor, including one in an iframe.
+  - Picking: Select field and `contextMenus.onClicked.dispatch`, with "Show outline" on and off.
+    With it off, assert through a MutationObserver that nothing is added to the page.
+  - Stealth: from a test page, `fetch("chrome-extension://<id>/src/content/main.js")` fails.
+  - Service-worker restart mid-capture: stop the worker through CDP and check the capture is
+    picked back up.
+  - Model download: serve a small file with the wrong hash and check it is rejected and not
+    cached.
 
 ## Ideas, not planned
 

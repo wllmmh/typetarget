@@ -27,7 +27,16 @@ import { CaptureController, CaptureError } from "./capture-controller";
 import { DestinationController, DestinationError } from "./destination-controller";
 import { OFFSCREEN_DOCUMENT_PATH } from "./offscreen-manager";
 import { createTranscriptRouter } from "./transcript-router";
-import { buildMenuModel, ContextMenu, isCapturing, MENU_LISTEN_HERE_ID, MENU_NEW_FILE_ID, MENU_OUTPUT_ID, MENU_STOP_ID, MENU_STOP_TYPING_ID } from "./context-menu";
+import {
+  buildMenuModel,
+  ContextMenu,
+  isCapturing,
+  MENU_LISTEN_HERE_ID,
+  MENU_NEW_FILE_ID,
+  MENU_OUTPUT_ID,
+  MENU_STOP_ID,
+  MENU_STOP_TYPING_ID,
+} from "./context-menu";
 
 // MV3 service workers are non-persistent: this module-level state is rebuilt from
 // scratch whenever Chrome wakes the worker, so it must never be the sole record of
@@ -59,31 +68,37 @@ const syncContextMenu = () => {
   void contextMenu.apply(buildMenuModel(state, pointerOverDestination));
 };
 
-/** What the destination's timer badge was last told, so only an actual change messages the page. */
-let shownIndicator: { destination: DestinationRef; indicator: SessionIndicator } | null = null;
+type ShownIndicator = { destination: DestinationRef; indicator: SessionIndicator };
 
-/** Only if the captured tab somehow dropped out of the known list (it is recorded before capture can start). */
+/** What the destination's timer badge was last told, so only an actual change messages the page. */
+let shownIndicator: ShownIndicator | null = null;
 
 const sameFrame = (a: DestinationRef, b: DestinationRef) => a.tabId === b.tabId && a.frameId === b.frameId;
 
+const sameIndicator = (a: SessionIndicator, b: SessionIndicator): boolean =>
+  a.state === "stopped" || b.state === "stopped" ? a.state === b.state : a.state === b.state && a.since === b.since;
+
+const sameShownIndicator = (a: ShownIndicator | null, b: ShownIndicator | null): boolean =>
+  a && b
+    ? sameFrame(a.destination, b.destination) &&
+      a.destination.elementId === b.destination.elementId &&
+      sameIndicator(a.indicator, b.indicator)
+    : a === b;
+
 /**
- * Keeps the badge above the destination's outline in step with the capture: a timer while
- * capturing, "Stopped" whenever a destination is picked but nothing is. The page ticks the
- * clock itself from `since`, so this only sends when the badge's inputs change.
+ * Keeps the badge above the destination's outline in step with the capture: a running timer
+ * while capturing, a stopped one at 0:00 whenever a destination is picked but nothing is. The
+ * page ticks the clock itself from `since`, so this only sends when the badge's inputs change.
  * A destination replaced within the same frame re-anchors there; one in another frame is
  * told to drop its badge.
  */
 const syncSessionIndicator = () => {
   const { destination, session } = state;
-  const next = destination
-    ? {
-        destination,
-        indicator: (session
-          ? { since: session.since, state: session.reconnecting ? "reconnecting" : state.status === "paused" ? "paused" : "listening" }
-          : { state: "stopped" }) satisfies SessionIndicator,
-      }
+  const runningState = session?.reconnecting ? "reconnecting" : state.status === "paused" ? "paused" : "listening";
+  const next: ShownIndicator | null = destination
+    ? { destination, indicator: session ? { since: session.since, state: runningState } : { state: "stopped" } }
     : null;
-  if (JSON.stringify(next) === JSON.stringify(shownIndicator)) return;
+  if (sameShownIndicator(next, shownIndicator)) return;
   const previous = shownIndicator;
   shownIndicator = next;
   if (previous && !(next && sameFrame(previous.destination, next.destination))) {
@@ -92,18 +107,21 @@ const syncSessionIndicator = () => {
   if (next) void destinationController.showSessionIndicator(next.destination, next.indicator);
 };
 
-/** What the toolbar icon's badge last showed, so only a change calls chrome.action. */
-let shownToolbarBadge: string | null = null;
+type ToolbarBadge = { text: string; color: string };
+
+/** What the toolbar icon's badge last showed (undefined before the first sync), so only a
+ * change calls chrome.action. */
+let shownToolbarBadge: ToolbarBadge | null | undefined;
 
 /**
  * With "Show outline" off, the toolbar icon stands in for the badge on the page,
  * since websites can't see it: "REC" in green while capturing into an output, "II" or "..." in
- * grey while paused or reconnecting, and nothing otherwise. With them on, the page's badge
+ * grey while paused or reconnecting, and nothing otherwise. With it on, the page's badge
  * already shows this.
  */
 const syncToolbarBadge = () => {
   const { destination, session } = state;
-  const badge =
+  const badge: ToolbarBadge | null =
     !state.showPageIndicators && destination && session
       ? session.reconnecting
         ? { text: "...", color: "#6b7280" }
@@ -111,9 +129,8 @@ const syncToolbarBadge = () => {
           ? { text: "II", color: "#6b7280" }
           : { text: "REC", color: "#1f9d55" }
       : null;
-  const key = JSON.stringify(badge);
-  if (key === shownToolbarBadge) return;
-  shownToolbarBadge = key;
+  if (shownToolbarBadge !== undefined && badge?.text === shownToolbarBadge?.text && badge?.color === shownToolbarBadge?.color) return;
+  shownToolbarBadge = badge;
   void chrome.action.setBadgeText({ text: badge?.text ?? "" }).catch(() => {});
   if (badge) void chrome.action.setBadgeBackgroundColor({ color: badge.color }).catch(() => {});
 };
@@ -216,8 +233,8 @@ chrome.tabs.onRemoved.addListener((tabId) => {
   commitState();
 });
 
-/** Keeps each known tab's label current — the popup, context menu, and destination badge
- * all show the source tab's title, which pages like YouTube change on every video. */
+/** Keeps each known tab's label current: the popup shows the source tab's title, which pages
+ * like YouTube change on every video. */
 chrome.tabs.onUpdated.addListener((tabId, change) => {
   const knownTabs = updateKnownTab(state.knownTabs, tabId, change);
   if (knownTabs === state.knownTabs) return;
@@ -320,7 +337,7 @@ const setPaused = async (paused: boolean): Promise<BackgroundResponse> => {
 };
 
 const setModel = (modelId: ModelId): BackgroundResponse => {
-  if (state.status !== "idle" && state.status !== "error") {
+  if (isCapturing(state.status)) {
     return { kind: "error", code: "invalid-state", message: "Stop transcribing before changing the model." };
   }
   state.selectedModel = modelId;
@@ -335,7 +352,7 @@ const setModel = (modelId: ModelId): BackgroundResponse => {
 const setChunkMs = async (chunkMs: number): Promise<BackgroundResponse> => {
   state.chunkMs = clampChunkMs(chunkMs);
   commitState();
-  if (state.status !== "idle" && state.status !== "error") {
+  if (isCapturing(state.status)) {
     // Best effort: if the offscreen document has gone, the next start sends the value anyway.
     await captureController.setChunkMs(state.chunkMs).catch(() => {});
   }
@@ -368,7 +385,7 @@ const setApiKey = async (provider: ApiKeyProvider, apiKey: string): Promise<Back
   if (trimmed === "") delete state.apiKeys[provider];
   else state.apiKeys[provider] = trimmed;
   commitState();
-  if (state.status !== "idle" && state.status !== "error") {
+  if (isCapturing(state.status)) {
     await captureController.setApiKey(provider, trimmed).catch(() => {});
   }
   return { kind: "ok" };
@@ -391,7 +408,7 @@ const beginDestinationSelection = async (): Promise<BackgroundResponse> => {
 
 void captureReattached.then(() => {
   syncContextMenu();
-  syncSessionIndicator(); // a restored destination shows "Stopped" until capture starts
+  syncSessionIndicator(); // a restored destination shows the stopped badge until capture starts
 });
 
 /** The pointer can't still be over the destination once the user is in another tab or window. */
@@ -532,20 +549,6 @@ const clearDestination = ({ keepNewFileField = false } = {}): BackgroundResponse
   return { kind: "ok" };
 };
 
-/**
- * Remembers which tab the user picked as the source. Held here rather than in the popup
- * because the popup is destroyed whenever it closes — including when the user switches
- * to the tab they want to type into, which is the normal way this extension is used.
- */
-const setSourceTab = (sourceTabId: number | null): BackgroundResponse => {
-  if (state.status !== "idle" && state.status !== "error") {
-    return { kind: "error", code: "invalid-state", message: "Stop transcribing before changing the source tab." };
-  }
-  state.pendingSourceTabId = sourceTabId;
-  commitState();
-  return { kind: "ok" };
-};
-
 const handlePopupRequest = async (req: PopupRequest): Promise<BackgroundResponse> => {
   await captureReattached;
   switch (req.kind) {
@@ -579,16 +582,6 @@ const handlePopupRequest = async (req: PopupRequest): Promise<BackgroundResponse
       return setShowPageIndicators(req.show);
     case "set-api-key":
       return setApiKey(req.provider, req.apiKey);
-    case "set-source-tab":
-      return setSourceTab(req.sourceTabId);
-    case "load-model":
-    case "download-model":
-      // The model is loaded (downloading first if needed) when capture starts.
-      return {
-        kind: "error",
-        code: "not-implemented",
-        message: `"${req.kind}" is not implemented yet.`,
-      };
     default: {
       const _exhaustive: never = req;
       return _exhaustive;

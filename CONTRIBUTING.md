@@ -33,8 +33,10 @@ changes.
 
 ## Testing in Chrome
 
-Unit tests use a fake `chrome` (`src/test/fake-chrome.ts`). That fake has hidden real
-behaviour before, so check changes to capture, messaging or insertion in a real browser too.
+Unit tests use a fake `chrome` (`src/test/fake-chrome.ts`). The service worker's tests load
+the real module against it and drive it through the listeners it registers
+(`service-worker.test.ts`). That fake has hidden real behaviour before, so check changes to
+capture, messaging or insertion in a real browser too.
 
 - **Reload the destination page, not just the extension**, after changing the content
   script. Old injected instances live on in the page.

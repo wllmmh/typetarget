@@ -10,11 +10,6 @@
 
 import type { ChromeTabCaptureConstraints } from "./chrome-media-constraints";
 
-export type CaptureHandle = {
-  stream: MediaStream;
-  stop: () => void;
-};
-
 let sharedAudioContext: AudioContext | null = null;
 
 const getSharedAudioContext = (): AudioContext => {

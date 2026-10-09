@@ -10,7 +10,14 @@
  * the page. The flag lives on the isolated world's global object, which every
  * execution of the script in this frame shares.
  */
-import { isEnvelope, envelope, type BackgroundToContent, type ContentToBackground, type DestinationTextReply, type ReleaseReply } from "../domain/messages";
+import {
+  isEnvelope,
+  envelope,
+  type BackgroundToContent,
+  type ContentToBackground,
+  type DestinationTextReply,
+  type ReleaseReply,
+} from "../domain/messages";
 import { destinationSession } from "./destination-session";
 
 /** Exported so the test can clear it; nothing else should read it. */
@@ -91,7 +98,11 @@ export const installContentBridge = (
           envelope(
             destinationSession.pickFocused()
               ? ({ kind: "ok" } as const)
-              : ({ kind: "error", code: "no-focused-text-box", message: "TypeTarget couldn't find that text box. Click into it, then right-click it again." } as const),
+              : ({
+                  kind: "error",
+                  code: "no-focused-text-box",
+                  message: "TypeTarget couldn't find that text box. Click into it, then right-click it again.",
+                } as const),
           ),
         );
         return undefined;

@@ -78,7 +78,6 @@ export type PopupRequest =
   | { kind: "list-capturable-tabs" }
   /** Sent when the popup opens: records the tab it was opened on as capturable (see known-tabs.ts). */
   | { kind: "register-active-tab" }
-  | { kind: "set-source-tab"; sourceTabId: number | null }
   | { kind: "start-capture"; sourceTabId: number }
   | { kind: "stop-capture" }
   | { kind: "pause-transcription" }
@@ -89,8 +88,6 @@ export type PopupRequest =
   | { kind: "set-model"; modelId: ModelId }
   | { kind: "set-chunk-ms"; chunkMs: number }
   | { kind: "set-show-page-indicators"; show: boolean }
-  | { kind: "load-model" }
-  | { kind: "download-model" }
   /** Sets or clears (empty apiKey) the stored key for a network provider. */
   | { kind: "set-api-key"; provider: ApiKeyProvider; apiKey: string };
 

@@ -60,7 +60,10 @@ const ICON_SHAPES: Record<BadgeIndicator["state"], IconShape> = {
   "not-typing": { tag: "rect", attrs: { x: "1.5", y: "1.5", width: "9", height: "9", fill: "currentColor" } },
 };
 
-const CLOSE_SHAPE: IconShape = { tag: "path", attrs: { d: "M2.5 2.5 L9.5 9.5 M9.5 2.5 L2.5 9.5", stroke: "currentColor", "stroke-width": "1.75", fill: "none" } };
+const CLOSE_SHAPE: IconShape = {
+  tag: "path",
+  attrs: { d: "M2.5 2.5 L9.5 9.5 M9.5 2.5 L2.5 9.5", stroke: "currentColor", "stroke-width": "1.75", fill: "none" },
+};
 const SAVE_SHAPE: IconShape = {
   tag: "path",
   attrs: { d: "M6 1 V8 M3 5 L6 8 L9 5 M1.5 10.75 H10.5", stroke: "currentColor", "stroke-width": "1.5", fill: "none" },

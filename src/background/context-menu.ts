@@ -35,7 +35,7 @@ export type MenuModel = {
   hasDestination: boolean;
 };
 
-/** Same test as the popup's Start/Stop toggle and the service worker's setSourceTab guard. */
+/** Same test as the popup's Start/Stop toggle. */
 export const isCapturing = (status: AppState["status"]): boolean => status !== "idle" && status !== "error";
 
 /**

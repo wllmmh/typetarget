@@ -5,7 +5,16 @@
  * into tabs TypeTarget holds activeTab for (where the popup was opened or a menu item
  * chosen).
  */
-import { envelope, isEnvelope, type BackgroundToContent, type BackgroundResponse, type DestinationRef, type DestinationTextReply, type ReleaseReply, type SessionIndicator } from "../domain/messages";
+import {
+  envelope,
+  isEnvelope,
+  type BackgroundToContent,
+  type BackgroundResponse,
+  type DestinationRef,
+  type DestinationTextReply,
+  type ReleaseReply,
+  type SessionIndicator,
+} from "../domain/messages";
 // `?script&iife` is @crxjs/vite-plugin's mechanism for content scripts that are only
 // ever injected dynamically (via chrome.scripting.executeScript) rather than declared
 // in manifest.content_scripts, which is the only place crxjs's own build-file
@@ -187,8 +196,9 @@ export class DestinationController {
    * of the "Type to new file" box this closed, if that was the destination (see ReleaseReply).
    * With `keepNewFileField` such a box stays on the page instead (Stop typing). */
   async release(destination: DestinationRef, keepNewFileField = false): Promise<string | null> {
+    const msg: BackgroundToContent = { kind: "clear-destination", keepNewFileField };
     const raw: unknown = await chrome.tabs
-      .sendMessage(destination.tabId, envelope<BackgroundToContent>({ kind: "clear-destination", keepNewFileField }), { frameId: destination.frameId })
+      .sendMessage(destination.tabId, envelope(msg), { frameId: destination.frameId })
       .catch(() => null);
     return isEnvelope<ReleaseReply>(raw) && raw.payload.kind === "released" ? raw.payload.carriedText : null;
   }

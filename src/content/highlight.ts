@@ -51,7 +51,12 @@ export const setHighlighted = candidateMarker.set;
 
 export const clearHighlight = (): void => setHighlighted(null);
 
-const destinationMarker = createMarker("typetarget-destination", "typetarget-destination-style", () => `4px double ${destinationColor}`, INSET_4PX);
+const destinationMarker = createMarker(
+  "typetarget-destination",
+  "typetarget-destination-style",
+  () => `4px double ${destinationColor}`,
+  INSET_4PX,
+);
 
 /** Double outline on the element transcribed text is going to; null removes it. */
 export const setDestinationMarker = destinationMarker.set;

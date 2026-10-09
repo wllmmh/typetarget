@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { TranscriptStabilizer, hypothesisDelta } from "./stabilizer";
+import { TranscriptStabilizer } from "./stabilizer";
 
 describe("TranscriptStabilizer.onHypothesis", () => {
   it("emits a partial event for each growing hypothesis", () => {
@@ -89,19 +89,5 @@ describe("TranscriptStabilizer.reset", () => {
     stabilizer.reset();
 
     expect(stabilizer.onHypothesis("hello", 2)).toEqual({ type: "partial", text: "hello", timestamp: 2 });
-  });
-});
-
-describe("hypothesisDelta", () => {
-  it("returns only the newly-added suffix for a growing refinement", () => {
-    expect(hypothesisDelta("The quarterly", "The quarterly revenue")).toBe(" revenue");
-  });
-
-  it("returns the full next string when it's not a refinement of the previous one", () => {
-    expect(hypothesisDelta("completely different", "totally unrelated text")).toBe("totally unrelated text");
-  });
-
-  it("returns the full string when there was no previous hypothesis", () => {
-    expect(hypothesisDelta("", "hello")).toBe("hello");
   });
 });

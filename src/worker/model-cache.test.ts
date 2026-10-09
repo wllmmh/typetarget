@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import "fake-indexeddb/auto";
 import { IDBFactory } from "fake-indexeddb";
-import { isModelCached, getCachedModel, putCachedModel, deleteCachedModel } from "./model-cache";
+import { isModelCached, getCachedModel, putCachedModel } from "./model-cache";
 
 // Fresh database per test: model-cache.ts's openDb() always targets the same DB
 // name, so state would otherwise leak between tests. Recreating the global
@@ -31,13 +31,6 @@ describe("model cache", () => {
 
     expect(new Uint8Array((await getCachedModel("tiny.en"))!)).toEqual(new Uint8Array([1]));
     expect(new Uint8Array((await getCachedModel("base.en"))!)).toEqual(new Uint8Array([2]));
-  });
-
-  it("deletes a cached model", async () => {
-    await putCachedModel("tiny.en", new Uint8Array([1]).buffer);
-    await deleteCachedModel("tiny.en");
-
-    expect(await isModelCached("tiny.en")).toBe(false);
   });
 
   it("overwrites a previously cached model with the same id", async () => {

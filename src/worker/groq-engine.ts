@@ -9,7 +9,14 @@
  * anyway, and its docs recommend WAV for latency). Sends captured audio to Groq using the
  * user's own key.
  */
-import { MODEL_CATALOG, type EngineStatus, type ModelId, type TranscriptionEngine, type TranscriptionOptions, type TranscriptionResult } from "../domain/models";
+import {
+  MODEL_CATALOG,
+  type EngineStatus,
+  type ModelId,
+  type TranscriptionEngine,
+  type TranscriptionOptions,
+  type TranscriptionResult,
+} from "../domain/models";
 import { float32ToWav } from "./pcm16-encode";
 import { SAMPLE_RATE } from "./streaming-transcriber";
 

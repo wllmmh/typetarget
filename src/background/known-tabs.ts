@@ -55,7 +55,17 @@ export const updateKnownTab = (
 
 /** Whether two lists would render identically (order, ids, and labels). */
 export const sameKnownTabs = (a: readonly CapturableTab[], b: readonly CapturableTab[]): boolean =>
-  JSON.stringify(a) === JSON.stringify(b);
+  a.length === b.length &&
+  a.every((tab, i) => {
+    const other = b[i];
+    return (
+      other !== undefined &&
+      tab.tabId === other.tabId &&
+      tab.title === other.title &&
+      tab.url === other.url &&
+      tab.favIconUrl === other.favIconUrl
+    );
+  });
 
 export const removeKnownTab = (known: readonly CapturableTab[], tabId: number): CapturableTab[] =>
   known.filter((t) => t.tabId !== tabId);

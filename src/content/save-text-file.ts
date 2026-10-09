@@ -14,8 +14,11 @@ const pad = (n: number) => String(n).padStart(2, "0");
  * Windows file names can't hold colons). The source tab's title is left out: the content script
  * never receives it (see SessionIndicator).
  */
-export const textFileName = (date: Date): string =>
-  `TypeTarget-${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}-${pad(date.getMinutes())}-${pad(date.getSeconds())}.txt`;
+export const textFileName = (date: Date): string => {
+  const day = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+  const time = `${pad(date.getHours())}-${pad(date.getMinutes())}-${pad(date.getSeconds())}`;
+  return `TypeTarget-${day}T${time}.txt`;
+};
 
 /**
  * The text a box holds. `innerText` keeps a rich editor's line breaks, which `textContent`

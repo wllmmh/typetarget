@@ -1,7 +1,7 @@
 /**
  * TranscriptionEngine implementation backed by Google's Gemini Live API (persistent
- * WebSocket; see docs/adr/0005-gemini-live-api-via-official-sdk.md). This is the *only* module allowed to know about @google/genai's Live session
- * shape — everything above it talks to TranscriptionEngine (domain/models.ts) plus the
+ * WebSocket; see docs/adr/0005-gemini-live-api-via-official-sdk.md). This is the *only* module
+ * allowed to know about @google/genai's Live session shape — everything above it talks to TranscriptionEngine (domain/models.ts) plus the
  * narrow streaming shape engine-router.ts also expects of it (pushAudio/flush/setOptions),
  * same boundary whisper-cpp-engine.ts draws around whisper.cpp.
  *
@@ -30,7 +30,14 @@
  * no retry can fix (a bad key, a refused request) stop it.
  */
 import { GoogleGenAI, TurnCoverage, type LiveServerMessage, type VoiceActivity } from "@google/genai";
-import type { ConnectionStatus, EngineStatus, ModelId, TranscriptionEngine, TranscriptionOptions, TranscriptionResult } from "../domain/models";
+import type {
+  ConnectionStatus,
+  EngineStatus,
+  ModelId,
+  TranscriptionEngine,
+  TranscriptionOptions,
+  TranscriptionResult,
+} from "../domain/models";
 import type { TranscriptEvent } from "../domain/transcript";
 import type { VoiceActivityDetector } from "../domain/vad";
 import { CHUNK_MS_DEFAULT } from "../domain/tuning";
@@ -53,7 +60,10 @@ const LIVE_TRANSCRIBE_MODEL = "gemini-3.5-transcribe-live";
  */
 export type LiveSessionLike = {
   sendRealtimeInput: (
-    input: { audio: { data: string; mimeType: string } } | { activityStart: Record<string, never> } | { activityEnd: Record<string, never> },
+    input:
+      | { audio: { data: string; mimeType: string } }
+      | { activityStart: Record<string, never> }
+      | { activityEnd: Record<string, never> },
   ) => void;
   close: () => void;
 };

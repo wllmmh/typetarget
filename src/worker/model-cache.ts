@@ -52,13 +52,3 @@ export const putCachedModel = async (modelId: ModelId, data: ArrayBuffer): Promi
     tx.onerror = () => reject(tx.error ?? new Error("Failed to cache model."));
   });
 };
-
-export const deleteCachedModel = async (modelId: ModelId): Promise<void> => {
-  const db = await openDb();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, "readwrite");
-    tx.objectStore(STORE_NAME).delete(modelId);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error ?? new Error("Failed to delete cached model."));
-  });
-};

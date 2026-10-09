@@ -385,7 +385,11 @@ export const App = () => {
           >
             <StopIcon /> Stop typing
           </button>
-          <button type="button" disabled={busy || state.isSelectingDestination} onClick={() => handleOutputAction("begin-destination-selection")}>
+          <button
+            type="button"
+            disabled={busy || state.isSelectingDestination}
+            onClick={() => handleOutputAction("begin-destination-selection")}
+          >
             <TargetIcon /> Select field
           </button>
         </div>

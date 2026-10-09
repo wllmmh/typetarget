@@ -3,7 +3,14 @@
  * that knows whisper.cpp's API shape (init/free/full_default, stdout-based results);
  * everything above it talks to the TranscriptionEngine interface in domain/models.ts.
  */
-import type { EngineStatus, ModelId, TranscriptionEngine, TranscriptionOptions, TranscriptionResult, WhisperModelId } from "../domain/models";
+import type {
+  EngineStatus,
+  ModelId,
+  TranscriptionEngine,
+  TranscriptionOptions,
+  TranscriptionResult,
+  WhisperModelId,
+} from "../domain/models";
 import { MODEL_CATALOG } from "../domain/models";
 import type { WhisperModule, WhisperModuleFactory } from "./whisper-module";
 import { parseWhisperOutput } from "./whisper-line-parser";

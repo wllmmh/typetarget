@@ -11,38 +11,12 @@
  */
 import type { TranscriptEvent } from "../domain/transcript";
 
-/**
- * Finds the length of the longest common prefix between two strings, used to detect
- * whether `next` is simply an extension of `previous` (the common "growing
- * hypothesis" case) versus a genuinely different re-interpretation of the same audio.
- */
-const commonPrefixLength = (a: string, b: string): number => {
-  const max = Math.min(a.length, b.length);
-  let i = 0;
-  while (i < max && a[i] === b[i]) i++;
-  return i;
-};
-
-export type StabilizerOptions = {
-  /**
-   * Minimum fraction of the shorter string that must match as a common prefix for
-   * two hypotheses to be treated as "the same utterance, refined" rather than "a
-   * new, unrelated guess" (which resets partial tracking instead of diffing).
-   */
-  minPrefixOverlapRatio: number;
-};
-
-export const DEFAULT_STABILIZER_OPTIONS: StabilizerOptions = {
-  minPrefixOverlapRatio: 0.6,
-};
-
 export class TranscriptStabilizer {
   private lastPartial = "";
 
   /**
-   * Feeds a new rolling-window hypothesis. Returns a "partial" event with only the
-   * text that's new/changed relative to what was already emitted, or null if the
-   * hypothesis is unchanged (avoids re-sending/re-inserting identical text).
+   * Feeds a new hypothesis for the open utterance. Returns it as a "partial" event (the whole
+   * hypothesis, which replaces the previous partial), or null if it is empty or unchanged.
    */
   onHypothesis(text: string, timestamp: number): TranscriptEvent | null {
     const trimmed = text.trim();
@@ -68,14 +42,3 @@ export class TranscriptStabilizer {
     this.lastPartial = "";
   }
 }
-
-/**
- * The text `next` adds to `previous`, or all of `next` when it is a different guess rather
- * than a refinement. The stabilizer itself always emits the full hypothesis.
- */
-export const hypothesisDelta = (previous: string, next: string, options: StabilizerOptions = DEFAULT_STABILIZER_OPTIONS): string => {
-  const prefixLen = commonPrefixLength(previous, next);
-  const shorterLen = Math.min(previous.length, next.length);
-  const isRefinement = shorterLen === 0 || prefixLen / shorterLen >= options.minPrefixOverlapRatio;
-  return isRefinement ? next.slice(prefixLen) : next;
-};

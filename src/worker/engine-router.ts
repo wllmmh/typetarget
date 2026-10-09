@@ -8,7 +8,15 @@
  * are an instrumented engine and the StreamingTranscriber around it (see main.ts); for
  * gemini-live both are the same GeminiLiveEngine, which implements both shapes.
  */
-import { MODEL_CATALOG, type EngineProvider, type EngineStatus, type ModelId, type TranscriptionEngine, type TranscriptionOptions, type TranscriptionResult } from "../domain/models";
+import {
+  MODEL_CATALOG,
+  type EngineProvider,
+  type EngineStatus,
+  type ModelId,
+  type TranscriptionEngine,
+  type TranscriptionOptions,
+  type TranscriptionResult,
+} from "../domain/models";
 import type { StreamingOptions, StreamingTranscriber } from "./streaming-transcriber";
 
 export type ProviderImpl = {

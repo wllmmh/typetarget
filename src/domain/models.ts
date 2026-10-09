@@ -104,12 +104,6 @@ export const MODEL_CATALOG: Record<ModelId, ModelInfo> = {
   },
 };
 
-export type ModelDownloadState =
-  | { status: "not-downloaded" }
-  | { status: "downloading"; receivedBytes: number; totalBytes: number }
-  | { status: "cached" }
-  | { status: "error"; message: string };
-
 export type EngineStatus =
   | { state: "unloaded" }
   | { state: "loading"; modelId: ModelId }
