@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { sendToBackground } from "./background-client";
 import { useBackgroundState } from "./use-background-state";
 import type { PublicAppState } from "../domain/messages";
-import { MODEL_CATALOG, type ModelId, type ModelInfo } from "../domain/models";
+import { MODEL_CATALOG, type ModelId } from "../domain/models";
+import { ModelPicker } from "./model-picker";
 import { API_KEY_PAGES, API_KEY_PROVIDER_NAMES, type ApiKeyProvider } from "../domain/api-key";
 import { CHUNK_MS_MAX, CHUNK_MS_MIN, CHUNK_MS_STEP } from "../domain/tuning";
 import { formatElapsed } from "../domain/elapsed";
@@ -76,15 +77,6 @@ const PlayIcon = () => (
     <path d="M2 1.2 L10.5 6 L2 10.8 Z" fill="currentColor" />
   </svg>
 );
-/** The model picker's sections: one per provider, in catalog order, so each model is listed
- * once under its provider's name instead of repeating it on every option. */
-const MODEL_GROUPS: [string, ModelInfo[]][] = Object.entries(
-  Object.values(MODEL_CATALOG).reduce<Record<string, ModelInfo[]>>(
-    (groups, model) => ({ ...groups, [model.name]: [...(groups[model.name] ?? []), model] }),
-    {},
-  ),
-);
-
 const StopIcon = () => (
   <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
     <rect x="1.5" y="1.5" width="9" height="9" fill="currentColor" />
@@ -103,13 +95,6 @@ const TargetIcon = () => (
     <circle cx="6" cy="6" r="1.4" fill="currentColor" />
   </svg>
 );
-const KeyIcon = () => (
-  <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-    <circle cx="5" cy="8" r="3" fill="none" stroke="currentColor" strokeWidth="1.6" />
-    <path d="M8 8 H14.5 M12 8 V11 M14.5 8 V10.5" fill="none" stroke="currentColor" strokeWidth="1.6" />
-  </svg>
-);
-
 export const App = () => {
   const state = useBackgroundState();
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -118,6 +103,8 @@ export const App = () => {
   const [draggedChunkMs, setDraggedChunkMs] = useState<number | null>(null);
   const chunkCommitTimer = useRef<number | null>(null);
   const apiKeyDialogRef = useRef<HTMLDialogElement>(null);
+  /** Which provider's key the dialog edits: the one whose group header opened it, not the selected model's. */
+  const [keyDialogProvider, setKeyDialogProvider] = useState<ApiKeyProvider | null>(null);
   const [apiKeyError, setApiKeyError] = useState<string | null>(null);
   const now = useNow(state.session !== null);
 
@@ -147,7 +134,8 @@ export const App = () => {
     state.status === "paused";
 
   const chunkMs = draggedChunkMs ?? state.chunkMs;
-  const sourceTab = state.knownTabs.find((tab) => tab.tabId === state.pendingSourceTabId);
+  // Named only while capturing: before Start, the pending tab is just whichever tab the popup opened over.
+  const sourceTab = isCapturing ? state.knownTabs.find((tab) => tab.tabId === state.sourceTabId) : undefined;
 
   /**
    * Debounced: a drag fires a change per step, and each one persists to storage and retunes
@@ -215,8 +203,7 @@ export const App = () => {
     setBusy(false);
   };
 
-  /** The selected model's key provider; null for local models, whose dialog says no key is needed. */
-  const { provider: modelProvider, requiresApiKey, network: sendsAudio, name: providerName } = MODEL_CATALOG[state.selectedModel];
+  const { provider: modelProvider } = MODEL_CATALOG[state.selectedModel];
   /**
    * Whether a local model keeps up depends on the machine, and on most it won't. An utterance
    * is at most one chunk of audio, so a call that takes longer than a chunk means this machine
@@ -225,11 +212,13 @@ export const App = () => {
    */
   const fallingBehind =
     isCapturing && modelProvider === "whisper-cpp" && (state.inference?.lastMs ?? 0) > state.chunkMs;
-  const keyProvider = requiresApiKey && modelProvider !== "whisper-cpp" ? modelProvider : null;
-  const keySaved = keyProvider !== null && state.apiKeyProviders.includes(keyProvider);
+  const keyDialogModel = Object.values(MODEL_CATALOG).find((model) => model.provider === keyDialogProvider);
+  const keySaved = keyDialogProvider !== null && state.apiKeyProviders.includes(keyDialogProvider);
 
-  const keyName = keyProvider ? `${API_KEY_PROVIDER_NAMES[keyProvider]} API key` : "API key";
-  const keyLabel = keyProvider ? `${keyName}${keySaved ? " (saved)" : " (not set)"}` : "API key (none required)";
+  const handleEditKey = (provider: ApiKeyProvider) => {
+    setKeyDialogProvider(provider);
+    apiKeyDialogRef.current?.showModal();
+  };
 
   const hasOutput = state.isSelectingDestination || state.destinationLabel !== null;
 
@@ -252,31 +241,13 @@ export const App = () => {
       <section>
         <h2>Model</h2>
         <div className="model-row">
-          <select
+          <ModelPicker
             value={state.selectedModel}
             disabled={isCapturing}
-            onChange={(e) => handleModelChange(e.target.value as ModelId)}
-          >
-            {MODEL_GROUPS.map(([name, models]) => (
-              <optgroup key={name} label={name}>
-                {models.map((model) => (
-                  <option key={model.id} value={model.id}>
-                    {model.label}
-                    {model.approxSizeMb !== undefined ? ` (~${model.approxSizeMb} MB)` : ""}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
-          <button
-            type="button"
-            className={keyProvider && !keySaved ? "model-api-key-btn key-missing" : "model-api-key-btn"}
-            aria-label={keyLabel}
-            title={keyLabel}
-            onClick={() => apiKeyDialogRef.current?.showModal()}
-          >
-            <KeyIcon />
-          </button>
+            savedKeyProviders={state.apiKeyProviders}
+            onChange={handleModelChange}
+            onEditKey={handleEditKey}
+          />
         </div>
         {fallingBehind && (
           <p className="error">
@@ -302,32 +273,32 @@ export const App = () => {
       </section>
 
       <dialog ref={apiKeyDialogRef} onClose={() => setApiKeyError(null)}>
-        <h2>{keyName}</h2>
-        {keyProvider ? (
-          <p className="hint">Stored on this device only, used solely to authenticate requests to the provider.</p>
-        ) : (
-          <p className="hint">No API key required</p>
-        )}
-        {sendsAudio && <p className="hint">Captured audio is sent to {providerName} using your API key.</p>}
-        {apiKeyError && <p className="error">{apiKeyError}</p>}
-        {keyProvider && (
-          // Keyed by provider so a half-typed key never carries over into another provider's field.
-          <input
-            key={keyProvider}
-            type="password"
-            aria-label={`${API_KEY_PROVIDER_NAMES[keyProvider]} API key`}
-            placeholder={keySaved ? "•••• saved" : `Paste your ${API_KEY_PROVIDER_NAMES[keyProvider]} API key`}
-            onBlur={(e) => handleApiKeyBlur(keyProvider, e.currentTarget)}
-          />
+        {keyDialogProvider && (
+          <>
+            <h2>{API_KEY_PROVIDER_NAMES[keyDialogProvider]} API key</h2>
+            <p className="hint">Your API key is stored on this device only, used solely to authenticate requests to the provider.</p>
+            {keyDialogModel?.network && (
+              <p className="hint">Audio is sent to {keyDialogModel.name} for processing.</p>
+            )}
+            {apiKeyError && <p className="error">{apiKeyError}</p>}
+            {/* Keyed by provider so a half-typed key never carries over into another provider's field. */}
+            <input
+              key={keyDialogProvider}
+              type="password"
+              aria-label={`${API_KEY_PROVIDER_NAMES[keyDialogProvider]} API key`}
+              placeholder={keySaved ? "•••• saved" : `Paste your ${API_KEY_PROVIDER_NAMES[keyDialogProvider]} API key`}
+              onBlur={(e) => handleApiKeyBlur(keyDialogProvider, e.currentTarget)}
+            />
+          </>
         )}
         <div className="dialog-actions">
-          {keyProvider && keySaved && (
-            <button type="button" onClick={() => void handleApiKeyRemove(keyProvider)}>
+          {keyDialogProvider && keySaved && (
+            <button type="button" onClick={() => void handleApiKeyRemove(keyDialogProvider)}>
               Remove key
             </button>
           )}
-          {keyProvider && API_KEY_PAGES[keyProvider] && (
-            <button type="button" onClick={() => void chrome.tabs.create({ url: API_KEY_PAGES[keyProvider] })}>
+          {keyDialogProvider && API_KEY_PAGES[keyDialogProvider] && (
+            <button type="button" onClick={() => void chrome.tabs.create({ url: API_KEY_PAGES[keyDialogProvider] })}>
               Get API Key
             </button>
           )}

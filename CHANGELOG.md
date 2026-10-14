@@ -15,6 +15,8 @@ All notable changes to this project are documented here. The format follows
 - Hosted models with your own API key: Gemini 3.5 Transcribe Live (Google), and Whisper Large v3 and
   v3 Turbo on Groq.
 - API Keys dialog with Get API Key and Remove key. Keys stay on this device.
+- In the model menu, each hosted provider's heading has an "API key" action that opens that
+  provider's key dialog. The separate key button is gone.
 - Chunk length slider (3–25 s), which caps how long one utterance can grow and can be changed
   while listening.
 - Right-click "TypeTarget" menu: Listen to this tab, Stop listening, Type to this field, Type

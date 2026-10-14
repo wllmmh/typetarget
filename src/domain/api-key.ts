@@ -13,6 +13,7 @@ export const API_KEY_PROVIDER_NAMES: Record<ApiKeyProvider, string> = {
 /** Where a provider's keys are created, for the API key dialog's Get API Key button. */
 export const API_KEY_PAGES: Partial<Record<ApiKeyProvider, string>> = {
   "gemini-live": "https://aistudio.google.com/api-keys",
+  groq: "https://console.groq.com/keys",
 };
 
 /** Short enough to catch an obvious mistake (a stray character, a whitespace-only

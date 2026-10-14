@@ -59,21 +59,21 @@ export const MODEL_CATALOG: Record<ModelId, ModelInfo> = {
     id: "tiny.en-q5_1",
     provider: "whisper-cpp",
     name: "Local",
-    label: "Whisper Tiny Q5 (English, quantized)",
+    label: "Whisper Tiny Q5 (English)",
     approxSizeMb: 31, // measured: 32,166,155 bytes
   },
-  "tiny.en-q8_0": { id: "tiny.en-q8_0", provider: "whisper-cpp", name: "Local", label: "Whisper Tiny Q8 (English, quantized)", approxSizeMb: 42 }, // 43,550,795 bytes
+  "tiny.en-q8_0": { id: "tiny.en-q8_0", provider: "whisper-cpp", name: "Local", label: "Whisper Tiny Q8 (English)", approxSizeMb: 42 }, // 43,550,795 bytes
   "base.en": { id: "base.en", provider: "whisper-cpp", name: "Local", label: "Whisper Base (English)", approxSizeMb: 142 }, // not independently verified
-  "base.en-q5_1": { id: "base.en-q5_1", provider: "whisper-cpp", name: "Local", label: "Whisper Base Q5 (English, quantized)", approxSizeMb: 57 }, // 59,721,011 bytes
-  "base.en-q8_0": { id: "base.en-q8_0", provider: "whisper-cpp", name: "Local", label: "Whisper Base Q8 (English, quantized)", approxSizeMb: 78 }, // 81,781,811 bytes
+  "base.en-q5_1": { id: "base.en-q5_1", provider: "whisper-cpp", name: "Local", label: "Whisper Base Q5 (English)", approxSizeMb: 57 }, // 59,721,011 bytes
+  "base.en-q8_0": { id: "base.en-q8_0", provider: "whisper-cpp", name: "Local", label: "Whisper Base Q8 (English)", approxSizeMb: 78 }, // 81,781,811 bytes
   // The rest of the mirror's English-only files that fit the vendored build's ~2 GB WASM heap
   // (full-precision medium.en and the large models don't). Sizes in MiB from the mirror's byte
   // counts. Whether Medium Q8 fits alongside its working memory is unverified.
-  "small.en-q5_1": { id: "small.en-q5_1", provider: "whisper-cpp", name: "Local", label: "Whisper Small Q5 (English, quantized)", approxSizeMb: 181 }, // 190,098,681 bytes
-  "small.en-q8_0": { id: "small.en-q8_0", provider: "whisper-cpp", name: "Local", label: "Whisper Small Q8 (English, quantized)", approxSizeMb: 252 }, // 264,477,561 bytes
+  "small.en-q5_1": { id: "small.en-q5_1", provider: "whisper-cpp", name: "Local", label: "Whisper Small Q5 (English)", approxSizeMb: 181 }, // 190,098,681 bytes
+  "small.en-q8_0": { id: "small.en-q8_0", provider: "whisper-cpp", name: "Local", label: "Whisper Small Q8 (English)", approxSizeMb: 252 }, // 264,477,561 bytes
   "small.en": { id: "small.en", provider: "whisper-cpp", name: "Local", label: "Whisper Small (English)", approxSizeMb: 465 }, // 487,614,201 bytes
-  "medium.en-q5_0": { id: "medium.en-q5_0", provider: "whisper-cpp", name: "Local", label: "Whisper Medium Q5 (English, quantized)", approxSizeMb: 514 }, // 539,225,533 bytes
-  "medium.en-q8_0": { id: "medium.en-q8_0", provider: "whisper-cpp", name: "Local", label: "Whisper Medium Q8 (English, quantized)", approxSizeMb: 785 }, // 823,382,461 bytes
+  "medium.en-q5_0": { id: "medium.en-q5_0", provider: "whisper-cpp", name: "Local", label: "Whisper Medium Q5 (English)", approxSizeMb: 514 }, // 539,225,533 bytes
+  "medium.en-q8_0": { id: "medium.en-q8_0", provider: "whisper-cpp", name: "Local", label: "Whisper Medium Q8 (English)", approxSizeMb: 785 }, // 823,382,461 bytes
   // Google's Gemini 3.5 Transcribe via the Live API (docs/adr/0005-gemini-live-api-via-official-sdk.md).
   // Sends captured audio to Google using the user's own API key.
   "gemini-3.5-transcribe-live": {

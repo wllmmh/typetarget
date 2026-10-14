@@ -40,30 +40,85 @@ body {
   margin: 2px 0;
 }
 
-.popup select {
-  width: 100%;
-  padding: 4px;
-}
-
+/* The panel is positioned against the row, so it spans the popup, not just the picker's own width. */
 .model-row {
+  position: relative;
   display: flex;
   gap: 6px;
 }
 
-.model-row select {
+/* Replaces a native select so a row can hold a link; colors match the API key dialog. */
+.model-picker {
   flex: 1;
   min-width: 0;
 }
 
-/* The key icon shows whether the selected model's key is saved: a dot while it is missing. */
-.model-api-key-btn {
-  position: relative;
-  display: inline-flex;
+.model-picker-trigger {
+  display: flex;
   align-items: center;
-  padding: 0 7px;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+  padding: 4px;
+  text-align: left;
 }
 
-.model-api-key-btn.key-missing::after {
+.model-picker-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.model-picker-panel {
+  position: absolute;
+  z-index: 1;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 300px;
+  overflow-y: auto;
+  margin-top: 2px;
+  background: Field;
+  color: FieldText;
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.25);
+}
+
+.model-picker-group {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 10px 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Normal weight and the row sizes' look, so the provider's name stays the heading. */
+.model-picker-note {
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+.model-picker-key-action {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: LinkText;
+  font: inherit;
+  font-weight: 400;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Shown while the selected model's key is missing, so it is visible with the menu closed. */
+.model-picker-trigger {
+  position: relative;
+}
+
+.model-picker-trigger.key-missing::after {
   content: "";
   position: absolute;
   top: -3px;
@@ -72,6 +127,32 @@ body {
   height: 8px;
   border-radius: 50%;
   background: #e0a100;
+}
+
+.model-picker-option {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  width: calc(100% - 8px);
+  margin: 0 4px;
+  padding: 3px 6px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  border-radius: 4px;
+}
+
+.model-picker-option:hover,
+.model-picker-option[aria-pressed="true"] {
+  background: color-mix(in srgb, currentColor 14%, transparent);
+}
+
+.model-picker-size {
+  flex: none;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
 }
 
 .chunk-length-heading {
