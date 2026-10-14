@@ -282,6 +282,17 @@ body {
   color: var(--tt-on-primary);
 }
 
+/* Stop actions are outlined, so they read as different from the filled Start ones. */
+.controls button.stop {
+  border-color: var(--tt-outline);
+  background: transparent;
+  color: var(--tt-primary);
+}
+
+.controls button.stop:hover:not(:disabled) {
+  background: var(--tt-primary-tint);
+}
+
 .dialog-actions button:not(.dialog-done):hover {
   background: var(--tt-primary-tint);
 }

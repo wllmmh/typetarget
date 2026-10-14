@@ -157,6 +157,9 @@ export const App = () => {
   const handleStop = async () => {
     setBusy(true);
     await sendToBackground({ kind: "stop-capture" });
+    // Stopping clears the source tab, and the popup has no tab picker: without this, Start stays
+    // disabled until the popup is reopened. It is still open over the tab it was invoked on.
+    await sendToBackground({ kind: "register-active-tab" });
     setBusy(false);
   };
 
@@ -325,7 +328,7 @@ export const App = () => {
         </p>
         <div className="controls">
           {isCapturing ? (
-            <button type="button" disabled={busy} onClick={handleStop}>
+            <button type="button" className="stop" disabled={busy} onClick={handleStop}>
               <StopIcon /> Stop listening
             </button>
           ) : (
@@ -342,7 +345,7 @@ export const App = () => {
           {state.destinationLabel ?? "No field selected"}
         </p>
         <div className="controls">
-          <button type="button" disabled={busy} onClick={handleOutputToggle}>
+          <button type="button" className={hasOutput ? "stop" : undefined} disabled={busy} onClick={handleOutputToggle}>
             {hasOutput ? (
               <>
                 <StopIcon /> Stop typing

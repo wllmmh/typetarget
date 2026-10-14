@@ -22,3 +22,5 @@ third_party/whisper-wasm/*.wasm
 bench/libmain-threaded.js
 
 .env*
+
+dist/
