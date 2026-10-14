@@ -47,7 +47,8 @@ All notable changes to this project are documented here. The format follows
 - Capture continues across a service-worker restart, and stops with an error when the
   source tab's audio ends.
 - Popup styled like Chrome's own UI: pill buttons, hairline-divided sections, rounded
-  menus and dialogs, in light and dark to match the system theme.
+  menus and dialogs, in light and dark to match the system theme. The title is set in
+  Geist Mono.
 
 ### Security
 - Websites can't detect that TypeTarget is installed: no file is web-accessible.
