@@ -95,21 +95,17 @@ body {
   margin: 2px 0;
 }
 
-/* The panel is positioned against the row, so it spans the popup, not just the picker's own width. */
-.model-row {
+/* A dropdown (select-box.tsx); its panel is positioned against it, so it spans the same width. */
+.select {
   position: relative;
-  display: flex;
-  gap: 6px;
 }
 
-/* Replaces a native select so a row can hold a link; colors match the API key dialog. */
-.model-picker {
-  flex: 1;
-  min-width: 0;
-}
-
-/* The box every dropdown in the popup is drawn in: the model picker's trigger and native selects (select-box.tsx). */
+/* The box every dropdown's trigger is drawn in. */
 .select-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
   width: 100%;
   padding: 6px 12px;
   border: 1px solid var(--tt-outline);
@@ -131,56 +127,22 @@ body {
   cursor: default;
 }
 
-.model-picker-trigger {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-}
-
-/* A native select's own arrow is replaced by the shared caret, placed where the trigger's sits:
-   at the end of the padding, inside the border. */
-.native-select {
-  position: relative;
-}
-
-.native-select .select-box {
-  appearance: none;
-  padding-inline-end: 30px;
-}
-
-/* The open list, in the same menu color as the model picker's panel (Chrome honors this on Linux and Windows). */
-.native-select option {
-  background: var(--tt-menu);
-  color: var(--tt-text);
-}
-
-.native-select .select-caret {
-  position: absolute;
-  inset-inline-end: 13px;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
-}
-
-.native-select .select-box:disabled + .select-caret {
-  color: var(--tt-disabled);
-}
-
-.model-picker-value {
+.select-value {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.model-picker-panel {
+/* Floats over the popup and scrolls inside itself, since the popup must not scroll. Short enough
+   that the lowest dropdown's panel still ends above the popup's bottom edge. */
+.select-panel {
   position: absolute;
   z-index: 1;
   top: 100%;
   left: 0;
   right: 0;
-  max-height: 300px;
+  max-height: 260px;
   overflow-y: auto;
   margin-top: 4px;
   padding: 4px 0;
@@ -190,6 +152,75 @@ body {
   box-shadow:
     0 1px 3px rgb(0 0 0 / 0.3),
     0 4px 8px 3px rgb(0 0 0 / 0.15);
+}
+
+/* A row that opens details (Diagnostics): no box or caret, since it offers no choice. The
+   negative margin keeps its text in line with the section's while the hover wash bleeds out. */
+.info-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  width: calc(100% + 16px);
+  margin-inline: -8px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--tt-text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.info-trigger:hover,
+.info-trigger[aria-expanded="true"] {
+  background: var(--tt-hover);
+}
+
+.info-icon {
+  flex: none;
+  color: var(--tt-text-secondary);
+}
+
+.info-trigger[aria-expanded="true"] .info-icon {
+  color: var(--tt-primary);
+}
+
+/* The lowest menu (Diagnostics) opens upward, where the popup has room for it. */
+.select-panel.opens-up {
+  top: auto;
+  bottom: 100%;
+  margin-top: 0;
+  margin-bottom: 4px;
+}
+
+.diagnostics-lines {
+  padding: 2px 12px;
+}
+
+.select-option {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  margin: 0;
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.select-option:hover {
+  background: var(--tt-hover);
+}
+
+.select-option[aria-pressed="true"] {
+  background: var(--tt-primary-tint);
+  color: var(--tt-primary);
 }
 
 .model-picker-group {
@@ -216,11 +247,11 @@ body {
 }
 
 /* Shown while the selected model's key is missing, so it is visible with the menu closed. */
-.model-picker-trigger {
+.select-box.key-missing {
   position: relative;
 }
 
-.model-picker-trigger.key-missing::after {
+.select-box.key-missing::after {
   content: "";
   position: absolute;
   top: -3px;
@@ -229,30 +260,6 @@ body {
   height: 8px;
   border-radius: 50%;
   background: var(--tt-warning);
-}
-
-.model-picker-option {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  margin: 0;
-  padding: 6px 12px;
-  border: none;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  text-align: start;
-  cursor: pointer;
-}
-
-.model-picker-option:hover {
-  background: var(--tt-hover);
-}
-
-.model-picker-option[aria-pressed="true"] {
-  background: var(--tt-primary-tint);
-  color: var(--tt-primary);
 }
 
 .model-picker-size {

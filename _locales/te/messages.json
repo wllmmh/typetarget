@@ -300,6 +300,9 @@
   "badgeNotTyping": {
     "message": "టైప్ కావడం లేదు"
   },
+  "badgeNotListening": {
+    "message": "వినడం లేదు"
+  },
   "newFileLabel": {
     "message": "TypeTarget కొత్త ఫైల్"
   },

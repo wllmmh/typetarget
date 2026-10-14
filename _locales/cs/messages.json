@@ -300,6 +300,9 @@
   "badgeNotTyping": {
     "message": "Nepíše se"
   },
+  "badgeNotListening": {
+    "message": "Neposlouchá se"
+  },
   "newFileLabel": {
     "message": "Nový soubor TypeTarget"
   },

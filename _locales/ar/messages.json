@@ -300,6 +300,9 @@
   "badgeNotTyping": {
     "message": "لا تتم الكتابة"
   },
+  "badgeNotListening": {
+    "message": "لا يتم الاستماع"
+  },
   "newFileLabel": {
     "message": "ملف TypeTarget جديد"
   },

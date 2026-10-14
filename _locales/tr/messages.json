@@ -300,6 +300,9 @@
   "badgeNotTyping": {
     "message": "Yazılmıyor"
   },
+  "badgeNotListening": {
+    "message": "Dinlenmiyor"
+  },
   "newFileLabel": {
     "message": "Yeni TypeTarget dosyası"
   },

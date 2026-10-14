@@ -4,7 +4,7 @@ import { useBackgroundState } from "./use-background-state";
 import type { PublicAppState } from "../domain/messages";
 import { MODEL_CATALOG, type ModelId } from "../domain/models";
 import { ModelPicker } from "./model-picker";
-import { NativeSelect } from "./select-box";
+import { Dropdown, DropdownOption } from "./select-box";
 import { API_KEY_PAGES, API_KEY_PROVIDER_NAMES, type ApiKeyProvider } from "../domain/api-key";
 import { UTTERANCE_CAP_MS } from "../domain/tuning";
 import { formatElapsed } from "../domain/elapsed";
@@ -262,16 +262,14 @@ export const App = () => {
     
 
       <section>
-        <h2>{t("modelHeading")}</h2>
-        <div className="model-row">
-          <ModelPicker
-            value={state.selectedModel}
-            disabled={isCapturing}
-            savedKeyProviders={state.apiKeyProviders}
-            onChange={handleModelChange}
-            onEditKey={handleEditKey}
-          />
-        </div>
+        <h2 id="model-heading">{t("modelHeading")}</h2>
+        <ModelPicker
+          value={state.selectedModel}
+          disabled={isCapturing}
+          savedKeyProviders={state.apiKeyProviders}
+          onChange={handleModelChange}
+          onEditKey={handleEditKey}
+        />
         {fallingBehind && (
           <p className="error">{t("fallingBehind")}</p>
         )}
@@ -279,21 +277,33 @@ export const App = () => {
 
       <section>
         <h2 id="spoken-language-heading">{t("spokenLanguageHeading")}</h2>
-        <NativeSelect
-          aria-labelledby="spoken-language-heading"
+        <Dropdown
           // Shows Auto for Gemini without touching the saved choice, which returns with a Whisper model.
-          value={spokenLanguageSettable ? (state.spokenLanguage ?? "") : ""}
+          value={
+            spokenLanguageSettable && state.spokenLanguage
+              ? SPOKEN_LANGUAGE_NAMES[state.spokenLanguage]
+              : t("spokenLanguageAuto")
+          }
           disabled={!spokenLanguageSettable}
-          onChange={(e) => void handleSpokenLanguageChange(e.target.value)}
+          labelledBy="spoken-language-heading"
         >
-          <option value="">{t("spokenLanguageAuto")}</option>
-          {SPOKEN_LANGUAGE_OPTIONS.map(({ code, name }) => (
-            // lang: each name is in its own language, for screen readers and the right font.
-            <option key={code} value={code} lang={code}>
-              {name}
-            </option>
-          ))}
-        </NativeSelect>
+          {(close) =>
+            [{ code: "", name: t("spokenLanguageAuto") }, ...SPOKEN_LANGUAGE_OPTIONS].map(({ code, name }) => (
+              <DropdownOption
+                key={code}
+                selected={code === (state.spokenLanguage ?? "")}
+                // lang: each name is in its own language, for screen readers and the right font.
+                lang={code || undefined}
+                onSelect={() => {
+                  close();
+                  void handleSpokenLanguageChange(code);
+                }}
+              >
+                {name}
+              </DropdownOption>
+            ))
+          }
+        </Dropdown>
       </section>
 
       <dialog ref={apiKeyDialogRef} onClose={() => setApiKeyError(null)}>
@@ -384,29 +394,43 @@ export const App = () => {
       </section>
 
       <section>
-        <h2>{t("diagnosticsHeading")}</h2>
-        <p>{t("diagnosticsModel", engineLabel ? t(engineLabel) : state.engineState)}</p>
-        {state.pipeline ? (
-          <>
-            <p>{t("diagnosticsAudio", state.pipeline.batches, state.pipeline.peakLevel.toFixed(3))}</p>
-            {state.pipeline.peakLevel < QUIET_LEVEL && (
-              <p className="error">{t("diagnosticsNoAudio")}</p>
-            )}
-            {state.pipeline.droppedBatches > 0 && <p>{t("diagnosticsDropped", state.pipeline.droppedBatches)}</p>}
-          </>
-        ) : (
-          <p>{t("diagnosticsAudioIdle")}</p>
+        <h2 id="diagnostics-heading">{t("diagnosticsHeading")}</h2>
+        {/* Floats over the popup like the menus' panels instead of lengthening it;
+            what needs the user's attention (no audio, the download, errors) stays outside it. */}
+        <Dropdown
+          value={t("diagnosticsStatus", statusText(state))}
+          disabled={false}
+          labelledBy="diagnostics-heading"
+          kind="info"
+          opensUp
+        >
+          {() => (
+            <div className="diagnostics-lines">
+              <p>{t("diagnosticsModel", engineLabel ? t(engineLabel) : state.engineState)}</p>
+              {state.pipeline ? (
+                <>
+                  <p>{t("diagnosticsAudio", state.pipeline.batches, state.pipeline.peakLevel.toFixed(3))}</p>
+                  {state.pipeline.droppedBatches > 0 && <p>{t("diagnosticsDropped", state.pipeline.droppedBatches)}</p>}
+                </>
+              ) : (
+                <p>{t("diagnosticsAudioIdle")}</p>
+              )}
+              <p>{t("diagnosticsTranscribed", state.transcript.finals, state.transcript.inserted)}</p>
+              {state.inference && (
+                <p>
+                  {t("diagnosticsInference", state.inference.finished, state.inference.started)}
+                  {state.inference.failed > 0 && t("diagnosticsInferenceFailed", state.inference.failed)}
+                  {state.inference.lastMs !== null &&
+                    t("diagnosticsInferenceLast", (state.inference.lastMs / 1000).toFixed(1))}
+                </p>
+              )}
+              {state.session && <p>{t("diagnosticsSession", sessionCaption(state))}</p>}
+            </div>
+          )}
+        </Dropdown>
+        {state.pipeline && state.pipeline.peakLevel < QUIET_LEVEL && (
+          <p className="error">{t("diagnosticsNoAudio")}</p>
         )}
-        <p>{t("diagnosticsTranscribed", state.transcript.finals, state.transcript.inserted)}</p>
-        {state.inference && (
-          <p>
-            {t("diagnosticsInference", state.inference.finished, state.inference.started)}
-            {state.inference.failed > 0 && t("diagnosticsInferenceFailed", state.inference.failed)}
-            {state.inference.lastMs !== null && t("diagnosticsInferenceLast", (state.inference.lastMs / 1000).toFixed(1))}
-          </p>
-        )}
-        <p>{t("diagnosticsStatus", statusText(state))}</p>
-        {state.session && <p>{t("diagnosticsSession", sessionCaption(state))}</p>}
         {state.modelDownload && state.modelDownload.totalBytes > 0 && (
           <progress value={state.modelDownload.receivedBytes} max={state.modelDownload.totalBytes} />
         )}

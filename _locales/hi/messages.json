@@ -300,6 +300,9 @@
   "badgeNotTyping": {
     "message": "टाइप नहीं हो रहा"
   },
+  "badgeNotListening": {
+    "message": "सुना नहीं जा रहा"
+  },
   "newFileLabel": {
     "message": "TypeTarget की नई फ़ाइल"
   },

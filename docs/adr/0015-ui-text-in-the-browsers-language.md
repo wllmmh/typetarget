@@ -55,8 +55,8 @@ Use Chrome's own extension i18n:
   ([ADR 0012](0012-websites-cannot-detect-typetarget.md)). The badge's text is in the user's
   language, which a page can learn from `navigator.language` anyway.
 - The badge on the page stays left to right in every language: it is placed against the
-  destination's own edges, and its text is "TypeTarget" and a timer. Its buttons' tooltips are
-  translated.
+  destination's own edges. While listening its text is "TypeTarget" and a timer; otherwise it is
+  a translated "Not listening" or "Not typing". Its buttons' tooltips are translated.
 - `chrome.i18n` has no plural rules, so counts in Diagnostics are phrased as "label: number" in
   languages where a plural would read badly.
 - Tests see English: `src/test/fake-chrome.ts` fakes `chrome.i18n` over the English file, and

@@ -300,6 +300,9 @@
   "badgeNotTyping": {
     "message": "入力停止中"
   },
+  "badgeNotListening": {
+    "message": "聞き取り停止中"
+  },
   "newFileLabel": {
     "message": "TypeTarget の新しいファイル"
   },

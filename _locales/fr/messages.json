@@ -300,6 +300,9 @@
   "badgeNotTyping": {
     "message": "Pas de saisie"
   },
+  "badgeNotListening": {
+    "message": "Pas d'écoute"
+  },
   "newFileLabel": {
     "message": "Nouveau fichier TypeTarget"
   },

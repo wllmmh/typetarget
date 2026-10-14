@@ -300,6 +300,9 @@
   "badgeNotTyping": {
     "message": "Digitação parada"
   },
+  "badgeNotListening": {
+    "message": "Escuta parada"
+  },
   "newFileLabel": {
     "message": "Novo arquivo do TypeTarget"
   },

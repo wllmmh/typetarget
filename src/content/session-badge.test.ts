@@ -132,7 +132,7 @@ describe("session badge over the destination", () => {
     expect(badge()?.style.left).toBe("40px");
   });
 
-  it("shows a square and TypeTarget 0:00 in a red badge while a destination is picked but nothing is listening", () => {
+  it("shows a square and Not listening in a red badge while a destination is picked but nothing is listening", () => {
     vi.useFakeTimers({ now: 50_000 });
     pickTextarea();
 
@@ -140,7 +140,7 @@ describe("session badge over the destination", () => {
     destinationSession.setIndicator({ state: "stopped" });
     vi.advanceTimersByTime(5_000);
 
-    expect(badge()?.textContent).toBe("TypeTarget 0:00");
+    expect(badge()?.textContent).toBe("Not listening");
     expect(badge()?.style.background).toBe("rgb(226, 39, 38)");
     expect(document.getElementById("typetarget-destination-style")?.textContent).toContain("#e22726");
   });

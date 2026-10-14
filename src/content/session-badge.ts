@@ -5,7 +5,7 @@
  * Fixed-positioned at the document root rather than inserted beside the element, so the
  * page's layout and `overflow: hidden` containers can't move or clip it. It is re-placed on
  * every animation frame, not just on scroll/resize: chat boxes grow as text is typed and
- * pages shift layout without firing either event. Only ever one, for the one destination. Reads: state icon, "TypeTarget", the timer.
+ * pages shift layout without firing either event. Only ever one, for the one destination. Reads: state icon, then "TypeTarget" and the timer while listening, or "Not listening" when stopped.
  * Never the source tab's name: this is the destination page's DOM, which its scripts can read.
  *
  * A second tab of the same color sits on the outline's top right with the output's buttons:
@@ -219,10 +219,13 @@ const render = (): void => {
     labelNode = document.createTextNode("");
     badge.replaceChildren(createIcon(indicator.state), labelNode);
   }
+  // "TypeTarget" and the timer are for a session that is both listening and typing.
   labelNode.data =
     indicator.state === "not-typing"
       ? t("badgeNotTyping")
-      : `TypeTarget ${formatElapsed(indicator.state === "stopped" ? 0 : Date.now() - indicator.since)}`;
+      : indicator.state === "stopped"
+        ? t("badgeNotListening")
+        : `TypeTarget ${formatElapsed(Date.now() - indicator.since)}`;
   badge.style.background = COLOR[indicator.state];
   if (controls) controls.style.background = COLOR[indicator.state];
   setDestinationColor(COLOR[indicator.state]); // the outline always matches the label's color

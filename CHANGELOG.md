@@ -39,7 +39,7 @@ All notable changes to this project are documented here. The format follows
   into an existing field, use right-click → Type to this field.
 - A badge on the output's outline with a listening timer ("TypeTarget 1:05"), plus buttons to
   save the text as a `.txt` file (named like `TypeTarget-2026-10-08T17-30-05.txt`) and to stop
-  typing.
+  typing. While nothing is listening, the badge is red and reads "Not listening" instead.
 - A text box scrolled to its bottom follows new transcribed text. One you have scrolled up
   keeps your position.
 - Selection follows you into other tabs while you are picking a field.
@@ -48,7 +48,9 @@ All notable changes to this project are documented here. The format follows
   a new tab.
 - A notice in the API Keys dialog when a hosted model will receive audio, and a popup warning
   when a local model is slower than real time on this computer.
-- Popup diagnostics: audio level, finals, inference timings and model download progress.
+- Popup diagnostics: audio level, finals, inference timings and model download progress. The
+  Diagnostics menu shows the status and opens over the popup with the numbers, so the popup
+  fits without scrolling; the download bar and warnings stay visible.
 - Gemini reconnects by itself, without losing audio, when a connection drops or reaches the
   free tier's time limit.
 - Capture continues across a service-worker restart, and stops with an error when the

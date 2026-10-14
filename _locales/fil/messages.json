@@ -300,6 +300,9 @@
   "badgeNotTyping": {
     "message": "Hindi nagta-type"
   },
+  "badgeNotListening": {
+    "message": "Hindi nakikinig"
+  },
   "newFileLabel": {
     "message": "Bagong file ng TypeTarget"
   },

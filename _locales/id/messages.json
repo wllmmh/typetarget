@@ -300,6 +300,9 @@
   "badgeNotTyping": {
     "message": "Tidak mengetik"
   },
+  "badgeNotListening": {
+    "message": "Tidak mendengarkan"
+  },
   "newFileLabel": {
     "message": "File baru TypeTarget"
   },

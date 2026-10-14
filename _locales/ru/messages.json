@@ -300,6 +300,9 @@
   "badgeNotTyping": {
     "message": "Ввод остановлен"
   },
+  "badgeNotListening": {
+    "message": "Прослушивание остановлено"
+  },
   "newFileLabel": {
     "message": "Новый файл TypeTarget"
   },

@@ -300,6 +300,9 @@
   "badgeNotTyping": {
     "message": "未在輸入"
   },
+  "badgeNotListening": {
+    "message": "未在聆聽"
+  },
   "newFileLabel": {
     "message": "TypeTarget 新檔案"
   },

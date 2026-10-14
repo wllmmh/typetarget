@@ -165,6 +165,7 @@
   "badgeStopTyping": { "message": "Stop typing here" },
   "badgeClose": { "message": "Close" },
   "badgeNotTyping": { "message": "Not typing" },
+  "badgeNotListening": { "message": "Not listening" },
 
   "newFileLabel": { "message": "TypeTarget new file" },
   "editorTitle": { "message": "TypeTarget file" },

@@ -300,6 +300,9 @@
   "badgeNotTyping": {
     "message": "Scrittura interrotta"
   },
+  "badgeNotListening": {
+    "message": "Ascolto interrotto"
+  },
   "newFileLabel": {
     "message": "Nuovo file TypeTarget"
   },

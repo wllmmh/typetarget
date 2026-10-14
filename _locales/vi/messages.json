@@ -300,6 +300,9 @@
   "badgeNotTyping": {
     "message": "Không nhập"
   },
+  "badgeNotListening": {
+    "message": "Không nghe"
+  },
   "newFileLabel": {
     "message": "Tệp mới TypeTarget"
   },
