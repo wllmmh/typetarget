@@ -4,7 +4,8 @@
  * grants the activeTab access both need, so a tab never opened in the popup works too),
  * Stop listening (greyed out unless capturing), Type to this field (greyed out anywhere but a
  * text box, and on the one that is already the output), Type to new file (anywhere; opens a text
- * box over the page's bottom third as the output), and Stop typing (greyed out while there is no output
+ * box over the page's bottom third as the output), Type to new tab (anywhere; opens an editor tab
+ * as the output, the same one the new-file box's Open in new tab opens), and Stop typing (greyed out while there is no output
  * box; works from anywhere). It mirrors the popup's equivalent controls (worded
  * differently there) so they can be used from the tab the user is typing into, without opening
  * the popup. There is deliberately no tab list: Chrome gives no event when a menu opens, so a
@@ -22,6 +23,7 @@ export const MENU_OUTPUT_ID = "typetarget-output";
 /** Type to this field's greyed-out twin, shown in its place everywhere but text boxes. */
 export const MENU_OUTPUT_DISABLED_ID = "typetarget-output-disabled";
 export const MENU_NEW_FILE_ID = "typetarget-new-file";
+export const MENU_NEW_TAB_ID = "typetarget-new-tab";
 export const MENU_STOP_TYPING_ID = "typetarget-stop-typing";
 
 /** Which items are enabled. Every item is always visible; only which of Type to this field's two
@@ -95,6 +97,10 @@ export class ContextMenu {
         );
         chrome.contextMenus.create(
           { id: MENU_NEW_FILE_ID, parentId: MENU_ROOT_ID, title: "Type to new file", contexts: ["all"] },
+          warnIfFailed,
+        );
+        chrome.contextMenus.create(
+          { id: MENU_NEW_TAB_ID, parentId: MENU_ROOT_ID, title: "Type to new tab", contexts: ["all"] },
           warnIfFailed,
         );
         chrome.contextMenus.create(

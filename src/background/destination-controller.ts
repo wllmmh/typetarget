@@ -138,12 +138,22 @@ export class DestinationController {
     await this.pickInFrame(tabId, 0, { kind: "open-new-file-field", text, minimized });
   }
 
-  private async pickInFrame(tabId: number, frameId: number, msg: BackgroundToContent): Promise<void> {
+  /**
+   * "Type to this field" on an editor tab's text box (after Stop typing, say). An extension page
+   * can't be injected into; it runs the content bridge itself, so the pick is asked of it directly.
+   */
+  async pickInEditorTab(tabId: number): Promise<void> {
+    await this.pickInFrame(tabId, 0, { kind: "pick-focused-element", showIndicators: this.showIndicators }, false);
+  }
+
+  private async pickInFrame(tabId: number, frameId: number, msg: BackgroundToContent, inject = true): Promise<void> {
     await this.cancelSelection();
-    await chrome.scripting.executeScript({ target: { tabId, frameIds: [frameId] }, files: [contentScriptFile] }).catch((err: unknown) => {
-      const message = err instanceof Error ? err.message : "Unknown injection error.";
-      throw new DestinationError(`Could not prepare this page to receive text. (${message})`, "injection-failed");
-    });
+    if (inject) {
+      await chrome.scripting.executeScript({ target: { tabId, frameIds: [frameId] }, files: [contentScriptFile] }).catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : "Unknown injection error.";
+        throw new DestinationError(`Could not prepare this page to receive text. (${message})`, "injection-failed");
+      });
+    }
     this.selectingTabIds.add(tabId);
     const raw: unknown = await chrome.tabs.sendMessage(tabId, envelope(msg), { frameId });
     if (isEnvelope<BackgroundResponse>(raw) && raw.payload.kind === "error") {

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createInitialState, type AppState } from "./state";
-import { buildMenuModel, ContextMenu, MENU_LISTEN_HERE_ID, MENU_OUTPUT_DISABLED_ID, MENU_OUTPUT_ID, MENU_NEW_FILE_ID, MENU_STOP_ID, MENU_STOP_TYPING_ID } from "./context-menu";
+import { buildMenuModel, ContextMenu, MENU_LISTEN_HERE_ID, MENU_OUTPUT_DISABLED_ID, MENU_OUTPUT_ID, MENU_NEW_FILE_ID, MENU_NEW_TAB_ID, MENU_STOP_ID, MENU_STOP_TYPING_ID } from "./context-menu";
 
 const tab = (tabId: number, title: string) => ({ tabId, title, url: `https://example.com/${tabId}` });
 
@@ -46,7 +46,7 @@ describe("ContextMenu", () => {
     vi.unstubAllGlobals();
   });
 
-  it("builds a TypeTarget submenu offering Type to this field everywhere (greyed out off text boxes) and Type to new file everywhere", async () => {
+  it("builds a TypeTarget submenu offering Type to this field everywhere (greyed out off text boxes) Type to new file and Type to new tab everywhere", async () => {
     const menu = new ContextMenu();
     await menu.apply(buildMenuModel(stateWith({}), false));
 
@@ -62,11 +62,14 @@ describe("ContextMenu", () => {
     const newFile = created.find((p) => p.id === MENU_NEW_FILE_ID);
     expect(newFile).toMatchObject({ title: "Type to new file", contexts: ["all"] }); // text boxes included
     expect(newFile.enabled).not.toBe(false);
+    const newTab = created.find((p) => p.id === MENU_NEW_TAB_ID);
+    expect(newTab).toMatchObject({ title: "Type to new tab", contexts: ["all"] });
+    expect(newTab.enabled).not.toBe(false);
     expect(created.find((p) => p.id === MENU_STOP_TYPING_ID)).toMatchObject({ title: "Stop typing", enabled: false });
     expect(created.find((p) => p.id === MENU_LISTEN_HERE_ID)).toMatchObject({ parentId: "typetarget", title: "Listen to this tab", contexts: ["all"] });
     expect(created.findIndex((p) => p.id === MENU_LISTEN_HERE_ID)).toBe(1); // first item under TypeTarget
     expect(created.find((p) => p.id === MENU_STOP_ID)).toMatchObject({ title: "Stop listening", enabled: false });
-    expect(created.map((p) => p.id)).toEqual(["typetarget", MENU_LISTEN_HERE_ID, MENU_STOP_ID, MENU_OUTPUT_ID, MENU_OUTPUT_DISABLED_ID, MENU_NEW_FILE_ID, MENU_STOP_TYPING_ID]);
+    expect(created.map((p) => p.id)).toEqual(["typetarget", MENU_LISTEN_HERE_ID, MENU_STOP_ID, MENU_OUTPUT_ID, MENU_OUTPUT_DISABLED_ID, MENU_NEW_FILE_ID, MENU_NEW_TAB_ID, MENU_STOP_TYPING_ID]);
   });
 
   it("sends Chrome nothing when the state it reflects hasn't changed", async () => {

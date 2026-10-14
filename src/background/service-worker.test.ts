@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { envelope, type BackgroundResponse, type Envelope, type PopupRequest, type PublicAppState } from "../domain/messages";
 import { installFakeChrome, type FakeChrome } from "../test/fake-chrome";
-import { MENU_NEW_FILE_ID } from "./context-menu";
+import { MENU_NEW_FILE_ID, MENU_NEW_TAB_ID, MENU_OUTPUT_ID } from "./context-menu";
 
 /**
  * The service worker is driven the way Chrome drives it: the real module is loaded against the
@@ -212,6 +212,38 @@ describe("messages from the destination's page", () => {
 
     await send({ kind: "stop-typing-requested" }, PAGE);
     expect((await getState()).destinationLabel).toBeNull();
+  });
+});
+
+describe("the right-click menu and editor tabs", () => {
+  const EDITOR_URL = `${ORIGIN}/src/editor/index.html`;
+  const EDITOR_TAB = { id: 99, windowId: 1, url: EDITOR_URL, title: "TypeTarget" };
+  const sentKinds = () => fake.tabs.sendMessage.mock.calls.map(([, message]) => (message as Envelope<{ kind: string }>).payload.kind);
+
+  it("opens an editor tab for Type to new tab even with the outline on, without a box on the page", async () => {
+    await startServiceWorker();
+    fake.tabs.create.mockResolvedValue({ id: EDITOR_TAB.id });
+
+    fake.contextMenus.onClicked.emit({ menuItemId: MENU_NEW_TAB_ID, frameId: 0 }, PAGE_TAB);
+
+    await vi.waitFor(() => expect(fake.tabs.create).toHaveBeenCalledWith({ url: EDITOR_URL, openerTabId: PAGE_TAB.id }));
+    expect(sentKinds()).not.toContain("open-new-file-field");
+  });
+
+  it("lets Type to this field pick the editor tab's box again after Stop typing, without injecting into it", async () => {
+    await startServiceWorker();
+    fake.tabs.query.mockResolvedValue([EDITOR_TAB]);
+    await popup({ kind: "begin-destination-selection" });
+    await send({ kind: "destination-picked", elementId: "el-1", label: "textarea" }, { id: "test-extension-id", url: EDITOR_URL, tab: EDITOR_TAB as chrome.tabs.Tab, frameId: 0 });
+    await popup({ kind: "clear-destination" });
+    expect((await getState()).destinationLabel).toBeNull();
+    fake.scripting.executeScript.mockClear();
+    fake.tabs.sendMessage.mockClear();
+
+    fake.contextMenus.onClicked.emit({ menuItemId: MENU_OUTPUT_ID, frameId: 0, pageUrl: EDITOR_URL }, EDITOR_TAB);
+
+    await vi.waitFor(() => expect(sentKinds()).toContain("pick-focused-element"));
+    expect(fake.scripting.executeScript).not.toHaveBeenCalled();
   });
 });
 

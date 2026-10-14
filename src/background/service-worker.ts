@@ -33,6 +33,7 @@ import {
   isCapturing,
   MENU_LISTEN_HERE_ID,
   MENU_NEW_FILE_ID,
+  MENU_NEW_TAB_ID,
   MENU_OUTPUT_ID,
   MENU_STOP_ID,
   MENU_STOP_TYPING_ID,
@@ -482,12 +483,13 @@ const handleMenuClick = async (info: chrome.contextMenus.OnClickData, tab: chrom
   }
   if (tab?.id === undefined) return;
   const tabId = tab.id;
-  if (info.menuItemId === MENU_NEW_FILE_ID) {
+  if (info.menuItemId === MENU_NEW_FILE_ID || info.menuItemId === MENU_NEW_TAB_ID) {
     // The new box opens with the current output's text, as Open in new tab and Type to this
     // field carry it. Copied from a page's own text box (which keeps it); moved from a new-file box.
     const text = state.destination ? await destinationController.takeText(state.destination) : null;
-    if (!state.showPageIndicators) {
-      // The box would itself show TypeTarget to the page, so it opens as an editor tab instead.
+    if (info.menuItemId === MENU_NEW_TAB_ID || !state.showPageIndicators) {
+      // Type to new tab always opens an editor tab; Type to new file does when its box would
+      // itself show TypeTarget to the page.
       await pickFromContextMenu(async () => openInNewTab(text ?? "", tabId));
       return;
     }
@@ -495,7 +497,11 @@ const handleMenuClick = async (info: chrome.contextMenus.OnClickData, tab: chrom
     return;
   }
   if (info.menuItemId !== MENU_OUTPUT_ID) return;
-  await pickFromContextMenu(() => destinationController.pickFromContextMenu(tabId, info.frameId ?? 0));
+  // An editor tab is an extension page, which can't be injected into; it has its own bridge.
+  const inEditorTab = info.pageUrl === chrome.runtime.getURL(EDITOR_PAGE_PATH);
+  await pickFromContextMenu(() =>
+    inEditorTab ? destinationController.pickInEditorTab(tabId) : destinationController.pickFromContextMenu(tabId, info.frameId ?? 0),
+  );
 };
 
 chrome.contextMenus.onClicked.addListener((info, tab) => void handleMenuClick(info, tab));

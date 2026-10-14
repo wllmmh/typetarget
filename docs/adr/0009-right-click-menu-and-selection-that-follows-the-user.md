@@ -13,7 +13,7 @@ a broad install warning.
 
 - Add a "TypeTarget" right-click submenu (`contextMenus`, which has no install warning).
   Choosing an item grants `activeTab` for its tab. The items are Listen to this tab, Stop
-  listening, Type to this field, Type to new file and Stop typing
+  listening, Type to this field, Type to new file, Type to new tab and Stop typing
   (`src/background/context-menu.ts`).
 - Type to this field injects into only the clicked frame and picks `document.activeElement`,
   since right-clicking a text box focuses it.

@@ -25,7 +25,9 @@ Then open `chrome://extensions`, turn on Developer mode, click "Load unpacked" a
    this tab**.
 2. Right-click anywhere on a page and choose **TypeTarget → Type to new file**, for a text box
    over the bottom third of the page. Or right-click any existing text field already on the
-   page, in that tab or another one, and choose **TypeTarget → Type to this field**.
+   page, in that tab or another one, and choose **TypeTarget → Type to this field**. **Type to
+   new tab** opens a full-page text box in a new tab. After **Stop typing** in a new tab,
+   right-click its text box and choose **Type to this field** to start typing there again.
 3. Text appears there as people speak. **Stop typing** and **Stop listening** are in the same
    menu.
 

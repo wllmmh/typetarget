@@ -76,6 +76,20 @@ describe("DestinationController.pickFromContextMenu", () => {
   });
 });
 
+describe("DestinationController.pickInEditorTab", () => {
+  it("asks the editor tab to pick its focused box without injecting into it, and accepts the pick", async () => {
+    const onPicked = vi.fn();
+    const controller = new DestinationController({ onPicked, onUnavailable: vi.fn() });
+
+    await controller.pickInEditorTab(9);
+
+    expect(fake.scripting.executeScript).not.toHaveBeenCalled();
+    expect(fake.tabs.sendMessage).toHaveBeenLastCalledWith(9, envelope({ kind: "pick-focused-element", showIndicators: true }), { frameId: 0 });
+    controller.handlePicked(9, 0, "el-1", "textarea");
+    expect(onPicked).toHaveBeenCalledWith({ tabId: 9, frameId: 0, elementId: "el-1" }, "textarea");
+  });
+});
+
 describe("DestinationController.openNewFileField", () => {
   it("opens the new-file box in the tab's top frame, whichever frame was right-clicked, and accepts its pick", async () => {
     const onPicked = vi.fn();

@@ -18,12 +18,17 @@ All notable changes to this project are documented here. The format follows
 - Chunk length slider (3–25 s), which caps how long one utterance can grow and can be changed
   while listening.
 - Right-click "TypeTarget" menu: Listen to this tab, Stop listening, Type to this field, Type
-  to new file and Stop typing.
+  to new file, Type to new tab and Stop typing. "Type to new tab" opens the full-page text box
+  straight away, without going through the new-file box's Open in new tab button. After Stop
+  typing in a new tab, right-clicking its text box and choosing "Type to this field" starts
+  typing there again.
 - "Type to new file": a text box over the bottom third of the page. It can be minimized,
   opened in a new tab and moved back, and stays on the page after Stop typing.
 - A badge on the output's outline with a listening timer ("TypeTarget 1:05"), plus buttons to
   save the text as a `.txt` file (named like `TypeTarget-2026-10-08T17-30-05.txt`) and to stop
   typing.
+- A text box scrolled to its bottom follows new transcribed text. One you have scrolled up
+  keeps your position.
 - Selection follows you into other tabs while you are picking a field.
 - "Show outline" setting in the popup. Turned off, the field you type into gets no
   outline, timer or buttons, the toolbar icon shows REC instead, and "Type to new file" opens in

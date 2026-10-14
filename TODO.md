@@ -26,6 +26,9 @@
       right-click menu and confirm nothing appears on the page (watch with a MutationObserver
       in the page's console), the toolbar badge shows REC / II / ..., toggling mid-capture
       redraws or removes the outline, and Type to new file opens an editor tab.
+- [ ] Right-click menu and the editor tab (2026-10-14): choose Type to new tab on a page and
+      confirm the editor tab opens and types. Press Stop typing, right-click the editor's text
+      box, and confirm Type to this field is enabled and starts typing again.
 - [ ] Test Gemini end to end in the extension (popup → offscreen → worker → insertion) since
       the client-side boundary change. The engine has been verified against the API, and the
       user has used Gemini, but no deliberate pass has been made.

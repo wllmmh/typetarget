@@ -1,6 +1,59 @@
 import { describe, expect, it, vi } from "vitest";
 import { insertTranscriptText, toInsertionTarget, type InsertionTarget } from "./insert-text";
 
+/** jsdom does no layout, so a textarea's scroll geometry is faked: ten pixels per line, 100px tall. */
+const scrollableTextarea = (initialScrollTop: number): HTMLTextAreaElement => {
+  const textarea = document.createElement("textarea");
+  let scrollTop = initialScrollTop;
+  Object.defineProperty(textarea, "clientHeight", { value: 100 });
+  Object.defineProperty(textarea, "scrollHeight", { get: () => Math.max(100, (textarea.value.split("\n").length) * 10) });
+  Object.defineProperty(textarea, "scrollTop", {
+    get: () => Math.min(scrollTop, Math.max(0, textarea.scrollHeight - 100)),
+    set: (value: number) => {
+      scrollTop = value;
+    },
+  });
+  return textarea;
+};
+
+describe("insertTranscriptText — scrolling", () => {
+  const lines = (count: number) => Array.from({ length: count }, (_, i) => `line ${i}`).join("\n");
+
+  it("follows new lines when the field was scrolled to the bottom", () => {
+    const textarea = scrollableTextarea(0);
+    textarea.value = lines(30); // 300px tall in a 100px box
+    textarea.scrollTop = 200; // the very bottom
+    const target: InsertionTarget = { kind: "text-field", element: textarea };
+
+    insertTranscriptText(target, "a new line", "\n", textarea.value.length);
+
+    expect(textarea.scrollTop).toBe(textarea.scrollHeight - 100);
+    expect(textarea.scrollTop).toBe(210);
+  });
+
+  it("keeps the user's position when the field was scrolled up", () => {
+    const textarea = scrollableTextarea(0);
+    textarea.value = lines(30);
+    textarea.scrollTop = 50;
+    const target: InsertionTarget = { kind: "text-field", element: textarea };
+
+    insertTranscriptText(target, "a new line", "\n", textarea.value.length);
+
+    expect(textarea.scrollTop).toBe(50);
+  });
+
+  it("keeps the user's position when the field was only a little above the bottom", () => {
+    const textarea = scrollableTextarea(0);
+    textarea.value = lines(30);
+    textarea.scrollTop = 190; // 10px short of the bottom
+    const target: InsertionTarget = { kind: "text-field", element: textarea };
+
+    insertTranscriptText(target, "a new line", "\n", textarea.value.length);
+
+    expect(textarea.scrollTop).toBe(190);
+  });
+});
+
 describe("insertTranscriptText — text fields", () => {
   it("inserts at offset 0 with no separator", () => {
     const textarea = document.createElement("textarea");

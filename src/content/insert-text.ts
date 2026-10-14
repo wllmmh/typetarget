@@ -20,6 +20,11 @@ const nativeTextareaValueSetter = Object.getOwnPropertyDescriptor(
 )?.set;
 const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
 
+/** Sub-pixel scroll positions and zoom leave a field resting a fraction short of its bottom. */
+const AT_BOTTOM_TOLERANCE_PX = 1;
+
+const isScrolledToBottom = (el: HTMLElement): boolean => el.scrollHeight - el.scrollTop - el.clientHeight <= AT_BOTTOM_TOLERANCE_PX;
+
 const dispatchInputEvents = (el: Element) => {
   el.dispatchEvent(new Event("input", { bubbles: true }));
   el.dispatchEvent(new Event("change", { bubbles: true }));
@@ -30,7 +35,8 @@ const dispatchInputEvents = (el: Element) => {
  * the offset just after it (the caller's next insertion boundary). The user's
  * selection is kept where it was: positions before the insertion point stay put,
  * positions at or after it shift by the inserted length (so a caret sitting at the
- * boundary keeps following the transcript).
+ * boundary keeps following the transcript). A field scrolled to its bottom stays at the bottom as
+ * the text grows; one scrolled up keeps the user's position.
  */
 const insertIntoTextField = (el: HTMLInputElement | HTMLTextAreaElement, text: string, atOffset: number): number => {
   const setter = el instanceof HTMLTextAreaElement ? nativeTextareaValueSetter : nativeInputValueSetter;
@@ -38,6 +44,7 @@ const insertIntoTextField = (el: HTMLInputElement | HTMLTextAreaElement, text: s
   const safeOffset = Math.min(atOffset, currentValue.length);
   const nextValue = currentValue.slice(0, safeOffset) + text + currentValue.slice(safeOffset);
   const { selectionStart, selectionEnd, selectionDirection, scrollTop, scrollLeft } = el;
+  const wasAtBottom = isScrolledToBottom(el);
   const shift = (position: number) => (position >= safeOffset ? position + text.length : position);
 
   if (setter) {
@@ -52,13 +59,13 @@ const insertIntoTextField = (el: HTMLInputElement | HTMLTextAreaElement, text: s
   // selectionStart is null for input types without a selection API (e.g. email).
   if (selectionStart !== null && selectionEnd !== null) {
     el.setSelectionRange(shift(selectionStart), shift(selectionEnd), selectionDirection ?? undefined);
-    // Replacing the value can scroll the field; keep the user's view when they're editing above the boundary.
-    if (selectionEnd < safeOffset) {
-      el.scrollTop = scrollTop;
-      el.scrollLeft = scrollLeft;
-    }
+    // Replacing the value can scroll the field sideways; keep the user's view when they're editing above the boundary.
+    if (selectionEnd < safeOffset) el.scrollLeft = scrollLeft;
   }
   dispatchInputEvents(el);
+  // Set the vertical position last, since replacing the value and moving the selection can both
+  // scroll the field (to the caret, wherever the user had left it).
+  el.scrollTop = wasAtBottom ? el.scrollHeight : scrollTop;
   return newOffset;
 };
 
