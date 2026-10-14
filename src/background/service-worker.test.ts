@@ -247,6 +247,31 @@ describe("the right-click menu and editor tabs", () => {
   });
 });
 
+describe("the popup's Start typing", () => {
+  it("opens Type to new file on the tab the popup was opened on", async () => {
+    await startServiceWorker();
+    fake.tabs.query.mockResolvedValue([PAGE_TAB]);
+    fake.tabs.sendMessage.mockResolvedValue(envelope({ kind: "ok" }));
+
+    const response = await popup({ kind: "start-typing" });
+
+    expect(response).toEqual({ kind: "ok" });
+    const sent = fake.tabs.sendMessage.mock.calls.map(
+      ([tabId, message]) => [tabId, (message as Envelope<{ kind: string }>).payload.kind] as const,
+    );
+    expect(sent).toContainEqual([PAGE_TAB.id, "open-new-file-field"]);
+  });
+
+  it("reports an error when there is no active tab", async () => {
+    await startServiceWorker();
+    fake.tabs.query.mockResolvedValue([]);
+
+    const response = await popup({ kind: "start-typing" });
+
+    expect(response).toMatchObject({ kind: "error", code: "no-active-tab" });
+  });
+});
+
 describe('with "Show outline" off', () => {
   it("shows REC on the toolbar icon while typing into a field, and clears it on Stop", async () => {
     await startServiceWorker();

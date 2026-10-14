@@ -39,8 +39,8 @@ on every start (`restrictLocalStorageToExtension` in `background/persisted-state
 `storage.session` was already restricted by default.
 
 **2. A saved API key could not be removed without uninstalling.** The dialog ignored an empty
-field. Fixed: a "Remove key" button in the API Keys dialog clears it (the background already
-treated an empty key as "clear").
+field. Fixed: emptying the field in the API Keys dialog and clicking Done clears it (the background already
+treated an empty key as "clear"). A saved key shows as a mask, since the key never reaches the popup.
 
 **3. The badge showed the source tab's title inside the destination page (medium).** The
 listening badge above the output field is an ordinary element in the host page's DOM, and its

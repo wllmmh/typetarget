@@ -76,7 +76,7 @@ and has no access to your audio, transcripts or API keys.
 
 Uninstalling TypeTarget deletes everything it stored: settings, API keys and cached models.
 To delete just an API key, open the API Keys dialog (the key icon next to the model picker)
-and click Remove key. Session data is cleared when you close the browser.
+clear the key's field and click Done. Session data is cleared when you close the browser.
 
 ## Changes
 

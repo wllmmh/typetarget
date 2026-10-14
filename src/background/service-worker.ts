@@ -448,6 +448,32 @@ const listenTo = async (tabId: number): Promise<void> => {
 };
 
 /**
+ * Type to new file (the menu item, and the popup's Start typing): a box over `tabId`'s page as
+ * the output, or an editor tab when `forceEditorTab` (Type to new tab) or when the box would
+ * itself show TypeTarget to the page and "Show outline" is off.
+ */
+const typeToNewFile = async (tabId: number, forceEditorTab: boolean): Promise<void> => {
+  // The new box opens with the current output's text, as Open in new tab and Type to this
+  // field carry it. Copied from a page's own text box (which keeps it); moved from a new-file box.
+  const text = state.destination ? await destinationController.takeText(state.destination) : null;
+  if (forceEditorTab || !state.showPageIndicators) {
+    await pickFromContextMenu(async () => openInNewTab(text ?? "", tabId));
+    return;
+  }
+  await pickFromContextMenu(() => destinationController.openNewFileField(tabId, text?.trim() ? text : undefined));
+};
+
+/** The popup's Start typing: Type to new file on the tab the popup was opened on. */
+const startTypingInActiveTab = async (): Promise<BackgroundResponse> => {
+  const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (activeTab?.id === undefined) {
+    return { kind: "error", code: "no-active-tab", message: "There is no tab to type into." };
+  }
+  await typeToNewFile(activeTab.id, false);
+  return { kind: "ok" };
+};
+
+/**
  * Each item does what the matching popup control does. Choosing any menu item grants
  * activeTab for the tab it's in, which is what lets Type to this field pick there and,
  * as registerActiveTab does for the popup, makes the tab labellable and capturable.
@@ -484,16 +510,7 @@ const handleMenuClick = async (info: chrome.contextMenus.OnClickData, tab: chrom
   if (tab?.id === undefined) return;
   const tabId = tab.id;
   if (info.menuItemId === MENU_NEW_FILE_ID || info.menuItemId === MENU_NEW_TAB_ID) {
-    // The new box opens with the current output's text, as Open in new tab and Type to this
-    // field carry it. Copied from a page's own text box (which keeps it); moved from a new-file box.
-    const text = state.destination ? await destinationController.takeText(state.destination) : null;
-    if (info.menuItemId === MENU_NEW_TAB_ID || !state.showPageIndicators) {
-      // Type to new tab always opens an editor tab; Type to new file does when its box would
-      // itself show TypeTarget to the page.
-      await pickFromContextMenu(async () => openInNewTab(text ?? "", tabId));
-      return;
-    }
-    await pickFromContextMenu(() => destinationController.openNewFileField(tabId, text?.trim() ? text : undefined));
+    await typeToNewFile(tabId, info.menuItemId === MENU_NEW_TAB_ID);
     return;
   }
   if (info.menuItemId !== MENU_OUTPUT_ID) return;
@@ -576,6 +593,8 @@ const handlePopupRequest = async (req: PopupRequest): Promise<BackgroundResponse
       return cancelDestinationSelection();
     case "clear-destination":
       return clearDestination({ keepNewFileField: true }); // the popup's Stop typing, same as the menu's
+    case "start-typing":
+      return startTypingInActiveTab();
     case "pause-transcription":
       return setPaused(true);
     case "resume-transcription":

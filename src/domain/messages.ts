@@ -67,8 +67,8 @@ export type PublicAppState = {
   /** Non-null while capturing. */
   session: ListeningSession | null;
   /** Which network providers currently have a stored API key — never the keys
-   * themselves (see domain/api-key.ts). Drives the API Keys dialog's "•••• saved"
-   * placeholders. */
+   * themselves (see domain/api-key.ts). Drives whether the API Keys dialog shows
+   * the saved-key mask. */
   apiKeyProviders: ApiKeyProvider[];
 };
 
@@ -85,6 +85,8 @@ export type PopupRequest =
   | { kind: "begin-destination-selection" }
   | { kind: "cancel-destination-selection" }
   | { kind: "clear-destination" }
+  /** Start typing: "Type to new file" on the tab the popup was opened on. */
+  | { kind: "start-typing" }
   | { kind: "set-model"; modelId: ModelId }
   | { kind: "set-chunk-ms"; chunkMs: number }
   | { kind: "set-show-page-indicators"; show: boolean }

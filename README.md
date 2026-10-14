@@ -31,8 +31,10 @@ Then open `chrome://extensions`, turn on Developer mode, click "Load unpacked" a
 3. Text appears there as people speak. **Stop typing** and **Stop listening** are in the same
    menu.
 
-The toolbar popup has the same controls (**Start listening**, **Select field**, **Pause**),
-plus the model picker, API keys and chunk length.
+The toolbar popup has one button each for listening and typing (**Start listening** /
+**Stop listening**, **Start typing** / **Stop typing**), both acting on the tab the popup was
+opened on, plus the model picker, API keys and chunk length. **Start typing** is **Type to new
+file**.
 
 The output box gets a colored outline, a "TypeTarget" timer and buttons that save the text as
 a `.txt` file and stop typing. The page you type into is never told which tab you are
@@ -72,7 +74,7 @@ Whisper keep up on slow hardware and lowers Groq's per-request cost.
 
 **API keys**: click the key icon next to the model picker. A key is stored only in this
 browser's extension storage, sent only to its own provider, never shown again once saved,
-and takes effect immediately. Remove key deletes it.
+and takes effect immediately. A saved key shows as dots; clear the field and click Done to delete it.
 
 ## Permissions
 

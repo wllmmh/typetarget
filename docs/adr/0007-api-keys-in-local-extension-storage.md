@@ -14,7 +14,7 @@ protecting anything.
 - Store keys in `chrome.storage.local` under `apiKeys`, keyed by provider. The key never goes
   to `storage.sync`.
 - Never send a key back to the popup. `PublicAppState.apiKeyProviders` only lists which
-  providers have one, and the dialog shows "•••• saved".
+  providers have one, and the dialog shows a saved key as a row of dots, and clearing the field then clicking Done removes it.
 - Restrict `storage.local` to trusted contexts (`setAccessLevel({ accessLevel:
   "TRUSTED_CONTEXTS" })`) on every service-worker start. By default content scripts can read
   it, and TypeTarget's content script runs inside arbitrary pages. This was added on

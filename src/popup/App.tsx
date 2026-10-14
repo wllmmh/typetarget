@@ -20,6 +20,13 @@ const STATUS_LABEL: Record<string, string> = {
 
 const MB = 1024 * 1024;
 
+/**
+ * Stands in for a saved API key in the dialog's field. The key itself never reaches the popup
+ * (ADR 0007), so a saved key is shown as this; emptying the field removes it. No real key
+ * contains a bullet, which is how an untouched field is told from an edited one.
+ */
+const SAVED_KEY_MASK = "••••••••••••";
+
 const ENGINE_LABEL: Record<string, string> = {
   unloaded: "not loaded",
   loading: "loading…",
@@ -82,19 +89,7 @@ const StopIcon = () => (
     <rect x="1.5" y="1.5" width="9" height="9" fill="currentColor" />
   </svg>
 );
-const PauseIcon = () => (
-  <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
-    <rect x="1.5" y="1" width="3" height="10" fill="currentColor" />
-    <rect x="7.5" y="1" width="3" height="10" fill="currentColor" />
-  </svg>
-);
 
-const TargetIcon = () => (
-  <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
-    <circle cx="6" cy="6" r="4.2" fill="none" stroke="currentColor" strokeWidth="1.4" />
-    <circle cx="6" cy="6" r="1.4" fill="currentColor" />
-  </svg>
-);
 export const App = () => {
   const state = useBackgroundState();
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -103,6 +98,7 @@ export const App = () => {
   const [draggedChunkMs, setDraggedChunkMs] = useState<number | null>(null);
   const chunkCommitTimer = useRef<number | null>(null);
   const apiKeyDialogRef = useRef<HTMLDialogElement>(null);
+  const apiKeyInputRef = useRef<HTMLInputElement>(null);
   /** Which provider's key the dialog edits: the one whose group header opened it, not the selected model's. */
   const [keyDialogProvider, setKeyDialogProvider] = useState<ApiKeyProvider | null>(null);
   const [apiKeyError, setApiKeyError] = useState<string | null>(null);
@@ -171,36 +167,40 @@ export const App = () => {
 
   /**
    * Commits on blur, not the chunk slider's per-keystroke debounce — a debounce
-   * mid-paste makes no sense for a discrete secret. Clears the field on success so it
-   * reverts to the "•••• saved" placeholder rather than leaving the raw key visible-if-
-   * unmasked in the DOM longer than it has to be.
+   * mid-paste makes no sense for a discrete secret. The mask means untouched, and an empty
+   * field is left for Done to treat as a removal. After a save the field shows the mask again
+   * rather than leaving the raw key in the DOM.
    */
   const handleApiKeyBlur = async (provider: ApiKeyProvider, input: HTMLInputElement) => {
     const apiKey = input.value;
-    if (apiKey === "") return; // nothing typed; leave whatever was already stored alone
+    if (apiKey === "" || apiKey === SAVED_KEY_MASK) return;
+    if (apiKey.includes("•")) {
+      // Typed onto the mask instead of replacing it; no key looks like that.
+      input.value = SAVED_KEY_MASK;
+      return;
+    }
     const res = await sendToBackground({ kind: "set-api-key", provider, apiKey });
     if (res.kind === "error") {
       setApiKeyError(res.message);
       return;
     }
     setApiKeyError(null);
-    input.value = "";
+    input.value = SAVED_KEY_MASK;
   };
 
-  /** An empty key clears the stored one (see the background's setApiKey). */
-  const handleApiKeyRemove = async (provider: ApiKeyProvider) => {
-    const res = await sendToBackground({ kind: "set-api-key", provider, apiKey: "" });
-    setApiKeyError(res.kind === "error" ? res.message : null);
-  };
-
-  const handleTogglePause = async () => {
-    setBusy(true);
-    setLoadError(null);
-    const res = await sendToBackground({
-      kind: state.status === "paused" ? "resume-transcription" : "pause-transcription",
-    });
-    if (res.kind === "error") setLoadError(res.message);
-    setBusy(false);
+  /**
+   * Done is what removes a key: a saved key whose field has been emptied is cleared (the
+   * background treats an empty key as "clear"). Leaving the dialog any other way keeps it.
+   */
+  const handleApiKeyDone = async () => {
+    if (keyDialogProvider && keySaved && apiKeyInputRef.current?.value === "") {
+      const res = await sendToBackground({ kind: "set-api-key", provider: keyDialogProvider, apiKey: "" });
+      if (res.kind === "error") {
+        setApiKeyError(res.message);
+        return;
+      }
+    }
+    apiKeyDialogRef.current?.close();
   };
 
   const { provider: modelProvider } = MODEL_CATALOG[state.selectedModel];
@@ -217,15 +217,20 @@ export const App = () => {
 
   const handleEditKey = (provider: ApiKeyProvider) => {
     setKeyDialogProvider(provider);
+    // Closed without Done, an emptied field would otherwise reopen empty over a key that is still stored.
+    if (apiKeyInputRef.current) {
+      apiKeyInputRef.current.value = state.apiKeyProviders.includes(provider) ? SAVED_KEY_MASK : "";
+    }
     apiKeyDialogRef.current?.showModal();
   };
 
-  const hasOutput = state.isSelectingDestination || state.destinationLabel !== null;
+  const hasOutput = state.destinationLabel !== null;
 
-  const handleOutputAction = async (kind: "begin-destination-selection" | "cancel-destination-selection" | "clear-destination") => {
+  /** Start typing is the right-click menu's "Type to new file", on the tab the popup opened over. */
+  const handleOutputToggle = async () => {
     setBusy(true);
     setLoadError(null);
-    const res = await sendToBackground({ kind });
+    const res = await sendToBackground({ kind: hasOutput ? "clear-destination" : "start-typing" });
     if (res.kind === "error") setLoadError(res.message);
     setBusy(false);
   };
@@ -284,25 +289,24 @@ export const App = () => {
             {/* Keyed by provider so a half-typed key never carries over into another provider's field. */}
             <input
               key={keyDialogProvider}
+              ref={apiKeyInputRef}
               type="password"
               aria-label={`${API_KEY_PROVIDER_NAMES[keyDialogProvider]} API key`}
-              placeholder={keySaved ? "•••• saved" : `Paste your ${API_KEY_PROVIDER_NAMES[keyDialogProvider]} API key`}
+              placeholder={`Paste your ${API_KEY_PROVIDER_NAMES[keyDialogProvider]} API key`}
+              defaultValue={keySaved ? SAVED_KEY_MASK : ""}
+              // Selected so that typing or pasting replaces the mask instead of landing after it.
+              onFocus={(e) => e.currentTarget.select()}
               onBlur={(e) => handleApiKeyBlur(keyDialogProvider, e.currentTarget)}
             />
           </>
         )}
         <div className="dialog-actions">
-          {keyDialogProvider && keySaved && (
-            <button type="button" onClick={() => void handleApiKeyRemove(keyDialogProvider)}>
-              Remove key
-            </button>
-          )}
           {keyDialogProvider && API_KEY_PAGES[keyDialogProvider] && (
             <button type="button" onClick={() => void chrome.tabs.create({ url: API_KEY_PAGES[keyDialogProvider] })}>
               Get API Key
             </button>
           )}
-          <button type="button" className="dialog-done" onClick={() => apiKeyDialogRef.current?.close()}>
+          <button type="button" className="dialog-done" onClick={() => void handleApiKeyDone()}>
             Done
           </button>
         </div>
@@ -329,39 +333,25 @@ export const App = () => {
               <PlayIcon /> Start listening
             </button>
           )}
-          <button
-            type="button"
-            disabled={busy || (state.status !== "capturing" && state.status !== "paused")}
-            onClick={handleTogglePause}
-          >
-            <PauseIcon /> {state.status === "paused" ? "Resume" : "Pause"}
-          </button>
         </div>
       </section>
 
       <section>
         <h2>Typing to</h2>
-        {state.isSelectingDestination && (
-          <p>Click any text field to send transcribed text there.</p>
-        )}
         <p className="target-name" title={state.destinationLabel ?? undefined}>
           {state.destinationLabel ?? "No field selected"}
         </p>
         <div className="controls">
-          {/* While a pick is in progress this cancels it; once bound, it clears the output. */}
-          <button
-            type="button"
-            disabled={busy || !hasOutput}
-            onClick={() => handleOutputAction(state.isSelectingDestination ? "cancel-destination-selection" : "clear-destination")}
-          >
-            <StopIcon /> Stop typing
-          </button>
-          <button
-            type="button"
-            disabled={busy || state.isSelectingDestination}
-            onClick={() => handleOutputAction("begin-destination-selection")}
-          >
-            <TargetIcon /> Select field
+          <button type="button" disabled={busy} onClick={handleOutputToggle}>
+            {hasOutput ? (
+              <>
+                <StopIcon /> Stop typing
+              </>
+            ) : (
+              <>
+                <PlayIcon /> Start typing
+              </>
+            )}
           </button>
         </div>
         <label className="toggle-row">

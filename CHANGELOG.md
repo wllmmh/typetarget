@@ -14,7 +14,8 @@ All notable changes to this project are documented here. The format follows
   Tiny Q5 is the default.
 - Hosted models with your own API key: Gemini 3.5 Transcribe Live (Google), and Whisper Large v3 and
   v3 Turbo on Groq.
-- API Keys dialog with Get API Key and Remove key. Keys stay on this device.
+- API Keys dialog with Get API Key. A saved key shows as dots in the field; clear the field
+  and click Done to remove it. Keys stay on this device.
 - In the model menu, each hosted provider's heading has an "API key" action that opens that
   provider's key dialog. The separate key button is gone.
 - Chunk length slider (3–25 s), which caps how long one utterance can grow and can be changed
@@ -26,6 +27,9 @@ All notable changes to this project are documented here. The format follows
   typing there again.
 - "Type to new file": a text box over the bottom third of the page. It can be minimized,
   opened in a new tab and moved back, and stays on the page after Stop typing.
+- The popup has one Start/Stop button for listening and one for typing, replacing Pause and
+  Select field. Start typing is "Type to new file" on the tab the popup was opened on; to type
+  into an existing field, use right-click → Type to this field.
 - A badge on the output's outline with a listening timer ("TypeTarget 1:05"), plus buttons to
   save the text as a `.txt` file (named like `TypeTarget-2026-10-08T17-30-05.txt`) and to stop
   typing.
