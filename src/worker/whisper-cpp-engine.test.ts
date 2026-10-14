@@ -9,9 +9,9 @@ import type { WhisperModule, WhisperModuleFactory, WhisperModuleOverrides } from
 const FAKE_MODEL_FILE = { sha256: "039058c6f2c0cb492c533b0a4d14ef77cc0f78abccced5287d84a1a2011cfb81" };
 const MODEL_FILES: ModelSource = {
   ...REAL_MODEL_FILES,
-  "tiny.en": { ...FAKE_MODEL_FILE, url: "https://example.com/tiny.en.bin" },
-  "tiny.en-q5_1": { ...FAKE_MODEL_FILE, url: "https://example.com/tiny.en-q5_1.bin" },
-  "base.en": { ...FAKE_MODEL_FILE, url: "https://example.com/base.en.bin" },
+  "tiny": { ...FAKE_MODEL_FILE, url: "https://example.com/tiny.bin" },
+  "tiny-q5_1": { ...FAKE_MODEL_FILE, url: "https://example.com/tiny-q5_1.bin" },
+  "base": { ...FAKE_MODEL_FILE, url: "https://example.com/base.bin" },
 };
 
 /** Builds a fake WhisperModule plus the factory that loads it. Like the real build,
@@ -80,17 +80,17 @@ describe("WhisperCppEngine.load", () => {
     const fakeModule = createFakeModule();
     const engine = createEngine(fakeModule);
 
-    await engine.load("tiny.en");
+    await engine.load("tiny");
 
     expect(fakeModule.module.FS_createDataFile).toHaveBeenCalledWith(
       "/",
-      "ggml-tiny.en.bin",
+      "ggml-tiny.bin",
       expect.any(Uint8Array),
       true,
       true,
     );
-    expect(fakeModule.module.init).toHaveBeenCalledWith("ggml-tiny.en.bin");
-    expect(engine.getStatus()).toEqual({ state: "ready", modelId: "tiny.en" });
+    expect(fakeModule.module.init).toHaveBeenCalledWith("ggml-tiny.bin");
+    expect(engine.getStatus()).toEqual({ state: "ready", modelId: "tiny" });
   });
 
   it("tolerates FS_unlink reporting ENOENT (no stale model file on first load)", async () => {
@@ -98,16 +98,16 @@ describe("WhisperCppEngine.load", () => {
     const fakeModule = createFakeModule({ fsUnlinkError: { name: "ErrnoError", errno: 44 } });
     const engine = createEngine(fakeModule);
 
-    await engine.load("tiny.en");
+    await engine.load("tiny");
 
-    expect(engine.getStatus()).toEqual({ state: "ready", modelId: "tiny.en" });
+    expect(engine.getStatus()).toEqual({ state: "ready", modelId: "tiny" });
   });
 
   it("propagates other FS_unlink failures", async () => {
     const fakeModule = createFakeModule({ fsUnlinkError: { name: "ErrnoError", errno: 13 } });
     const engine = createEngine(fakeModule);
 
-    await expect(engine.load("tiny.en")).rejects.toEqual({ name: "ErrnoError", errno: 13 });
+    await expect(engine.load("tiny")).rejects.toEqual({ name: "ErrnoError", errno: 13 });
     expect(engine.getStatus().state).toBe("error");
   });
 
@@ -115,7 +115,7 @@ describe("WhisperCppEngine.load", () => {
     const fakeModule = createFakeModule({ contextIndexFromInit: 0 });
     const engine = createEngine(fakeModule);
 
-    await expect(engine.load("tiny.en")).rejects.toThrow(/failed to initialize/);
+    await expect(engine.load("tiny")).rejects.toThrow(/failed to initialize/);
     expect(engine.getStatus().state).toBe("error");
   });
 });
@@ -134,7 +134,7 @@ describe("WhisperCppEngine.transcribe", () => {
       ],
     });
     const engine = createEngine(fakeModule);
-    await engine.load("tiny.en");
+    await engine.load("tiny");
 
     const result = await engine.transcribe(new Float32Array(16_000));
 
@@ -144,7 +144,7 @@ describe("WhisperCppEngine.transcribe", () => {
   it("throws when full_default returns a non-zero result code", async () => {
     const fakeModule = createFakeModule({ fullDefaultResultCode: -1 });
     const engine = createEngine(fakeModule);
-    await engine.load("tiny.en");
+    await engine.load("tiny");
 
     await expect(engine.transcribe(new Float32Array(16_000))).rejects.toThrow(/failed with code -1/);
   });
@@ -152,7 +152,7 @@ describe("WhisperCppEngine.transcribe", () => {
   it("times out with 'Transcription did not finish.' when no completion signal arrives", async () => {
     const fakeModule = createFakeModule({ neverFinishes: true });
     const engine = createEngine(fakeModule);
-    await engine.load("tiny.en"); // real timers: model download uses real fetch/stream promises
+    await engine.load("tiny"); // real timers: model download uses real fetch/stream promises
 
     vi.useFakeTimers();
     try {
@@ -168,7 +168,7 @@ describe("WhisperCppEngine.transcribe", () => {
   it("does not leak one call's output into the next", async () => {
     const fakeModule = createFakeModule({ segmentLines: ["[00:00:00.000 --> 00:00:01.000]  hello"] });
     const engine = createEngine(fakeModule);
-    await engine.load("tiny.en");
+    await engine.load("tiny");
 
     const first = await engine.transcribe(new Float32Array(16_000));
     const second = await engine.transcribe(new Float32Array(16_000));
@@ -182,7 +182,7 @@ describe("WhisperCppEngine.unload", () => {
   it("frees the context and resets status to unloaded", async () => {
     const fakeModule = createFakeModule();
     const engine = createEngine(fakeModule);
-    await engine.load("tiny.en");
+    await engine.load("tiny");
 
     await engine.unload();
 
@@ -200,9 +200,9 @@ describe("WhisperCppEngine repeated loads", () => {
   it("does nothing when the same model is already loaded (Stop then Start)", async () => {
     const fakeModule = createFakeModule();
     const engine = createEngine(fakeModule);
-    await engine.load("tiny.en");
+    await engine.load("tiny");
 
-    await engine.load("tiny.en");
+    await engine.load("tiny");
 
     // A second init would mean a second whisper context for the same model.
     expect(fakeModule.module.init).toHaveBeenCalledTimes(1);
@@ -211,12 +211,12 @@ describe("WhisperCppEngine repeated loads", () => {
   it("frees the previous context when switching models, since the module is shared", async () => {
     const fakeModule = createFakeModule();
     const engine = createEngine(fakeModule);
-    await engine.load("tiny.en");
+    await engine.load("tiny");
 
-    await engine.load("base.en");
+    await engine.load("base");
 
     expect(fakeModule.module.free).toHaveBeenCalledWith(1);
     expect(fakeModule.module.init).toHaveBeenCalledTimes(2);
-    expect(engine.getStatus()).toEqual({ state: "ready", modelId: "base.en" });
+    expect(engine.getStatus()).toEqual({ state: "ready", modelId: "base" });
   });
 });

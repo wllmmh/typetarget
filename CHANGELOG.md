@@ -9,9 +9,9 @@ All notable changes to this project are documented here. The format follows
 ### Added
 - Transcribe a browser tab's audio and type the text into a text field you pick, in the same
   tab or another one. Text goes in after what is already there and leaves your own edits alone.
-- Local Whisper models that run in the browser with no key and no network: Tiny, Base, Small
-  and Medium in English, full-precision and quantized. Each downloads once and is cached.
-  Tiny Q5 is the default.
+- Local Whisper models that run in the browser with no key and no network: the multilingual
+  Tiny, Base, Small, Medium and Large (v2, v3 and v3 Turbo), full-precision and quantized where
+  they fit in memory. Each downloads once and is cached. Tiny Q5 is the default.
 - Hosted models with your own API key: Gemini 3.5 Transcribe Live (Google), and Whisper Large v3 and
   v3 Turbo on Groq.
 - API Keys dialog with Get API Key. A saved key shows as dots in the field; clear the field

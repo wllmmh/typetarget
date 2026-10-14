@@ -3,6 +3,7 @@ import { installFakeChrome, type FakeChrome } from "../test/fake-chrome";
 import { createInitialState } from "./state";
 import { persistState, restorePersistedState, restrictLocalStorageToExtension } from "./persisted-state";
 import { CHUNK_MS_MAX } from "../domain/tuning";
+import { DEFAULT_MODEL } from "../domain/models";
 
 let fake: FakeChrome;
 
@@ -17,7 +18,7 @@ afterEach(() => {
 describe("persistState / restorePersistedState", () => {
   it("round-trips the user's picks so a reopened popup (or restarted worker) keeps them", async () => {
     const saved = createInitialState();
-    saved.selectedModel = "tiny.en";
+    saved.selectedModel = "tiny";
     saved.pendingSourceTabId = 42;
     saved.destination = { tabId: 7, frameId: 0, elementId: "el-1" };
     saved.destinationLabel = 'div "Add a comment..."';
@@ -26,10 +27,17 @@ describe("persistState / restorePersistedState", () => {
     const restored = createInitialState();
     await restorePersistedState(restored);
 
-    expect(restored.selectedModel).toBe("tiny.en");
+    expect(restored.selectedModel).toBe("tiny");
     expect(restored.pendingSourceTabId).toBe(42);
     expect(restored.destination).toEqual({ tabId: 7, frameId: 0, elementId: "el-1" });
     expect(restored.destinationLabel).toBe('div "Add a comment..."');
+  });
+
+  it("falls back to the default model when the stored one is no longer offered", async () => {
+    fake.storage.local.data.selectedModel = "tiny.en-q5_1";
+    const restored = createInitialState();
+    await restorePersistedState(restored);
+    expect(restored.selectedModel).toBe(DEFAULT_MODEL);
   });
 
   it("keeps lasting preferences in local storage and tab-scoped bindings in session storage", async () => {

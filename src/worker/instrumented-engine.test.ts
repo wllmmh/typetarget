@@ -6,7 +6,7 @@ const baseEngine = (transcribe: TranscriptionEngine["transcribe"]): Transcriptio
   load: vi.fn(),
   unload: vi.fn(),
   reset: vi.fn(),
-  getStatus: () => ({ state: "ready", modelId: "tiny.en" }),
+  getStatus: () => ({ state: "ready", modelId: "tiny" }),
   transcribe,
 });
 

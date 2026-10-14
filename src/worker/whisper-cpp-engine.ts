@@ -17,17 +17,21 @@ import { parseWhisperOutput } from "./whisper-line-parser";
 import { ensureModelDownloaded, type ModelSource } from "./model-downloader";
 
 const MODEL_FILENAME_IN_FS: Record<WhisperModelId, string> = {
-  "tiny.en": "ggml-tiny.en.bin",
-  "tiny.en-q5_1": "ggml-tiny.en-q5_1.bin",
-  "base.en": "ggml-base.en.bin",
-  "tiny.en-q8_0": "ggml-tiny.en-q8_0.bin",
-  "base.en-q5_1": "ggml-base.en-q5_1.bin",
-  "base.en-q8_0": "ggml-base.en-q8_0.bin",
-  "small.en-q5_1": "ggml-small.en-q5_1.bin",
-  "small.en-q8_0": "ggml-small.en-q8_0.bin",
-  "small.en": "ggml-small.en.bin",
-  "medium.en-q5_0": "ggml-medium.en-q5_0.bin",
-  "medium.en-q8_0": "ggml-medium.en-q8_0.bin",
+  "tiny-q5_1": "ggml-tiny-q5_1.bin",
+  "tiny-q8_0": "ggml-tiny-q8_0.bin",
+  "tiny": "ggml-tiny.bin",
+  "base-q5_1": "ggml-base-q5_1.bin",
+  "base-q8_0": "ggml-base-q8_0.bin",
+  "base": "ggml-base.bin",
+  "small-q5_1": "ggml-small-q5_1.bin",
+  "small-q8_0": "ggml-small-q8_0.bin",
+  "small": "ggml-small.bin",
+  "medium-q5_0": "ggml-medium-q5_0.bin",
+  "medium-q8_0": "ggml-medium-q8_0.bin",
+  "large-v3-turbo-q5_0": "ggml-large-v3-turbo-q5_0.bin",
+  "large-v3-turbo-q8_0": "ggml-large-v3-turbo-q8_0.bin",
+  "large-v2-q5_0": "ggml-large-v2-q5_0.bin",
+  "large-v3-q5_0": "ggml-large-v3-q5_0.bin",
 };
 
 /** EngineRouter only ever loads this engine for whisper-cpp-provider models, but

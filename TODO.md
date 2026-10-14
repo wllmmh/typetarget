@@ -20,6 +20,9 @@
       `fetch("chrome-extension://<id>/src/content/main.js")` fails.
 - [ ] Download a local model in Chrome and confirm it passes its SHA-256 check (2026-10-08). Also
       check how a failed check shows in the popup.
+- [ ] Load Medium Q8 and each Large model in Chrome and transcribe with it (2026-10-14). Their
+      weights plus working memory may not fit the ~2 GB WASM heap, and a ~1 GB download is
+      held twice in memory while it is hashed. Drop any that fail.
 - [ ] Check that the badge buttons and the picker still respond to real mouse clicks, and to
       Enter and Space on a focused button, now that untrusted events are ignored.
 - [ ] With "Show outline" off (2026-10-08): pick by Select field and by the

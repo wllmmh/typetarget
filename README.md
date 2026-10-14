@@ -49,14 +49,14 @@ typing, and "Type to new file" opens in a new tab. The site can still see the te
 
 The popup's Model dropdown lists every supported model, grouped by provider:
 
-- **Local Whisper** (`tiny.en-q5_1`, the default, plus `tiny.en` and `base.en`) — runs in the
-  browser in a Worker, with no network access and nothing to configure. Whether it keeps up
-  live depends on your computer, and on most it won't; the popup tells you when it is
-  falling behind. The first use of each model downloads it once (31–142 MB) and caches it.
-  Also listed: quantized `tiny.en-q8_0`, `base.en-q5_1`/`-q8_0`, `small.en-q5_1`/`-q8_0`,
-  `medium.en-q5_0`/`-q8_0`, and full-precision `small.en` (42–785 MB), from the same mirror.
-  Larger models are more accurate but much slower; the full-precision `medium.en` and the
-  large models don't fit in the bundled WASM build's ~2 GB memory.
+- **Local Whisper** (`tiny-q5_1` is the default) — runs in the browser in a Worker, with no
+  network access and nothing to configure. Whether it keeps up live depends on your computer,
+  and on most it won't; the popup tells you when it is falling behind. The first use of each
+  model downloads it once and caches it. The multilingual Tiny, Base and Small models are
+  listed quantized (Q5, Q8) and full-precision, Medium as Q5 and Q8, and Large as v3 Turbo
+  Q5/Q8, v2 Q5 and v3 Q5 (31 MB–1 GB), all from whisper.cpp's model mirror. Larger models
+  are more accurate but much slower; full-precision Medium and Large don't fit in the
+  bundled WASM build's ~2 GB memory.
 - **Google** (`Gemini 3.5 Transcribe Live`) — Google's Gemini Live API, a persistent
   streaming connection. Optional; requires your own Gemini API key and sends captured audio
   to Google.
@@ -65,8 +65,8 @@ The popup's Model dropdown lists every supported model, grouped by provider:
   Groq API key and sends captured audio to Groq. Groq bills every request as at least 10
   seconds of audio.
 
-**Languages**: Gemini and Groq's Whisper models cover dozens of languages; the Local Whisper models
-listed are English-only. TypeTarget's interface is in English.
+**Languages**: Gemini and Groq's Whisper models cover dozens of languages. The Local Whisper models
+are multilingual too, but TypeTarget asks them for English. TypeTarget's interface is in English.
 
 **Chunk length** (3–25 s, default 3 s) caps how long one utterance can grow before it is
 transcribed anyway; a pause in speech finalizes it sooner. A longer chunk helps local

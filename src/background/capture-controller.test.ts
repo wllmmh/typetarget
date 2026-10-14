@@ -35,8 +35,8 @@ describe("CaptureController.start", () => {
     fake.tabs.get.mockRejectedValue(new Error("No tab with id"));
     const controller = new CaptureController({ onSourceTabClosed: vi.fn() });
 
-    await expect(controller.start(42, "tiny.en")).rejects.toThrow(CaptureError);
-    await expect(controller.start(42, "tiny.en")).rejects.toMatchObject({ code: "source-tab-missing" });
+    await expect(controller.start(42, "tiny")).rejects.toThrow(CaptureError);
+    await expect(controller.start(42, "tiny")).rejects.toMatchObject({ code: "source-tab-missing" });
   });
 
   it("throws a CaptureError when Chrome provides no stream id", async () => {
@@ -48,7 +48,7 @@ describe("CaptureController.start", () => {
     });
     const controller = new CaptureController({ onSourceTabClosed: vi.fn() });
 
-    await expect(controller.start(42, "tiny.en")).rejects.toMatchObject({ code: "capture-failed" });
+    await expect(controller.start(42, "tiny")).rejects.toMatchObject({ code: "capture-failed" });
   });
 
   it("throws a CaptureError when the offscreen document reports failure", async () => {
@@ -61,7 +61,7 @@ describe("CaptureController.start", () => {
     );
     const controller = new CaptureController({ onSourceTabClosed: vi.fn() });
 
-    await expect(controller.start(42, "tiny.en")).rejects.toMatchObject({
+    await expect(controller.start(42, "tiny")).rejects.toMatchObject({
       code: "capture-failed",
       message: "getUserMedia rejected",
     });
@@ -80,14 +80,14 @@ describe("CaptureController.start", () => {
     });
     const controller = new CaptureController({ onSourceTabClosed: vi.fn() });
 
-    await controller.start(42, "base.en");
+    await controller.start(42, "base");
 
     // getMediaStreamId is tied to the popup's user gesture, so it must not wait for a
     // model download (see the ordering note on CaptureController.start).
     expect(calls).toEqual([
       "getMediaStreamId",
       JSON.stringify({ kind: "start-capture", streamId: "stream-1" }),
-      JSON.stringify({ kind: "load-model", modelId: "base.en" }),
+      JSON.stringify({ kind: "load-model", modelId: "base" }),
     ]);
   });
 
@@ -122,7 +122,7 @@ describe("CaptureController.start", () => {
     );
     const controller = new CaptureController({ onSourceTabClosed: vi.fn() });
 
-    await expect(controller.start(42, "tiny.en")).resolves.toBeUndefined();
+    await expect(controller.start(42, "tiny")).resolves.toBeUndefined();
     expect(controller.currentSourceTabId).toBe(42);
   });
 
@@ -136,7 +136,7 @@ describe("CaptureController.start", () => {
     );
     const controller = new CaptureController({ onSourceTabClosed: vi.fn() });
 
-    await expect(controller.start(42, "tiny.en")).resolves.toBeUndefined();
+    await expect(controller.start(42, "tiny")).resolves.toBeUndefined();
     expect(controller.currentSourceTabId).toBe(42);
   });
 
@@ -151,7 +151,7 @@ describe("CaptureController.start", () => {
     );
     const controller = new CaptureController({ onSourceTabClosed: vi.fn() });
 
-    await expect(controller.start(42, "tiny.en")).rejects.toMatchObject({ code: "capture-failed" });
+    await expect(controller.start(42, "tiny")).rejects.toMatchObject({ code: "capture-failed" });
     expect(fake.offscreen.closeDocument).toHaveBeenCalledTimes(1);
   });
 
@@ -161,7 +161,7 @@ describe("CaptureController.start", () => {
     stubOffscreenOk();
     const controller = new CaptureController({ onSourceTabClosed: vi.fn() });
 
-    await controller.start(42, "tiny.en");
+    await controller.start(42, "tiny");
 
     expect(controller.currentSourceTabId).toBe(42);
     expect(fake.offscreen.createDocument).toHaveBeenCalledTimes(1);
@@ -177,7 +177,7 @@ describe("CaptureController source-tab closure", () => {
     const onSourceTabClosed = vi.fn();
     const controller = new CaptureController({ onSourceTabClosed });
 
-    await controller.start(42, "tiny.en");
+    await controller.start(42, "tiny");
     fake.tabs.onRemoved.emit(42);
 
     expect(onSourceTabClosed).toHaveBeenCalledTimes(1);
@@ -191,7 +191,7 @@ describe("CaptureController source-tab closure", () => {
     const onSourceTabClosed = vi.fn();
     const controller = new CaptureController({ onSourceTabClosed });
 
-    await controller.start(42, "tiny.en");
+    await controller.start(42, "tiny");
     fake.tabs.onRemoved.emit(999);
 
     expect(onSourceTabClosed).not.toHaveBeenCalled();
@@ -227,7 +227,7 @@ describe("CaptureController.stop", () => {
     // Reflects that ensureOffscreenDocument() (called during start()) has created one.
     fake.runtime.getContexts.mockResolvedValue([{ contextType: "OFFSCREEN_DOCUMENT" }]);
     const controller = new CaptureController({ onSourceTabClosed: vi.fn() });
-    await controller.start(42, "tiny.en");
+    await controller.start(42, "tiny");
 
     await controller.stop();
 

@@ -19,7 +19,7 @@ const createManualEngine = () => {
     load: vi.fn(),
     unload: vi.fn(),
     reset: vi.fn(),
-    getStatus: () => ({ state: "ready", modelId: "tiny.en" }),
+    getStatus: () => ({ state: "ready", modelId: "tiny" }),
     transcribe: vi.fn(
       (audio: Float32Array) =>
         new Promise<TranscriptionResult>((resolve, reject) => {

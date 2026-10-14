@@ -36,17 +36,17 @@ const setup = (options?: { loadError?: Error; onSetApiKey?: ReturnType<typeof vi
 describe("createAsrWorkerController", () => {
   it("posts loading then ready while loading a model", async () => {
     const { controller, engine, events } = setup();
-    await controller.handle({ kind: "load-model", modelId: "tiny.en" });
-    expect(engine.load).toHaveBeenCalledWith("tiny.en");
+    await controller.handle({ kind: "load-model", modelId: "tiny" });
+    expect(engine.load).toHaveBeenCalledWith("tiny");
     expect(events).toEqual([
-      { kind: "engine-status", status: { state: "loading", modelId: "tiny.en" } },
-      { kind: "engine-status", status: { state: "ready", modelId: "tiny.en" } },
+      { kind: "engine-status", status: { state: "loading", modelId: "tiny" } },
+      { kind: "engine-status", status: { state: "ready", modelId: "tiny" } },
     ]);
   });
 
   it("reports a failed load as an error status instead of throwing", async () => {
     const { controller, events } = setup({ loadError: new Error("download failed") });
-    await expect(controller.handle({ kind: "load-model", modelId: "tiny.en" })).resolves.toBeUndefined();
+    await expect(controller.handle({ kind: "load-model", modelId: "tiny" })).resolves.toBeUndefined();
     expect(events.at(-1)).toEqual({ kind: "engine-status", status: { state: "error", message: "download failed" } });
   });
 
@@ -57,14 +57,14 @@ describe("createAsrWorkerController", () => {
     await controller.handle({ kind: "audio", samples });
     expect(transcriber.pushAudio).not.toHaveBeenCalled();
 
-    await controller.handle({ kind: "load-model", modelId: "tiny.en" });
+    await controller.handle({ kind: "load-model", modelId: "tiny" });
     await controller.handle({ kind: "audio", samples });
     expect(transcriber.pushAudio).toHaveBeenCalledWith(samples);
   });
 
   it("resets the transcriber when loading and unloading", async () => {
     const { controller, transcriber, engine, events } = setup();
-    await controller.handle({ kind: "load-model", modelId: "tiny.en" });
+    await controller.handle({ kind: "load-model", modelId: "tiny" });
     await controller.handle({ kind: "unload-model" });
     expect(transcriber.reset).toHaveBeenCalledTimes(2);
     expect(engine.unload).toHaveBeenCalled();

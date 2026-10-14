@@ -25,11 +25,11 @@ describe("EngineRouter", () => {
     const gemini = fakeProvider();
     const router = new EngineRouter({ providers: { "whisper-cpp": whisper, "gemini-live": gemini, groq: fakeProvider() } });
 
-    await router.load("tiny.en");
+    await router.load("tiny");
 
-    expect(whisper.engine.load).toHaveBeenCalledWith("tiny.en");
+    expect(whisper.engine.load).toHaveBeenCalledWith("tiny");
     expect(gemini.engine.load).not.toHaveBeenCalled();
-    expect(router.getStatus()).toEqual({ state: "ready", modelId: "tiny.en" });
+    expect(router.getStatus()).toEqual({ state: "ready", modelId: "tiny" });
   });
 
   it("unloads the previously active provider when switching providers", async () => {
@@ -37,7 +37,7 @@ describe("EngineRouter", () => {
     const gemini = fakeProvider();
     const router = new EngineRouter({ providers: { "whisper-cpp": whisper, "gemini-live": gemini, groq: fakeProvider() } });
 
-    await router.load("tiny.en");
+    await router.load("tiny");
     await router.load("gemini-3.5-transcribe-live");
 
     expect(whisper.engine.unload).toHaveBeenCalledTimes(1);
@@ -49,7 +49,7 @@ describe("EngineRouter", () => {
     const groq = fakeProvider();
     const router = new EngineRouter({ providers: { "whisper-cpp": whisper, "gemini-live": fakeProvider(), groq } });
 
-    await router.load("tiny.en");
+    await router.load("tiny");
     await router.load("groq-whisper-large-v3-turbo");
 
     expect(whisper.engine.unload).toHaveBeenCalledTimes(1);
@@ -61,8 +61,8 @@ describe("EngineRouter", () => {
     const gemini = fakeProvider();
     const router = new EngineRouter({ providers: { "whisper-cpp": whisper, "gemini-live": gemini, groq: fakeProvider() } });
 
-    await router.load("tiny.en");
-    await router.load("base.en");
+    await router.load("tiny");
+    await router.load("base");
 
     expect(whisper.engine.unload).not.toHaveBeenCalled();
   });
@@ -71,7 +71,7 @@ describe("EngineRouter", () => {
     const whisper = fakeProvider();
     const gemini = fakeProvider();
     const router = new EngineRouter({ providers: { "whisper-cpp": whisper, "gemini-live": gemini, groq: fakeProvider() } });
-    await router.load("tiny.en");
+    await router.load("tiny");
 
     const samples = new Float32Array(4);
     router.pushAudio(samples);
@@ -88,7 +88,7 @@ describe("EngineRouter", () => {
     const whisper = fakeProvider();
     const gemini = fakeProvider();
     const router = new EngineRouter({ providers: { "whisper-cpp": whisper, "gemini-live": gemini, groq: fakeProvider() } });
-    await router.load("tiny.en");
+    await router.load("tiny");
 
     await router.reset();
 

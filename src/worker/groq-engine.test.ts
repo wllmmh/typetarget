@@ -27,7 +27,7 @@ describe("GroqEngine.load", () => {
   it("refuses a model that belongs to another provider", async () => {
     const { engine } = createEngine("gsk_test_key", () => jsonResponse(200, { text: "" }));
 
-    await expect(engine.load("tiny.en")).rejects.toThrow(/non-Groq/);
+    await expect(engine.load("tiny")).rejects.toThrow(/non-Groq/);
   });
 
   it("is ready once a key is set, without contacting the network", async () => {

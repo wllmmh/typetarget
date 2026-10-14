@@ -97,7 +97,9 @@ The URLs are pinned to commit `5359861c739e955e79d9a303bcbc70fb988958b1`, and ea
 checked against its SHA-256. The supported models, their URLs and hashes are in
 `src/worker/model-urls.ts`, with sizes in
 `MODEL_CATALOG` (`src/domain/models.ts`). The WASM heap tops out near 2 GB (512 MB initial,
-growable to ~1.94 GiB), which rules out full-precision `medium.en` and every large model.
+growable to ~1.94 GiB), which rules out full-precision `medium`, full-precision
+`large-v3-turbo`, `large-v2-q8_0` and every full-precision large model
+([ADR 0014](../adr/0014-multilingual-local-whisper-models.md)).
 
 ## Verified against the real binary
 

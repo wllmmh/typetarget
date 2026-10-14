@@ -118,10 +118,10 @@ describe("popup requests", () => {
   });
 
   it("see the settings saved before a restart", async () => {
-    Object.assign(fake.storage.local.data, { selectedModel: "base.en", chunkMs: 9_000, showPageIndicators: false });
+    Object.assign(fake.storage.local.data, { selectedModel: "base", chunkMs: 9_000, showPageIndicators: false });
     await startServiceWorker();
 
-    expect(await getState()).toMatchObject({ selectedModel: "base.en", chunkMs: 9_000, showPageIndicators: false });
+    expect(await getState()).toMatchObject({ selectedModel: "base", chunkMs: 9_000, showPageIndicators: false });
   });
 });
 

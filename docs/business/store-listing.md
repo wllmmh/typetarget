@@ -52,7 +52,7 @@ PRIVATE BY DESIGN
 • Free and open source (MIT): https://github.com/wllmmh/typetarget
 
 Gemini and Groq's Whisper transcribe dozens of languages. The Local Whisper models in the list are
-English-only. TypeTarget's own interface is in English.
+multilingual, but TypeTarget asks them for English. TypeTarget's own interface is in English.
 ```
 
 **Graphic assets** (none exist yet):

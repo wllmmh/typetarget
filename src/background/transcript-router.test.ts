@@ -91,7 +91,7 @@ describe("createTranscriptRouter", () => {
 
   it("surfaces an engine error status but ignores loading/ready", async () => {
     const { router, state } = setup();
-    await router.handle({ kind: "engine-status", status: { state: "ready", modelId: "tiny.en" } });
+    await router.handle({ kind: "engine-status", status: { state: "ready", modelId: "tiny" } });
     expect(state.lastError).toBeNull();
 
     await router.handle({ kind: "engine-status", status: { state: "error", message: "boom" } });
@@ -101,7 +101,7 @@ describe("createTranscriptRouter", () => {
   it("tracks download progress in state so the popup can show it", async () => {
     const { router, state, onStateChanged } = setup();
 
-    await router.handle({ kind: "model-download-progress", modelId: "base.en", receivedBytes: 1000, totalBytes: 4000 });
+    await router.handle({ kind: "model-download-progress", modelId: "base", receivedBytes: 1000, totalBytes: 4000 });
 
     expect(state.modelDownload).toEqual({ receivedBytes: 1000, totalBytes: 4000 });
     expect(onStateChanged).toHaveBeenCalled();
@@ -109,9 +109,9 @@ describe("createTranscriptRouter", () => {
 
   it("clears download progress once the engine reaches a terminal state", async () => {
     const { router, state } = setup();
-    await router.handle({ kind: "model-download-progress", modelId: "base.en", receivedBytes: 1000, totalBytes: 4000 });
+    await router.handle({ kind: "model-download-progress", modelId: "base", receivedBytes: 1000, totalBytes: 4000 });
 
-    await router.handle({ kind: "engine-status", status: { state: "ready", modelId: "base.en" } });
+    await router.handle({ kind: "engine-status", status: { state: "ready", modelId: "base" } });
 
     expect(state.modelDownload).toBeNull();
   });
@@ -128,10 +128,10 @@ describe("createTranscriptRouter", () => {
   it("tracks the engine state so the popup can show whether a model is loaded", async () => {
     const { router, state } = setup();
 
-    await router.handle({ kind: "engine-status", status: { state: "loading", modelId: "tiny.en" } });
+    await router.handle({ kind: "engine-status", status: { state: "loading", modelId: "tiny" } });
     expect(state.engineState).toBe("loading");
 
-    await router.handle({ kind: "engine-status", status: { state: "ready", modelId: "tiny.en" } });
+    await router.handle({ kind: "engine-status", status: { state: "ready", modelId: "tiny" } });
     expect(state.engineState).toBe("ready");
   });
 

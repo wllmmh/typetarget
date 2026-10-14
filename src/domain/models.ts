@@ -10,31 +10,35 @@ export type EngineProvider = "whisper-cpp" | "gemini-live" | "groq";
 /** Whisper.cpp's own model identifiers — split out from ModelId so the download/cache
  * machinery (model-urls.ts, model-downloader.ts, whisper-cpp-engine.ts) that's keyed by
  * "one URL/filename per whisper model" doesn't need an (nonsensical) entry for network
- * providers that have no file to download. English-only, like the rest of the app. */
+ * providers that have no file to download. All multilingual; the mirror's English-only
+ * (`.en`) files are not offered. */
 export type WhisperModelId =
-  | "tiny.en"
-  | "tiny.en-q5_1"
-  | "base.en"
-  // Quantized and larger variants, from the same mirror (model-urls.ts).
-  | "tiny.en-q8_0"
-  | "base.en-q5_1"
-  | "base.en-q8_0"
-  | "small.en-q5_1"
-  | "small.en-q8_0"
-  | "small.en"
-  | "medium.en-q5_0"
-  | "medium.en-q8_0";
+  | "tiny-q5_1"
+  | "tiny-q8_0"
+  | "tiny"
+  | "base-q5_1"
+  | "base-q8_0"
+  | "base"
+  | "small-q5_1"
+  | "small-q8_0"
+  | "small"
+  | "medium-q5_0"
+  | "medium-q8_0"
+  | "large-v3-turbo-q5_0"
+  | "large-v3-turbo-q8_0"
+  | "large-v2-q5_0"
+  | "large-v3-q5_0";
 
 /** Model identifiers across all providers. */
 export type ModelId = WhisperModelId | "gemini-3.5-transcribe-live" | "groq-whisper-large-v3-turbo" | "groq-whisper-large-v3";
 
 /**
- * tiny.en-q5_1: the smallest download (~31 MB) and, measured in Chrome, ~1.3× faster than
- * tiny.en with an identical transcript. Network providers are never the default: sending
+ * tiny-q5_1: the smallest download (~31 MB). Its English-only twin measured ~1.3× faster than
+ * full-precision tiny in Chrome, with an identical transcript. Network providers are never the default: sending
  * audio off-device must be a deliberate choice, and they need the user's own API key.
  * See docs/adr/0010-hosted-models-for-live-transcription.md.
  */
-export const DEFAULT_MODEL: ModelId = "tiny.en-q5_1";
+export const DEFAULT_MODEL: ModelId = "tiny-q5_1";
 
 export type ModelInfo = {
   id: ModelId;
@@ -42,7 +46,7 @@ export type ModelInfo = {
   /** The provider's name, e.g. "Local" / "Groq" — shown in the model picker
    * alongside `label` so multiple providers' models aren't visually indistinguishable. */
   name: string;
-  /** Variant/size within the provider, e.g. "Whisper Tiny (English)" / "Gemini 3.5 Transcribe Live". */
+  /** Variant/size within the provider, e.g. "Whisper Tiny Q5" / "Gemini 3.5 Transcribe Live". */
   label: string;
   /** Only local models have a fixed download size. */
   approxSizeMb?: number;
@@ -53,27 +57,26 @@ export type ModelInfo = {
 };
 
 export const MODEL_CATALOG: Record<ModelId, ModelInfo> = {
-  "tiny.en": { id: "tiny.en", provider: "whisper-cpp", name: "Local", label: "Whisper Tiny (English)", approxSizeMb: 74 }, // measured: 77,704,715 bytes
-  // 5-bit quantized tiny.en: smaller download, ~1.3× faster, same transcript. The default.
-  "tiny.en-q5_1": {
-    id: "tiny.en-q5_1",
-    provider: "whisper-cpp",
-    name: "Local",
-    label: "Whisper Tiny Q5 (English)",
-    approxSizeMb: 31, // measured: 32,166,155 bytes
-  },
-  "tiny.en-q8_0": { id: "tiny.en-q8_0", provider: "whisper-cpp", name: "Local", label: "Whisper Tiny Q8 (English)", approxSizeMb: 42 }, // 43,550,795 bytes
-  "base.en": { id: "base.en", provider: "whisper-cpp", name: "Local", label: "Whisper Base (English)", approxSizeMb: 142 }, // not independently verified
-  "base.en-q5_1": { id: "base.en-q5_1", provider: "whisper-cpp", name: "Local", label: "Whisper Base Q5 (English)", approxSizeMb: 57 }, // 59,721,011 bytes
-  "base.en-q8_0": { id: "base.en-q8_0", provider: "whisper-cpp", name: "Local", label: "Whisper Base Q8 (English)", approxSizeMb: 78 }, // 81,781,811 bytes
-  // The rest of the mirror's English-only files that fit the vendored build's ~2 GB WASM heap
-  // (full-precision medium.en and the large models don't). Sizes in MiB from the mirror's byte
-  // counts. Whether Medium Q8 fits alongside its working memory is unverified.
-  "small.en-q5_1": { id: "small.en-q5_1", provider: "whisper-cpp", name: "Local", label: "Whisper Small Q5 (English)", approxSizeMb: 181 }, // 190,098,681 bytes
-  "small.en-q8_0": { id: "small.en-q8_0", provider: "whisper-cpp", name: "Local", label: "Whisper Small Q8 (English)", approxSizeMb: 252 }, // 264,477,561 bytes
-  "small.en": { id: "small.en", provider: "whisper-cpp", name: "Local", label: "Whisper Small (English)", approxSizeMb: 465 }, // 487,614,201 bytes
-  "medium.en-q5_0": { id: "medium.en-q5_0", provider: "whisper-cpp", name: "Local", label: "Whisper Medium Q5 (English)", approxSizeMb: 514 }, // 539,225,533 bytes
-  "medium.en-q8_0": { id: "medium.en-q8_0", provider: "whisper-cpp", name: "Local", label: "Whisper Medium Q8 (English)", approxSizeMb: 785 }, // 823,382,461 bytes
+  // 5-bit quantized tiny: the smallest download and the fastest. The default.
+  "tiny-q5_1": { id: "tiny-q5_1", provider: "whisper-cpp", name: "Local", label: "Whisper Tiny Q5", approxSizeMb: 31 }, // 32,152,673 bytes
+  "tiny-q8_0": { id: "tiny-q8_0", provider: "whisper-cpp", name: "Local", label: "Whisper Tiny Q8", approxSizeMb: 42 }, // 43,537,433 bytes
+  "tiny": { id: "tiny", provider: "whisper-cpp", name: "Local", label: "Whisper Tiny", approxSizeMb: 74 }, // 77,691,713 bytes
+  "base-q5_1": { id: "base-q5_1", provider: "whisper-cpp", name: "Local", label: "Whisper Base Q5", approxSizeMb: 57 }, // 59,707,625 bytes
+  "base-q8_0": { id: "base-q8_0", provider: "whisper-cpp", name: "Local", label: "Whisper Base Q8", approxSizeMb: 78 }, // 81,768,585 bytes
+  "base": { id: "base", provider: "whisper-cpp", name: "Local", label: "Whisper Base", approxSizeMb: 141 }, // 147,951,465 bytes
+  "small-q5_1": { id: "small-q5_1", provider: "whisper-cpp", name: "Local", label: "Whisper Small Q5", approxSizeMb: 181 }, // 190,085,487 bytes
+  "small-q8_0": { id: "small-q8_0", provider: "whisper-cpp", name: "Local", label: "Whisper Small Q8", approxSizeMb: 252 }, // 264,464,607 bytes
+  "small": { id: "small", provider: "whisper-cpp", name: "Local", label: "Whisper Small", approxSizeMb: 465 }, // 487,601,967 bytes
+  // Only the files that fit the vendored build's ~2 GB WASM heap: full-precision medium
+  // (1.43 GiB) and large-v3-turbo (1.51 GiB), large-v2 Q8 (1.54 GiB) and every full-precision
+  // large model (2.88 GiB) don't. Whether Medium Q8 and the large models fit alongside their
+  // working memory is unverified. Sizes in MiB from the mirror's byte counts.
+  "medium-q5_0": { id: "medium-q5_0", provider: "whisper-cpp", name: "Local", label: "Whisper Medium Q5", approxSizeMb: 514 }, // 539,212,467 bytes
+  "medium-q8_0": { id: "medium-q8_0", provider: "whisper-cpp", name: "Local", label: "Whisper Medium Q8", approxSizeMb: 785 }, // 823,369,779 bytes
+  "large-v3-turbo-q5_0": { id: "large-v3-turbo-q5_0", provider: "whisper-cpp", name: "Local", label: "Whisper Large v3 Turbo Q5", approxSizeMb: 547 }, // 574,041,195 bytes
+  "large-v3-turbo-q8_0": { id: "large-v3-turbo-q8_0", provider: "whisper-cpp", name: "Local", label: "Whisper Large v3 Turbo Q8", approxSizeMb: 834 }, // 874,188,075 bytes
+  "large-v2-q5_0": { id: "large-v2-q5_0", provider: "whisper-cpp", name: "Local", label: "Whisper Large v2 Q5", approxSizeMb: 1031 }, // 1,080,732,091 bytes
+  "large-v3-q5_0": { id: "large-v3-q5_0", provider: "whisper-cpp", name: "Local", label: "Whisper Large v3 Q5", approxSizeMb: 1031 }, // 1,081,140,203 bytes
   // Google's Gemini 3.5 Transcribe via the Live API (docs/adr/0005-gemini-live-api-via-official-sdk.md).
   // Sends captured audio to Google using the user's own API key.
   "gemini-3.5-transcribe-live": {
