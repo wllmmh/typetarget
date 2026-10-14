@@ -1,22 +1,21 @@
 /**
- * User-tunable pipeline settings, shared so the popup's control and the service worker's
- * validation cannot drift apart.
- *
- * Chunk length caps how long one utterance grows before it is transcribed anyway. It is the
- * main latency/throughput trade-off: inference cost is roughly fixed per call (Whisper pads
- * to a 30 s window), so short chunks get text sooner but do far more work per second of
- * audio, while long chunks keep up better and lag further behind.
+ * How long one utterance may grow before it is transcribed anyway, when speech runs on without a
+ * pause (a pause ends it sooner). Short keeps transcription live, and the hosted models are fast
+ * enough to keep up with it. See docs/adr/0017-utterance-cap-set-by-typetarget.md.
  */
+export const UTTERANCE_CAP_MS = 3_000;
 
-/** Short enough to be worth trying, long enough that one inference isn't pure overhead. */
-export const CHUNK_MS_MIN = 3_000;
 /** Kept under Whisper's 30 s window, with room for the pre-roll that precedes an utterance. */
-export const CHUNK_MS_MAX = 25_000;
-export const CHUNK_MS_DEFAULT = 3_000;
-export const CHUNK_MS_STEP = 1_000;
+export const UTTERANCE_CAP_MAX_MS = 25_000;
 
-/** Messages are a boundary: a value from the popup is clamped, and junk falls back to the default. */
-export const clampChunkMs = (ms: number): number => {
-  if (!Number.isFinite(ms)) return CHUNK_MS_DEFAULT;
-  return Math.min(CHUNK_MS_MAX, Math.max(CHUNK_MS_MIN, Math.round(ms)));
-};
+/** How much longer than one inference the cap is stretched to, so the next call has room to spare. */
+const KEEP_UP_HEADROOM = 1.25;
+
+/**
+ * Local Whisper's cap after an inference that took `inferenceMs`. Each call costs about the same
+ * whatever the audio's length (Whisper pads to a 30 s window), so a machine slower than the base
+ * cap only keeps up with a longer one: the cap stretches to the call's time plus headroom, and
+ * comes back down as calls get faster. Never below the base cap, never past the maximum.
+ */
+export const stretchedUtteranceCapMs = (inferenceMs: number): number =>
+  Math.min(UTTERANCE_CAP_MAX_MS, Math.max(UTTERANCE_CAP_MS, Math.ceil(inferenceMs * KEEP_UP_HEADROOM)));

@@ -141,6 +141,26 @@ describe("WhisperCppEngine.transcribe", () => {
     expect(result.text).toBe("hello world");
   });
 
+  it("has whisper.cpp detect the spoken language, and transcribe rather than translate it", async () => {
+    const fakeModule = createFakeModule();
+    const engine = createEngine(fakeModule);
+    await engine.load("tiny");
+
+    await engine.transcribe(new Float32Array(16_000));
+
+    expect(fakeModule.module.full_default).toHaveBeenCalledWith(1, expect.any(Float32Array), "auto", 1, false);
+  });
+
+  it("passes a given language through instead of detecting it", async () => {
+    const fakeModule = createFakeModule();
+    const engine = createEngine(fakeModule);
+    await engine.load("tiny");
+
+    await engine.transcribe(new Float32Array(16_000), { language: "fr" });
+
+    expect(fakeModule.module.full_default).toHaveBeenCalledWith(1, expect.any(Float32Array), "fr", 1, false);
+  });
+
   it("throws when full_default returns a non-zero result code", async () => {
     const fakeModule = createFakeModule({ fullDefaultResultCode: -1 });
     const engine = createEngine(fakeModule);

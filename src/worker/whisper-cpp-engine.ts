@@ -157,8 +157,10 @@ export class WhisperCppEngine implements TranscriptionEngine {
 
     try {
       // `nthreads` is ignored by the vendored single-threaded build (the patch forces
-      // n_threads = 1); it is still passed so the signature matches upstream's.
-      const resultCode = module.full_default(this.contextIndex, audio, options?.language ?? "en", 1, false);
+      // n_threads = 1); it is still passed so the signature matches upstream's. "auto" makes
+      // whisper_full detect the language from the audio first, and `translate` false keeps the
+      // text in that language rather than translating it to English.
+      const resultCode = module.full_default(this.contextIndex, audio, options?.language ?? "auto", 1, false);
       if (resultCode !== 0) {
         throw new Error(`whisper.cpp inference failed with code ${resultCode}.`);
       }

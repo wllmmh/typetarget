@@ -21,7 +21,8 @@ of the `.en` files. Within each tier, list every file that fits the heap:
 
 `tiny-q5_1` replaces `tiny.en-q5_1` as `DEFAULT_MODEL`
 ([ADR 0010](0010-hosted-models-for-live-transcription.md)). Transcription is still asked for in
-English (`language: "en"`), as with Groq.
+English (`language: "en"`), as with Groq. [ADR 0016](0016-transcription-detects-the-spoken-language.md)
+later replaced that with language detection.
 
 ## Consequences
 

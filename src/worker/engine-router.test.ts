@@ -84,6 +84,20 @@ describe("EngineRouter", () => {
     expect(gemini.transcriber.pushAudio).not.toHaveBeenCalled();
   });
 
+  it("applies options set before a load, or while another provider was active, to the one it loads", async () => {
+    const whisper = fakeProvider();
+    const gemini = fakeProvider();
+    const router = new EngineRouter({ providers: { "whisper-cpp": whisper, "gemini-live": gemini, groq: fakeProvider() } });
+
+    router.setOptions({ maxUtteranceMs: 5_000 });
+    await router.load("gemini-3.5-transcribe-live");
+    router.setOptions({ language: "fr" });
+    await router.load("tiny");
+
+    expect(gemini.transcriber.setOptions).toHaveBeenCalledWith({ maxUtteranceMs: 5_000 });
+    expect(whisper.transcriber.setOptions).toHaveBeenCalledWith({ maxUtteranceMs: 5_000, language: "fr" });
+  });
+
   it("routes reset() to the active provider's transcriber, not its engine", async () => {
     const whisper = fakeProvider();
     const gemini = fakeProvider();

@@ -36,9 +36,16 @@
       the client-side boundary change. The engine has been verified against the API, and the
       user has used Gemini, but no deliberate pass has been made.
 
+- [ ] Have a native speaker review each translation in `_locales/` (2026-10-14). They were
+      machine-written, and the badge buttons, right-click menu and API key dialog were only
+      checked in English; the popup and editor tab were seen in Japanese and German.
+
 ## Fix
 
-- [ ] Gemini: a boundary forced by the chunk cap in mid-phrase loses the straddling word.
+- [ ] No space between utterances in languages written without spaces (Chinese, Japanese,
+      Thai): `insert-text.ts` always adds one.
+
+- [ ] Gemini: a boundary forced by the 3 s utterance cap in mid-phrase loses the straddling word.
       Defer a cap cut to the next low-energy frame
       ([ADR 0006](docs/adr/0006-client-side-utterance-boundaries-for-gemini-live.md)).
 
@@ -61,6 +68,11 @@
     cached.
 
 ## Ideas, not planned
+
+- Translate error messages. Most are built in the background or the ASR worker (which has no
+  `chrome.i18n`) and some wrap a provider's own text, so the popup would need an error code
+  to translate from ([ADR 0015](docs/adr/0015-ui-text-in-the-browsers-language.md)).
+- Localize the Chrome Web Store listing's description and screenshots per language.
 
 - A `chrome.sidePanel` UI, so controls and diagnostics stay visible while typing elsewhere.
   The popup closes whenever the user clicks into the page.

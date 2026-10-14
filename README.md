@@ -33,8 +33,8 @@ Then open `chrome://extensions`, turn on Developer mode, click "Load unpacked" a
 
 The toolbar popup has one button each for listening and typing (**Start listening** /
 **Stop listening**, **Start typing** / **Stop typing**), both acting on the tab the popup was
-opened on, plus the model picker, API keys and chunk length. **Start typing** is **Type to new
-file**.
+opened on, plus the model picker, the spoken language and API keys. **Start typing** is **Type
+to new file**.
 
 The output box gets a colored outline, a "TypeTarget" timer and buttons that save the text as
 a `.txt` file and stop typing. The page you type into is never told which tab you are
@@ -65,16 +65,20 @@ The popup's Model dropdown lists every supported model, grouped by provider:
   Groq API key and sends captured audio to Groq. Groq bills every request as at least 10
   seconds of audio.
 
-**Languages**: Gemini and Groq's Whisper models cover dozens of languages. The Local Whisper models
-are multilingual too, but TypeTarget asks them for English. TypeTarget's interface is in English.
+**Languages**: every model transcribes speech in the language it is spoken in. The Whisper
+models, local and on Groq, detect it for each utterance out of the 99 languages Whisper knows,
+and Gemini detects it too. A very short utterance (a word or two) can be detected as the wrong
+language, so with a Whisper model you can name it in the popup's **Spoken language** menu
+instead of leaving it on Auto. It shows Auto, greyed out, while Gemini is selected. TypeTarget's own menus and buttons follow the browser's display language, in 26
+languages (`_locales/`), with English for the rest.
 
-**Chunk length** (3–25 s, default 3 s) caps how long one utterance can grow before it is
-transcribed anyway; a pause in speech finalizes it sooner. A longer chunk helps local
-Whisper keep up on slow hardware and lowers Groq's per-request cost.
+**Live text**: a pause in speech sends what was said to the model. In continuous speech, it
+is sent every 3 seconds anyway. Local Whisper lengthens that, up to 25 seconds, on a machine too
+slow to keep up at 3, and shortens it again when it can.
 
-**API keys**: click the key icon next to the model picker. A key is stored only in this
-browser's extension storage, sent only to its own provider, never shown again once saved,
-and takes effect immediately. A saved key shows as dots; clear the field and click Done to delete it.
+**API keys**: open the model menu and click **API key** on the provider's heading. A key is
+stored only in this browser's extension storage, sent only to its own provider, never shown
+again once saved, and takes effect immediately. A saved key shows as dots; clear the field and click Done to delete it.
 
 ## Permissions
 
@@ -83,7 +87,7 @@ and takes effect immediately. A saved key shows as dots; clear the field and cli
 | `tabCapture` | Capture the audio of the tab you choose. |
 | `activeTab` | Act on the tab where you opened the popup or used the right-click menu, without broad host permissions. |
 | `scripting` | Inject the field picker into that tab, on demand, instead of a content script on every site. |
-| `storage` | Remember the model, chunk length, page-indicator setting, API keys, and the current source tab and field. |
+| `storage` | Remember the model, spoken language, page-indicator setting, API keys, and the current source tab and field. |
 | `offscreen` | Run audio capture and transcription outside the service worker, which Chrome can stop at any time. |
 | `contextMenus` | The TypeTarget right-click menu. |
 | `generativelanguage.googleapis.com`, `api.groq.com` | Reach Gemini and Groq, only while one of their models is selected and listening. |

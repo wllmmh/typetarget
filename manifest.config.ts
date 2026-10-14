@@ -7,7 +7,7 @@ import pkg from "./package.json";
 //   persistent host permission; also what lets tabCapture target that tab.
 // - scripting: inject the destination content script on demand (activeTab-scoped) instead
 //   of a persistent <all_urls> content_scripts entry.
-// - storage: selected model, chunk length, page-indicator setting, API keys (local, read only to authenticate to
+// - storage: selected model, spoken language, page-indicator setting, API keys (local, read only to authenticate to
 //   their own provider), and session-scoped tab/destination state. Never audio or transcripts.
 // - offscreen: run the long-lived Web Audio + ASR pipeline outside the non-persistent service worker.
 // - contextMenus: the "TypeTarget" right-click submenu. Choosing an item grants activeTab for
@@ -17,10 +17,11 @@ import pkg from "./package.json";
 // groq-engine.ts); everything else relies on activeTab.
 export default defineManifest({
   manifest_version: 3,
-  name: "TypeTarget — Speech to text anywhere",
+  // Name and description in the browser's language, from _locales/ (see src/domain/i18n.ts).
+  name: "__MSG_extName__",
   version: pkg.version,
-  description:
-    "Transcribe browser tab audio directly into any text field, with your choice of AI model for free.",
+  description: "__MSG_extDescription__",
+  default_locale: "en",
   icons: {
     16: "public/icons/icon16.png",
     48: "public/icons/icon48.png",

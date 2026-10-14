@@ -40,11 +40,12 @@ and types the text into a text box the user picked, which may be in another tab.
 - **Offscreen document** (`src/offscreen`) owns the tab capture `MediaStream`. It plays the
   audio back to the speakers (capture mutes the tab otherwise), taps it through an
   AudioWorklet, resamples to 16 kHz mono and feeds the worker. It also owns the worker's
-  lifetime and remembers the chunk length and API keys for when the worker is created.
+  lifetime and remembers the spoken language and API keys for when the worker is created.
 - **ASR worker** (`src/worker`). `EngineRouter` picks a provider per model
   ([ADR 0004](docs/adr/0004-pluggable-transcription-engines.md)):
   - `whisper-cpp` and `groq` are discrete. Each `StreamingTranscriber` runs an `EnergyVad`
-    and sends one utterance per inference call, capped by the chunk length.
+    and sends one utterance per inference call, cut at 3 s of continuous speech. Local
+    Whisper stretches that cap to keep up ([ADR 0017](docs/adr/0017-utterance-cap-set-by-typetarget.md)).
   - `gemini-live` streams continuously over one connection and marks boundaries itself
     ([ADR 0006](docs/adr/0006-client-side-utterance-boundaries-for-gemini-live.md)).
 
@@ -63,12 +64,15 @@ and types the text into a text box the user picked, which may be in another tab.
   whenever it closes, so it holds no state of its own.
 - **Domain** (`src/domain`) holds shared contracts: messages, models, tuning bounds, API key
   providers and sender checks.
+- **UI text** comes from `_locales/<lang>/messages.json` through `t()` in `domain/i18n.ts`, in
+  the browser's display language with English as the fallback
+  ([ADR 0015](docs/adr/0015-ui-text-in-the-browsers-language.md)).
 
 ## Data flow of one utterance
 
 1. The offscreen worklet posts ~100 ms batches. They are resampled to 16 kHz and sent to the
    worker. Batches are dropped (and counted) until the engine reports `ready`.
-2. The engine decides where the utterance ends (VAD pause or chunk cap) and produces a
+2. The engine decides where the utterance ends (VAD pause or utterance cap) and produces a
    `final`.
 3. The offscreen document forwards the `transcript-event`. The service worker accepts it only
    from the offscreen page's URL.
@@ -83,7 +87,7 @@ and types the text into a text box the user picked, which may be in another tab.
 
 | Area | Contents |
 | --- | --- |
-| `storage.local` (restricted to extension pages) | selected model, chunk length, "Show outline", API keys |
+| `storage.local` (restricted to extension pages) | selected model, spoken language, "Show outline", API keys |
 | `storage.session` | known tabs, pending source tab, destination and its label, running capture |
 | IndexedDB (worker) | downloaded model files |
 

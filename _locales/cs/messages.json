@@ -1,0 +1,312 @@
+{
+  "extName": {
+    "message": "TypeTarget — Převod řeči na text kdekoli"
+  },
+  "extDescription": {
+    "message": "Přepisuje zvuk z karty prohlížeče přímo do libovolného textového pole. Zdarma, s modelem AI podle vašeho výběru."
+  },
+  "textDirection": {
+    "message": "ltr"
+  },
+  "statusIdle": {
+    "message": "Nečinné"
+  },
+  "statusLoadingModel": {
+    "message": "Načítání modelu"
+  },
+  "statusCapturing": {
+    "message": "Zachytávání"
+  },
+  "statusTranscribing": {
+    "message": "Přepisování"
+  },
+  "statusPaused": {
+    "message": "Pozastaveno"
+  },
+  "statusError": {
+    "message": "Chyba"
+  },
+  "statusDownloading": {
+    "message": "Stahování modelu ($RECEIVED$ MB)",
+    "placeholders": {
+      "received": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusDownloadingPercent": {
+    "message": "Stahování modelu: $PERCENT$ % ($RECEIVED$/$TOTAL$ MB)",
+    "placeholders": {
+      "percent": {
+        "content": "$1"
+      },
+      "received": {
+        "content": "$2"
+      },
+      "total": {
+        "content": "$3"
+      }
+    }
+  },
+  "engineUnloaded": {
+    "message": "nenačteno"
+  },
+  "engineLoading": {
+    "message": "načítání…"
+  },
+  "engineReady": {
+    "message": "připraveno"
+  },
+  "engineError": {
+    "message": "selhalo"
+  },
+  "sessionReconnecting": {
+    "message": "Obnovování připojení (pokus $ATTEMPT$)… $REASON$",
+    "placeholders": {
+      "attempt": {
+        "content": "$1"
+      },
+      "reason": {
+        "content": "$2"
+      }
+    }
+  },
+  "sessionReconnected": {
+    "message": "znovu připojeno $COUNT$×",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "sessionListening": {
+    "message": "poslech"
+  },
+  "sessionPaused": {
+    "message": "pozastaveno"
+  },
+  "modelHeading": {
+    "message": "Model"
+  },
+  "fallingBehind": {
+    "message": "Toto zařízení s tímto místním modelem přepisuje pomaleji než v reálném čase."
+  },
+  "spokenLanguageHeading": {
+    "message": "Mluvený jazyk"
+  },
+  "spokenLanguageAuto": {
+    "message": "Automaticky"
+  },
+  "apiKeyTitle": {
+    "message": "Klíč API pro $PROVIDER$",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyStorageNote": {
+    "message": "Klíč API je uložen pouze v tomto zařízení a slouží jen k ověření požadavků u poskytovatele."
+  },
+  "apiKeyNetworkNote": {
+    "message": "Zvuk se ke zpracování odesílá do služby $PROVIDER$.",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyPlaceholder": {
+    "message": "Vložte svůj klíč API pro $PROVIDER$",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "getApiKey": {
+    "message": "Získat klíč API"
+  },
+  "done": {
+    "message": "Hotovo"
+  },
+  "listeningToHeading": {
+    "message": "Zdroj zvuku"
+  },
+  "noTabSelected": {
+    "message": "Není vybrána žádná karta"
+  },
+  "startListening": {
+    "message": "Spustit poslech"
+  },
+  "stopListening": {
+    "message": "Zastavit poslech"
+  },
+  "typingToHeading": {
+    "message": "Psaní do"
+  },
+  "noFieldSelected": {
+    "message": "Není vybráno žádné pole"
+  },
+  "startTyping": {
+    "message": "Spustit psaní"
+  },
+  "stopTyping": {
+    "message": "Zastavit psaní"
+  },
+  "showOutline": {
+    "message": "Zobrazit obrys"
+  },
+  "diagnosticsHeading": {
+    "message": "Diagnostika"
+  },
+  "diagnosticsModel": {
+    "message": "Model: $STATE$",
+    "placeholders": {
+      "state": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsAudio": {
+    "message": "Zvuk: bloků $CHUNKS$, úroveň $LEVEL$",
+    "placeholders": {
+      "chunks": {
+        "content": "$1"
+      },
+      "level": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsAudioIdle": {
+    "message": "Zvuk: nezachytává se"
+  },
+  "diagnosticsNoAudio": {
+    "message": "Z této karty není slyšet žádný zvuk. Zkontrolujte, že se opravdu přehrává a není ztlumená."
+  },
+  "diagnosticsDropped": {
+    "message": "Zahozeno před připravením modelu: $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsTranscribed": {
+    "message": "Přepsáno: konečných $FINALS$, vloženo $INSERTED$",
+    "placeholders": {
+      "finals": {
+        "content": "$1"
+      },
+      "inserted": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInference": {
+    "message": "Inference: dokončeno $FINISHED$/$STARTED$",
+    "placeholders": {
+      "finished": {
+        "content": "$1"
+      },
+      "started": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInferenceFailed": {
+    "message": ", selhalo: $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsInferenceLast": {
+    "message": ", poslední $SECONDS$ s",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsStatus": {
+    "message": "Stav: $STATUS$",
+    "placeholders": {
+      "status": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsSession": {
+    "message": "Relace: $SESSION$",
+    "placeholders": {
+      "session": {
+        "content": "$1"
+      }
+    }
+  },
+  "modelGroupLocal": {
+    "message": "Místní"
+  },
+  "modelApiKey": {
+    "message": "Klíč API"
+  },
+  "modelSize": {
+    "message": "$SIZE$ MB",
+    "placeholders": {
+      "size": {
+        "content": "$1"
+      }
+    }
+  },
+  "menuListenHere": {
+    "message": "Poslouchat tuto kartu"
+  },
+  "menuTypeHere": {
+    "message": "Psát do tohoto pole"
+  },
+  "menuNewFile": {
+    "message": "Psát do nového souboru"
+  },
+  "menuNewTab": {
+    "message": "Psát do nové karty"
+  },
+  "badgeControls": {
+    "message": "Výstup TypeTarget"
+  },
+  "badgeSave": {
+    "message": "Uložit jako .txt"
+  },
+  "badgeMinimize": {
+    "message": "Minimalizovat"
+  },
+  "badgeRestore": {
+    "message": "Obnovit"
+  },
+  "badgeOpenInTab": {
+    "message": "Otevřít na nové kartě"
+  },
+  "badgeMoveBack": {
+    "message": "Vrátit na stránku"
+  },
+  "badgeStopTyping": {
+    "message": "Zastavit psaní sem"
+  },
+  "badgeClose": {
+    "message": "Zavřít"
+  },
+  "badgeNotTyping": {
+    "message": "Nepíše se"
+  },
+  "newFileLabel": {
+    "message": "Nový soubor TypeTarget"
+  },
+  "editorTitle": {
+    "message": "Soubor TypeTarget"
+  },
+  "transcriptPlaceholder": {
+    "message": "Zde se zobrazí přepsaný text. Můžete sem psát i sami."
+  }
+}

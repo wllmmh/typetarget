@@ -14,12 +14,19 @@ All notable changes to this project are documented here. The format follows
   they fit in memory. Each downloads once and is cached. Tiny Q5 is the default.
 - Hosted models with your own API key: Gemini 3.5 Transcribe Live (Google), and Whisper Large v3 and
   v3 Turbo on Groq.
+- Every model transcribes speech in the language it is spoken in. The Whisper models, local and
+  on Groq, detect it for each utterance, out of the 99 languages Whisper knows, instead of
+  assuming English. A very short utterance can be detected as the wrong language, so the popup
+  has a "Spoken language" menu, under the model, to name it instead
+  (Auto by default; it can be changed while listening). It shows Auto and is greyed out while a
+  Gemini model is selected, since Gemini always detects the language itself.
 - API Keys dialog with Get API Key. A saved key shows as dots in the field; clear the field
   and click Done to remove it. Keys stay on this device.
 - In the model menu, each hosted provider's heading has an "API key" action that opens that
   provider's key dialog. The separate key button is gone.
-- Chunk length slider (3–25 s), which caps how long one utterance can grow and can be changed
-  while listening.
+- Continuous speech is sent to the model every 3 seconds, without waiting for a pause. Local
+  Whisper stretches that, up to 25 seconds, on a machine too slow to keep up, and shortens it
+  again when it can. There is no chunk length setting.
 - Right-click "TypeTarget" menu: Listen to this tab, Stop listening, Type to this field, Type
   to new file, Type to new tab and Stop typing. "Type to new tab" opens the full-page text box
   straight away, without going through the new-file box's Open in new tab button. After Stop
@@ -49,6 +56,12 @@ All notable changes to this project are documented here. The format follows
 - Popup styled like Chrome's own UI: pill buttons, hairline-divided sections, rounded
   menus and dialogs, in light and dark to match the system theme. The title is set in
   Geist Mono.
+- The popup, right-click menu, badge buttons, new-file box and editor tab follow the browser's
+  display language: English, Arabic, Bengali, Czech, Filipino, German, Spanish, French,
+  Hindi, Indonesian, Italian, Marathi, Polish, Brazilian and European Portuguese, Russian, Telugu,
+  Thai, Turkish, Ukrainian, Urdu, Vietnamese, Japanese, Korean, and Simplified and Traditional
+  Chinese. In Arabic and Urdu the popup and editor tab are laid out right to left. Other
+  languages get English. Error messages are still in English.
 
 ### Security
 - Websites can't detect that TypeTarget is installed: no file is web-accessible.

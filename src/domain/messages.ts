@@ -8,6 +8,7 @@
 import type { ModelId } from "./models";
 import type { ConnectionStatus, EngineStatus } from "./models";
 import type { ApiKeyProvider } from "./api-key";
+import type { SpokenLanguage } from "./languages";
 import type { InferenceStats } from "../worker/instrumented-engine";
 import type { TranscriptEvent, TranscriptionStatus } from "./transcript";
 
@@ -58,8 +59,8 @@ export type PublicAppState = {
   inference: InferenceStats | null;
   destinationLabel: string | null;
   selectedModel: ModelId;
-  /** Cap on how long one utterance grows before it is transcribed (see domain/tuning.ts). */
-  chunkMs: number;
+  /** The language the Whisper models are told to expect; null to detect it (see domain/languages.ts). */
+  spokenLanguage: SpokenLanguage | null;
   /** "Show outline" (see background/state.ts). */
   showPageIndicators: boolean;
   isSelectingDestination: boolean;
@@ -88,7 +89,8 @@ export type PopupRequest =
   /** Start typing: "Type to new file" on the tab the popup was opened on. */
   | { kind: "start-typing" }
   | { kind: "set-model"; modelId: ModelId }
-  | { kind: "set-chunk-ms"; chunkMs: number }
+  /** null: detect the language. Validated by the background, like the stored value. */
+  | { kind: "set-spoken-language"; language: string | null }
   | { kind: "set-show-page-indicators"; show: boolean }
   /** Sets or clears (empty apiKey) the stored key for a network provider. */
   | { kind: "set-api-key"; provider: ApiKeyProvider; apiKey: string };
@@ -181,7 +183,7 @@ export type BackgroundToOffscreen =
   | { kind: "resume" }
   | { kind: "load-model"; modelId: ModelId }
   | { kind: "unload-model" }
-  | { kind: "set-chunk-ms"; chunkMs: number }
+  | { kind: "set-spoken-language"; language: SpokenLanguage | null }
   | { kind: "set-api-key"; provider: ApiKeyProvider; apiKey: string }
   /** Asked by a restarted service worker, to learn whether the capture it lost track of still runs. */
   | { kind: "get-capture-status" };

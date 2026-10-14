@@ -44,12 +44,16 @@ if (self.name === "em-pthread") {
   // Wrapped so the popup can tell "inference never runs" from "inference is slower than
   // the audio it covers" (see instrumented-engine.ts).
   const instrumented = createInstrumentedEngine(engine, (stats) => post({ kind: "inference-stats", stats }));
-  const transcriber = new StreamingTranscriber({
-    engine: instrumented,
-    vad: new EnergyVad(),
-    stabilizer: new TranscriptStabilizer(),
-    onEvent: (event) => post({ kind: "transcript-event", event }),
-  });
+  // The only engine whose speed depends on the machine, so the only one that stretches its cap.
+  const transcriber = new StreamingTranscriber(
+    {
+      engine: instrumented,
+      vad: new EnergyVad(),
+      stabilizer: new TranscriptStabilizer(),
+      onEvent: (event) => post({ kind: "transcript-event", event }),
+    },
+    { stretchToKeepUp: true },
+  );
 
   // Read by GeminiLiveEngine each time it connects, not captured once — a key entered
   // (or changed) after the worker started must take effect on the next load(), not

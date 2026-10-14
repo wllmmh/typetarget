@@ -1,0 +1,312 @@
+{
+  "extName": {
+    "message": "TypeTarget — Da voce a testo ovunque"
+  },
+  "extDescription": {
+    "message": "Trascrivi l'audio di una scheda direttamente in qualsiasi campo di testo, gratis e con il modello di IA che preferisci."
+  },
+  "textDirection": {
+    "message": "ltr"
+  },
+  "statusIdle": {
+    "message": "Inattivo"
+  },
+  "statusLoadingModel": {
+    "message": "Caricamento modello"
+  },
+  "statusCapturing": {
+    "message": "Acquisizione"
+  },
+  "statusTranscribing": {
+    "message": "Trascrizione"
+  },
+  "statusPaused": {
+    "message": "In pausa"
+  },
+  "statusError": {
+    "message": "Errore"
+  },
+  "statusDownloading": {
+    "message": "Download del modello ($RECEIVED$ MB)",
+    "placeholders": {
+      "received": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusDownloadingPercent": {
+    "message": "Download del modello: $PERCENT$% ($RECEIVED$/$TOTAL$ MB)",
+    "placeholders": {
+      "percent": {
+        "content": "$1"
+      },
+      "received": {
+        "content": "$2"
+      },
+      "total": {
+        "content": "$3"
+      }
+    }
+  },
+  "engineUnloaded": {
+    "message": "non caricato"
+  },
+  "engineLoading": {
+    "message": "caricamento…"
+  },
+  "engineReady": {
+    "message": "pronto"
+  },
+  "engineError": {
+    "message": "non riuscito"
+  },
+  "sessionReconnecting": {
+    "message": "Riconnessione (tentativo $ATTEMPT$)… $REASON$",
+    "placeholders": {
+      "attempt": {
+        "content": "$1"
+      },
+      "reason": {
+        "content": "$2"
+      }
+    }
+  },
+  "sessionReconnected": {
+    "message": "riconnesso $COUNT$ volte",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "sessionListening": {
+    "message": "in ascolto"
+  },
+  "sessionPaused": {
+    "message": "in pausa"
+  },
+  "modelHeading": {
+    "message": "Modello"
+  },
+  "fallingBehind": {
+    "message": "Con questo modello locale, il dispositivo trascrive più lentamente del tempo reale."
+  },
+  "spokenLanguageHeading": {
+    "message": "Lingua parlata"
+  },
+  "spokenLanguageAuto": {
+    "message": "Automatica"
+  },
+  "apiKeyTitle": {
+    "message": "Chiave API di $PROVIDER$",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyStorageNote": {
+    "message": "La chiave API viene salvata solo su questo dispositivo e usata esclusivamente per autenticare le richieste al fornitore."
+  },
+  "apiKeyNetworkNote": {
+    "message": "L'audio viene inviato a $PROVIDER$ per l'elaborazione.",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyPlaceholder": {
+    "message": "Incolla la chiave API di $PROVIDER$",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "getApiKey": {
+    "message": "Ottieni chiave API"
+  },
+  "done": {
+    "message": "Fine"
+  },
+  "listeningToHeading": {
+    "message": "In ascolto di"
+  },
+  "noTabSelected": {
+    "message": "Nessuna scheda selezionata"
+  },
+  "startListening": {
+    "message": "Avvia ascolto"
+  },
+  "stopListening": {
+    "message": "Interrompi ascolto"
+  },
+  "typingToHeading": {
+    "message": "Scrittura in"
+  },
+  "noFieldSelected": {
+    "message": "Nessun campo selezionato"
+  },
+  "startTyping": {
+    "message": "Avvia scrittura"
+  },
+  "stopTyping": {
+    "message": "Interrompi scrittura"
+  },
+  "showOutline": {
+    "message": "Mostra contorno"
+  },
+  "diagnosticsHeading": {
+    "message": "Diagnostica"
+  },
+  "diagnosticsModel": {
+    "message": "Modello: $STATE$",
+    "placeholders": {
+      "state": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsAudio": {
+    "message": "Audio: $CHUNKS$ blocchi, livello $LEVEL$",
+    "placeholders": {
+      "chunks": {
+        "content": "$1"
+      },
+      "level": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsAudioIdle": {
+    "message": "Audio: nessuna acquisizione"
+  },
+  "diagnosticsNoAudio": {
+    "message": "Nessun audio udibile da quella scheda. Verifica che sia in riproduzione e non disattivata."
+  },
+  "diagnosticsDropped": {
+    "message": "Scartati prima che il modello fosse pronto: $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsTranscribed": {
+    "message": "Trascritti: $FINALS$ definitivi, $INSERTED$ inseriti",
+    "placeholders": {
+      "finals": {
+        "content": "$1"
+      },
+      "inserted": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInference": {
+    "message": "Inferenza: $FINISHED$/$STARTED$ completate",
+    "placeholders": {
+      "finished": {
+        "content": "$1"
+      },
+      "started": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInferenceFailed": {
+    "message": ", $COUNT$ non riuscite",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsInferenceLast": {
+    "message": ", ultima $SECONDS$ s",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsStatus": {
+    "message": "Stato: $STATUS$",
+    "placeholders": {
+      "status": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsSession": {
+    "message": "Sessione: $SESSION$",
+    "placeholders": {
+      "session": {
+        "content": "$1"
+      }
+    }
+  },
+  "modelGroupLocal": {
+    "message": "Locale"
+  },
+  "modelApiKey": {
+    "message": "Chiave API"
+  },
+  "modelSize": {
+    "message": "$SIZE$ MB",
+    "placeholders": {
+      "size": {
+        "content": "$1"
+      }
+    }
+  },
+  "menuListenHere": {
+    "message": "Ascolta questa scheda"
+  },
+  "menuTypeHere": {
+    "message": "Scrivi in questo campo"
+  },
+  "menuNewFile": {
+    "message": "Scrivi in un nuovo file"
+  },
+  "menuNewTab": {
+    "message": "Scrivi in una nuova scheda"
+  },
+  "badgeControls": {
+    "message": "Output di TypeTarget"
+  },
+  "badgeSave": {
+    "message": "Salva come .txt"
+  },
+  "badgeMinimize": {
+    "message": "Riduci a icona"
+  },
+  "badgeRestore": {
+    "message": "Ripristina"
+  },
+  "badgeOpenInTab": {
+    "message": "Apri in una nuova scheda"
+  },
+  "badgeMoveBack": {
+    "message": "Riporta nella pagina"
+  },
+  "badgeStopTyping": {
+    "message": "Interrompi scrittura qui"
+  },
+  "badgeClose": {
+    "message": "Chiudi"
+  },
+  "badgeNotTyping": {
+    "message": "Scrittura interrotta"
+  },
+  "newFileLabel": {
+    "message": "Nuovo file TypeTarget"
+  },
+  "editorTitle": {
+    "message": "File TypeTarget"
+  },
+  "transcriptPlaceholder": {
+    "message": "Il testo trascritto appare qui. Puoi anche scrivere qui."
+  }
+}

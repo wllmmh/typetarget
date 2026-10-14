@@ -1,0 +1,312 @@
+{
+  "extName": {
+    "message": "TypeTarget — Chuyển giọng nói thành văn bản ở mọi nơi"
+  },
+  "extDescription": {
+    "message": "Chép lời âm thanh của thẻ trình duyệt thẳng vào bất kỳ ô văn bản nào, miễn phí, với mô hình AI bạn chọn."
+  },
+  "textDirection": {
+    "message": "ltr"
+  },
+  "statusIdle": {
+    "message": "Không hoạt động"
+  },
+  "statusLoadingModel": {
+    "message": "Đang tải mô hình"
+  },
+  "statusCapturing": {
+    "message": "Đang thu âm thanh"
+  },
+  "statusTranscribing": {
+    "message": "Đang chép lời"
+  },
+  "statusPaused": {
+    "message": "Đã tạm dừng"
+  },
+  "statusError": {
+    "message": "Lỗi"
+  },
+  "statusDownloading": {
+    "message": "Đang tải xuống mô hình ($RECEIVED$ MB)",
+    "placeholders": {
+      "received": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusDownloadingPercent": {
+    "message": "Đang tải xuống mô hình $PERCENT$% ($RECEIVED$/$TOTAL$ MB)",
+    "placeholders": {
+      "percent": {
+        "content": "$1"
+      },
+      "received": {
+        "content": "$2"
+      },
+      "total": {
+        "content": "$3"
+      }
+    }
+  },
+  "engineUnloaded": {
+    "message": "chưa tải"
+  },
+  "engineLoading": {
+    "message": "đang tải…"
+  },
+  "engineReady": {
+    "message": "sẵn sàng"
+  },
+  "engineError": {
+    "message": "thất bại"
+  },
+  "sessionReconnecting": {
+    "message": "Đang kết nối lại (lần thử $ATTEMPT$)… $REASON$",
+    "placeholders": {
+      "attempt": {
+        "content": "$1"
+      },
+      "reason": {
+        "content": "$2"
+      }
+    }
+  },
+  "sessionReconnected": {
+    "message": "đã kết nối lại $COUNT$ lần",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "sessionListening": {
+    "message": "đang nghe"
+  },
+  "sessionPaused": {
+    "message": "đã tạm dừng"
+  },
+  "modelHeading": {
+    "message": "Mô hình"
+  },
+  "fallingBehind": {
+    "message": "Thiết bị này đang chép lời chậm hơn thời gian thực với mô hình cục bộ này."
+  },
+  "spokenLanguageHeading": {
+    "message": "Ngôn ngữ nói"
+  },
+  "spokenLanguageAuto": {
+    "message": "Tự động"
+  },
+  "apiKeyTitle": {
+    "message": "Khóa API $PROVIDER$",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyStorageNote": {
+    "message": "Khóa API của bạn chỉ được lưu trên thiết bị này và chỉ dùng để xác thực các yêu cầu gửi tới nhà cung cấp."
+  },
+  "apiKeyNetworkNote": {
+    "message": "Âm thanh được gửi tới $PROVIDER$ để xử lý.",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyPlaceholder": {
+    "message": "Dán khóa API $PROVIDER$ của bạn",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "getApiKey": {
+    "message": "Lấy khóa API"
+  },
+  "done": {
+    "message": "Xong"
+  },
+  "listeningToHeading": {
+    "message": "Đang nghe"
+  },
+  "noTabSelected": {
+    "message": "Chưa chọn thẻ nào"
+  },
+  "startListening": {
+    "message": "Bắt đầu nghe"
+  },
+  "stopListening": {
+    "message": "Dừng nghe"
+  },
+  "typingToHeading": {
+    "message": "Đang nhập vào"
+  },
+  "noFieldSelected": {
+    "message": "Chưa chọn ô nào"
+  },
+  "startTyping": {
+    "message": "Bắt đầu nhập"
+  },
+  "stopTyping": {
+    "message": "Dừng nhập"
+  },
+  "showOutline": {
+    "message": "Hiện viền"
+  },
+  "diagnosticsHeading": {
+    "message": "Chẩn đoán"
+  },
+  "diagnosticsModel": {
+    "message": "Mô hình: $STATE$",
+    "placeholders": {
+      "state": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsAudio": {
+    "message": "Âm thanh: $CHUNKS$ khối, mức $LEVEL$",
+    "placeholders": {
+      "chunks": {
+        "content": "$1"
+      },
+      "level": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsAudioIdle": {
+    "message": "Âm thanh: không thu"
+  },
+  "diagnosticsNoAudio": {
+    "message": "Không nghe thấy âm thanh từ thẻ đó. Hãy kiểm tra xem thẻ có thực sự đang phát và không bị tắt tiếng."
+  },
+  "diagnosticsDropped": {
+    "message": "Bị bỏ trước khi mô hình sẵn sàng: $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsTranscribed": {
+    "message": "Đã chép lời: $FINALS$ đoạn hoàn chỉnh, $INSERTED$ đoạn đã chèn",
+    "placeholders": {
+      "finals": {
+        "content": "$1"
+      },
+      "inserted": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInference": {
+    "message": "Suy luận: hoàn tất $FINISHED$/$STARTED$",
+    "placeholders": {
+      "finished": {
+        "content": "$1"
+      },
+      "started": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInferenceFailed": {
+    "message": ", $COUNT$ thất bại",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsInferenceLast": {
+    "message": ", lần cuối $SECONDS$ giây",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsStatus": {
+    "message": "Trạng thái: $STATUS$",
+    "placeholders": {
+      "status": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsSession": {
+    "message": "Phiên: $SESSION$",
+    "placeholders": {
+      "session": {
+        "content": "$1"
+      }
+    }
+  },
+  "modelGroupLocal": {
+    "message": "Cục bộ"
+  },
+  "modelApiKey": {
+    "message": "Khóa API"
+  },
+  "modelSize": {
+    "message": "$SIZE$ MB",
+    "placeholders": {
+      "size": {
+        "content": "$1"
+      }
+    }
+  },
+  "menuListenHere": {
+    "message": "Nghe thẻ này"
+  },
+  "menuTypeHere": {
+    "message": "Nhập vào ô này"
+  },
+  "menuNewFile": {
+    "message": "Nhập vào tệp mới"
+  },
+  "menuNewTab": {
+    "message": "Nhập vào thẻ mới"
+  },
+  "badgeControls": {
+    "message": "Đầu ra TypeTarget"
+  },
+  "badgeSave": {
+    "message": "Lưu dưới dạng .txt"
+  },
+  "badgeMinimize": {
+    "message": "Thu nhỏ"
+  },
+  "badgeRestore": {
+    "message": "Khôi phục"
+  },
+  "badgeOpenInTab": {
+    "message": "Mở trong thẻ mới"
+  },
+  "badgeMoveBack": {
+    "message": "Chuyển lại về trang"
+  },
+  "badgeStopTyping": {
+    "message": "Dừng nhập ở đây"
+  },
+  "badgeClose": {
+    "message": "Đóng"
+  },
+  "badgeNotTyping": {
+    "message": "Không nhập"
+  },
+  "newFileLabel": {
+    "message": "Tệp mới TypeTarget"
+  },
+  "editorTitle": {
+    "message": "Tệp TypeTarget"
+  },
+  "transcriptPlaceholder": {
+    "message": "Văn bản đã chép lời sẽ hiện ở đây. Bạn cũng có thể tự nhập ở đây."
+  }
+}

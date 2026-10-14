@@ -26,7 +26,7 @@ your browser's extension storage on this device (`chrome.storage.local`), is not
 other devices, and is sent only to the provider it belongs to, to authenticate your requests.
 It is never shown again after you save it, and never logged.
 
-**Settings.** Your chosen model and chunk length are stored on this device. The tabs you
+**Settings.** Your chosen model and spoken language are stored on this device. The tabs you
 opened TypeTarget on (their titles and addresses), the tab being listened to and the field being
 typed into are stored for the current browser session only, and are cleared when you close
 the browser.

@@ -1,0 +1,312 @@
+{
+  "extName": {
+    "message": "TypeTarget — どこでも音声をテキストに"
+  },
+  "extDescription": {
+    "message": "ブラウザのタブの音声を、好きなテキスト欄へ直接文字起こし。AI モデルを選べて無料です。"
+  },
+  "textDirection": {
+    "message": "ltr"
+  },
+  "statusIdle": {
+    "message": "待機中"
+  },
+  "statusLoadingModel": {
+    "message": "モデルを読み込み中"
+  },
+  "statusCapturing": {
+    "message": "キャプチャ中"
+  },
+  "statusTranscribing": {
+    "message": "文字起こし中"
+  },
+  "statusPaused": {
+    "message": "一時停止中"
+  },
+  "statusError": {
+    "message": "エラー"
+  },
+  "statusDownloading": {
+    "message": "モデルをダウンロード中（$RECEIVED$ MB）",
+    "placeholders": {
+      "received": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusDownloadingPercent": {
+    "message": "モデルをダウンロード中 $PERCENT$%（$RECEIVED$/$TOTAL$ MB）",
+    "placeholders": {
+      "percent": {
+        "content": "$1"
+      },
+      "received": {
+        "content": "$2"
+      },
+      "total": {
+        "content": "$3"
+      }
+    }
+  },
+  "engineUnloaded": {
+    "message": "未読み込み"
+  },
+  "engineLoading": {
+    "message": "読み込み中…"
+  },
+  "engineReady": {
+    "message": "準備完了"
+  },
+  "engineError": {
+    "message": "失敗"
+  },
+  "sessionReconnecting": {
+    "message": "再接続中（$ATTEMPT$ 回目）… $REASON$",
+    "placeholders": {
+      "attempt": {
+        "content": "$1"
+      },
+      "reason": {
+        "content": "$2"
+      }
+    }
+  },
+  "sessionReconnected": {
+    "message": "再接続 $COUNT$ 回",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "sessionListening": {
+    "message": "聞き取り中"
+  },
+  "sessionPaused": {
+    "message": "一時停止中"
+  },
+  "modelHeading": {
+    "message": "モデル"
+  },
+  "fallingBehind": {
+    "message": "このデバイスでは、このローカルモデルの文字起こしがリアルタイムより遅れています。"
+  },
+  "spokenLanguageHeading": {
+    "message": "音声の言語"
+  },
+  "spokenLanguageAuto": {
+    "message": "自動"
+  },
+  "apiKeyTitle": {
+    "message": "$PROVIDER$ の API キー",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyStorageNote": {
+    "message": "API キーはこのデバイスにのみ保存され、プロバイダへのリクエストの認証にのみ使用されます。"
+  },
+  "apiKeyNetworkNote": {
+    "message": "音声は処理のため $PROVIDER$ に送信されます。",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyPlaceholder": {
+    "message": "$PROVIDER$ の API キーを貼り付け",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "getApiKey": {
+    "message": "API キーを取得"
+  },
+  "done": {
+    "message": "完了"
+  },
+  "listeningToHeading": {
+    "message": "聞き取り元"
+  },
+  "noTabSelected": {
+    "message": "タブが選択されていません"
+  },
+  "startListening": {
+    "message": "聞き取りを開始"
+  },
+  "stopListening": {
+    "message": "聞き取りを停止"
+  },
+  "typingToHeading": {
+    "message": "入力先"
+  },
+  "noFieldSelected": {
+    "message": "入力欄が選択されていません"
+  },
+  "startTyping": {
+    "message": "入力を開始"
+  },
+  "stopTyping": {
+    "message": "入力を停止"
+  },
+  "showOutline": {
+    "message": "枠線を表示"
+  },
+  "diagnosticsHeading": {
+    "message": "診断"
+  },
+  "diagnosticsModel": {
+    "message": "モデル: $STATE$",
+    "placeholders": {
+      "state": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsAudio": {
+    "message": "音声: $CHUNKS$ チャンク、レベル $LEVEL$",
+    "placeholders": {
+      "chunks": {
+        "content": "$1"
+      },
+      "level": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsAudioIdle": {
+    "message": "音声: キャプチャしていません"
+  },
+  "diagnosticsNoAudio": {
+    "message": "このタブから聞こえる音声がありません。再生中で、ミュートされていないか確認してください。"
+  },
+  "diagnosticsDropped": {
+    "message": "モデル準備前に破棄: $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsTranscribed": {
+    "message": "文字起こし: 確定 $FINALS$、挿入 $INSERTED$",
+    "placeholders": {
+      "finals": {
+        "content": "$1"
+      },
+      "inserted": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInference": {
+    "message": "推論: $FINISHED$/$STARTED$ 完了",
+    "placeholders": {
+      "finished": {
+        "content": "$1"
+      },
+      "started": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInferenceFailed": {
+    "message": "、失敗 $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsInferenceLast": {
+    "message": "、直近 $SECONDS$ 秒",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsStatus": {
+    "message": "状態: $STATUS$",
+    "placeholders": {
+      "status": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsSession": {
+    "message": "セッション: $SESSION$",
+    "placeholders": {
+      "session": {
+        "content": "$1"
+      }
+    }
+  },
+  "modelGroupLocal": {
+    "message": "ローカル"
+  },
+  "modelApiKey": {
+    "message": "API キー"
+  },
+  "modelSize": {
+    "message": "$SIZE$ MB",
+    "placeholders": {
+      "size": {
+        "content": "$1"
+      }
+    }
+  },
+  "menuListenHere": {
+    "message": "このタブを聞き取る"
+  },
+  "menuTypeHere": {
+    "message": "この欄に入力"
+  },
+  "menuNewFile": {
+    "message": "新しいファイルに入力"
+  },
+  "menuNewTab": {
+    "message": "新しいタブに入力"
+  },
+  "badgeControls": {
+    "message": "TypeTarget の出力"
+  },
+  "badgeSave": {
+    "message": ".txt として保存"
+  },
+  "badgeMinimize": {
+    "message": "最小化"
+  },
+  "badgeRestore": {
+    "message": "元に戻す"
+  },
+  "badgeOpenInTab": {
+    "message": "新しいタブで開く"
+  },
+  "badgeMoveBack": {
+    "message": "ページに戻す"
+  },
+  "badgeStopTyping": {
+    "message": "ここへの入力を停止"
+  },
+  "badgeClose": {
+    "message": "閉じる"
+  },
+  "badgeNotTyping": {
+    "message": "入力停止中"
+  },
+  "newFileLabel": {
+    "message": "TypeTarget の新しいファイル"
+  },
+  "editorTitle": {
+    "message": "TypeTarget ファイル"
+  },
+  "transcriptPlaceholder": {
+    "message": "文字起こしされたテキストがここに表示されます。ここに直接入力することもできます。"
+  }
+}

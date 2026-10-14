@@ -1,0 +1,312 @@
+{
+  "extName": {
+    "message": "TypeTarget — Ucapan jadi teks di mana saja"
+  },
+  "extDescription": {
+    "message": "Transkripsikan audio tab browser langsung ke kolom teks mana pun, gratis, dengan model AI pilihan Anda."
+  },
+  "textDirection": {
+    "message": "ltr"
+  },
+  "statusIdle": {
+    "message": "Tidak aktif"
+  },
+  "statusLoadingModel": {
+    "message": "Memuat model"
+  },
+  "statusCapturing": {
+    "message": "Merekam"
+  },
+  "statusTranscribing": {
+    "message": "Mentranskripsi"
+  },
+  "statusPaused": {
+    "message": "Dijeda"
+  },
+  "statusError": {
+    "message": "Error"
+  },
+  "statusDownloading": {
+    "message": "Mengunduh model ($RECEIVED$ MB)",
+    "placeholders": {
+      "received": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusDownloadingPercent": {
+    "message": "Mengunduh model $PERCENT$% ($RECEIVED$/$TOTAL$ MB)",
+    "placeholders": {
+      "percent": {
+        "content": "$1"
+      },
+      "received": {
+        "content": "$2"
+      },
+      "total": {
+        "content": "$3"
+      }
+    }
+  },
+  "engineUnloaded": {
+    "message": "belum dimuat"
+  },
+  "engineLoading": {
+    "message": "memuat…"
+  },
+  "engineReady": {
+    "message": "siap"
+  },
+  "engineError": {
+    "message": "gagal"
+  },
+  "sessionReconnecting": {
+    "message": "Menyambungkan ulang (percobaan $ATTEMPT$)… $REASON$",
+    "placeholders": {
+      "attempt": {
+        "content": "$1"
+      },
+      "reason": {
+        "content": "$2"
+      }
+    }
+  },
+  "sessionReconnected": {
+    "message": "tersambung ulang $COUNT$×",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "sessionListening": {
+    "message": "mendengarkan"
+  },
+  "sessionPaused": {
+    "message": "dijeda"
+  },
+  "modelHeading": {
+    "message": "Model"
+  },
+  "fallingBehind": {
+    "message": "Dengan model lokal ini, perangkat ini mentranskripsi lebih lambat dari waktu nyata."
+  },
+  "spokenLanguageHeading": {
+    "message": "Bahasa lisan"
+  },
+  "spokenLanguageAuto": {
+    "message": "Otomatis"
+  },
+  "apiKeyTitle": {
+    "message": "Kunci API $PROVIDER$",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyStorageNote": {
+    "message": "Kunci API Anda hanya disimpan di perangkat ini dan hanya digunakan untuk mengautentikasi permintaan ke penyedia."
+  },
+  "apiKeyNetworkNote": {
+    "message": "Audio dikirim ke $PROVIDER$ untuk diproses.",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyPlaceholder": {
+    "message": "Tempel kunci API $PROVIDER$ Anda",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "getApiKey": {
+    "message": "Dapatkan Kunci API"
+  },
+  "done": {
+    "message": "Selesai"
+  },
+  "listeningToHeading": {
+    "message": "Mendengarkan"
+  },
+  "noTabSelected": {
+    "message": "Tidak ada tab yang dipilih"
+  },
+  "startListening": {
+    "message": "Mulai mendengarkan"
+  },
+  "stopListening": {
+    "message": "Berhenti mendengarkan"
+  },
+  "typingToHeading": {
+    "message": "Mengetik ke"
+  },
+  "noFieldSelected": {
+    "message": "Tidak ada kolom yang dipilih"
+  },
+  "startTyping": {
+    "message": "Mulai mengetik"
+  },
+  "stopTyping": {
+    "message": "Berhenti mengetik"
+  },
+  "showOutline": {
+    "message": "Tampilkan garis tepi"
+  },
+  "diagnosticsHeading": {
+    "message": "Diagnostik"
+  },
+  "diagnosticsModel": {
+    "message": "Model: $STATE$",
+    "placeholders": {
+      "state": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsAudio": {
+    "message": "Audio: $CHUNKS$ potongan, level $LEVEL$",
+    "placeholders": {
+      "chunks": {
+        "content": "$1"
+      },
+      "level": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsAudioIdle": {
+    "message": "Audio: tidak merekam"
+  },
+  "diagnosticsNoAudio": {
+    "message": "Tidak ada audio yang terdengar dari tab itu. Pastikan tab benar-benar sedang memutar dan tidak dibisukan."
+  },
+  "diagnosticsDropped": {
+    "message": "Dibuang sebelum model siap: $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsTranscribed": {
+    "message": "Ditranskripsi: $FINALS$ final, $INSERTED$ disisipkan",
+    "placeholders": {
+      "finals": {
+        "content": "$1"
+      },
+      "inserted": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInference": {
+    "message": "Inferensi: $FINISHED$/$STARTED$ selesai",
+    "placeholders": {
+      "finished": {
+        "content": "$1"
+      },
+      "started": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInferenceFailed": {
+    "message": ", $COUNT$ gagal",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsInferenceLast": {
+    "message": ", terakhir $SECONDS$ dtk",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsStatus": {
+    "message": "Status: $STATUS$",
+    "placeholders": {
+      "status": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsSession": {
+    "message": "Sesi: $SESSION$",
+    "placeholders": {
+      "session": {
+        "content": "$1"
+      }
+    }
+  },
+  "modelGroupLocal": {
+    "message": "Lokal"
+  },
+  "modelApiKey": {
+    "message": "Kunci API"
+  },
+  "modelSize": {
+    "message": "$SIZE$ MB",
+    "placeholders": {
+      "size": {
+        "content": "$1"
+      }
+    }
+  },
+  "menuListenHere": {
+    "message": "Dengarkan tab ini"
+  },
+  "menuTypeHere": {
+    "message": "Ketik ke kolom ini"
+  },
+  "menuNewFile": {
+    "message": "Ketik ke file baru"
+  },
+  "menuNewTab": {
+    "message": "Ketik ke tab baru"
+  },
+  "badgeControls": {
+    "message": "Output TypeTarget"
+  },
+  "badgeSave": {
+    "message": "Simpan sebagai .txt"
+  },
+  "badgeMinimize": {
+    "message": "Perkecil"
+  },
+  "badgeRestore": {
+    "message": "Pulihkan"
+  },
+  "badgeOpenInTab": {
+    "message": "Buka di tab baru"
+  },
+  "badgeMoveBack": {
+    "message": "Kembalikan ke halaman"
+  },
+  "badgeStopTyping": {
+    "message": "Berhenti mengetik di sini"
+  },
+  "badgeClose": {
+    "message": "Tutup"
+  },
+  "badgeNotTyping": {
+    "message": "Tidak mengetik"
+  },
+  "newFileLabel": {
+    "message": "File baru TypeTarget"
+  },
+  "editorTitle": {
+    "message": "File TypeTarget"
+  },
+  "transcriptPlaceholder": {
+    "message": "Teks hasil transkripsi muncul di sini. Anda juga bisa mengetik di sini."
+  }
+}

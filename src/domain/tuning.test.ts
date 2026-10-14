@@ -1,22 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { CHUNK_MS_DEFAULT, CHUNK_MS_MAX, CHUNK_MS_MIN, clampChunkMs } from "./tuning";
+import { stretchedUtteranceCapMs, UTTERANCE_CAP_MAX_MS, UTTERANCE_CAP_MS } from "./tuning";
 
-describe("clampChunkMs", () => {
-  it("keeps a value inside the supported range", () => {
-    expect(clampChunkMs(8_000)).toBe(8_000);
+describe("stretchedUtteranceCapMs", () => {
+  it("keeps the base cap while inference is faster than it", () => {
+    expect(stretchedUtteranceCapMs(500)).toBe(UTTERANCE_CAP_MS);
   });
 
-  it("clamps to the bounds rather than rejecting", () => {
-    expect(clampChunkMs(500)).toBe(CHUNK_MS_MIN);
-    expect(clampChunkMs(120_000)).toBe(CHUNK_MS_MAX);
+  it("stretches past a slow inference, with headroom, so the next call keeps up", () => {
+    expect(stretchedUtteranceCapMs(8_000)).toBe(10_000);
   });
 
-  it("falls back to the default for junk, since this crosses a message boundary", () => {
-    expect(clampChunkMs(Number.NaN)).toBe(CHUNK_MS_DEFAULT);
-    expect(clampChunkMs(Number.POSITIVE_INFINITY)).toBe(CHUNK_MS_DEFAULT);
-  });
-
-  it("rounds to whole milliseconds", () => {
-    expect(clampChunkMs(7_500.6)).toBe(7_501);
+  it("never passes the maximum", () => {
+    expect(stretchedUtteranceCapMs(60_000)).toBe(UTTERANCE_CAP_MAX_MS);
   });
 });

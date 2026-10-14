@@ -1,0 +1,312 @@
+{
+  "extName": {
+    "message": "TypeTarget — แปลงเสียงพูดเป็นข้อความได้ทุกที่"
+  },
+  "extDescription": {
+    "message": "ถอดเสียงจากแท็บเบราว์เซอร์ลงในช่องข้อความใดก็ได้โดยตรง ใช้ฟรี พร้อมเลือกโมเดล AI ได้ตามต้องการ"
+  },
+  "textDirection": {
+    "message": "ltr"
+  },
+  "statusIdle": {
+    "message": "ว่าง"
+  },
+  "statusLoadingModel": {
+    "message": "กำลังโหลดโมเดล"
+  },
+  "statusCapturing": {
+    "message": "กำลังจับเสียง"
+  },
+  "statusTranscribing": {
+    "message": "กำลังถอดเสียง"
+  },
+  "statusPaused": {
+    "message": "หยุดชั่วคราว"
+  },
+  "statusError": {
+    "message": "ข้อผิดพลาด"
+  },
+  "statusDownloading": {
+    "message": "กำลังดาวน์โหลดโมเดล ($RECEIVED$ MB)",
+    "placeholders": {
+      "received": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusDownloadingPercent": {
+    "message": "กำลังดาวน์โหลดโมเดล $PERCENT$% ($RECEIVED$/$TOTAL$ MB)",
+    "placeholders": {
+      "percent": {
+        "content": "$1"
+      },
+      "received": {
+        "content": "$2"
+      },
+      "total": {
+        "content": "$3"
+      }
+    }
+  },
+  "engineUnloaded": {
+    "message": "ยังไม่ได้โหลด"
+  },
+  "engineLoading": {
+    "message": "กำลังโหลด…"
+  },
+  "engineReady": {
+    "message": "พร้อม"
+  },
+  "engineError": {
+    "message": "ล้มเหลว"
+  },
+  "sessionReconnecting": {
+    "message": "กำลังเชื่อมต่อใหม่ (ครั้งที่ $ATTEMPT$)… $REASON$",
+    "placeholders": {
+      "attempt": {
+        "content": "$1"
+      },
+      "reason": {
+        "content": "$2"
+      }
+    }
+  },
+  "sessionReconnected": {
+    "message": "เชื่อมต่อใหม่ $COUNT$ ครั้ง",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "sessionListening": {
+    "message": "กำลังฟัง"
+  },
+  "sessionPaused": {
+    "message": "หยุดชั่วคราว"
+  },
+  "modelHeading": {
+    "message": "โมเดล"
+  },
+  "fallingBehind": {
+    "message": "อุปกรณ์นี้ถอดเสียงด้วยโมเดลในเครื่องนี้ได้ช้ากว่าเวลาจริง"
+  },
+  "spokenLanguageHeading": {
+    "message": "ภาษาที่พูด"
+  },
+  "spokenLanguageAuto": {
+    "message": "อัตโนมัติ"
+  },
+  "apiKeyTitle": {
+    "message": "คีย์ API ของ $PROVIDER$",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyStorageNote": {
+    "message": "คีย์ API ของคุณจะเก็บไว้ในอุปกรณ์นี้เท่านั้น และใช้เพื่อยืนยันตัวตนคำขอกับผู้ให้บริการเท่านั้น"
+  },
+  "apiKeyNetworkNote": {
+    "message": "ระบบจะส่งเสียงไปยัง $PROVIDER$ เพื่อประมวลผล",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyPlaceholder": {
+    "message": "วางคีย์ API ของ $PROVIDER$",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "getApiKey": {
+    "message": "รับคีย์ API"
+  },
+  "done": {
+    "message": "เสร็จสิ้น"
+  },
+  "listeningToHeading": {
+    "message": "แหล่งเสียง"
+  },
+  "noTabSelected": {
+    "message": "ไม่ได้เลือกแท็บ"
+  },
+  "startListening": {
+    "message": "เริ่มฟัง"
+  },
+  "stopListening": {
+    "message": "หยุดฟัง"
+  },
+  "typingToHeading": {
+    "message": "พิมพ์ลงใน"
+  },
+  "noFieldSelected": {
+    "message": "ไม่ได้เลือกช่อง"
+  },
+  "startTyping": {
+    "message": "เริ่มพิมพ์"
+  },
+  "stopTyping": {
+    "message": "หยุดพิมพ์"
+  },
+  "showOutline": {
+    "message": "แสดงเส้นขอบ"
+  },
+  "diagnosticsHeading": {
+    "message": "การวินิจฉัย"
+  },
+  "diagnosticsModel": {
+    "message": "โมเดล: $STATE$",
+    "placeholders": {
+      "state": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsAudio": {
+    "message": "เสียง: $CHUNKS$ ช่วง, ระดับ $LEVEL$",
+    "placeholders": {
+      "chunks": {
+        "content": "$1"
+      },
+      "level": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsAudioIdle": {
+    "message": "เสียง: ไม่ได้จับเสียง"
+  },
+  "diagnosticsNoAudio": {
+    "message": "ไม่มีเสียงที่ได้ยินจากแท็บนั้น ตรวจสอบว่ากำลังเล่นอยู่จริงและไม่ได้ปิดเสียง"
+  },
+  "diagnosticsDropped": {
+    "message": "ทิ้งก่อนโมเดลพร้อม: $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsTranscribed": {
+    "message": "ถอดเสียงแล้ว: ผลสุดท้าย $FINALS$, แทรกแล้ว $INSERTED$",
+    "placeholders": {
+      "finals": {
+        "content": "$1"
+      },
+      "inserted": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInference": {
+    "message": "การอนุมาน: เสร็จ $FINISHED$/$STARTED$",
+    "placeholders": {
+      "finished": {
+        "content": "$1"
+      },
+      "started": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInferenceFailed": {
+    "message": ", ล้มเหลว $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsInferenceLast": {
+    "message": ", ล่าสุด $SECONDS$ วินาที",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsStatus": {
+    "message": "สถานะ: $STATUS$",
+    "placeholders": {
+      "status": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsSession": {
+    "message": "เซสชัน: $SESSION$",
+    "placeholders": {
+      "session": {
+        "content": "$1"
+      }
+    }
+  },
+  "modelGroupLocal": {
+    "message": "ในเครื่อง"
+  },
+  "modelApiKey": {
+    "message": "คีย์ API"
+  },
+  "modelSize": {
+    "message": "$SIZE$ MB",
+    "placeholders": {
+      "size": {
+        "content": "$1"
+      }
+    }
+  },
+  "menuListenHere": {
+    "message": "ฟังแท็บนี้"
+  },
+  "menuTypeHere": {
+    "message": "พิมพ์ลงในช่องนี้"
+  },
+  "menuNewFile": {
+    "message": "พิมพ์ลงในไฟล์ใหม่"
+  },
+  "menuNewTab": {
+    "message": "พิมพ์ลงในแท็บใหม่"
+  },
+  "badgeControls": {
+    "message": "เอาต์พุต TypeTarget"
+  },
+  "badgeSave": {
+    "message": "บันทึกเป็น .txt"
+  },
+  "badgeMinimize": {
+    "message": "ย่อ"
+  },
+  "badgeRestore": {
+    "message": "คืนค่า"
+  },
+  "badgeOpenInTab": {
+    "message": "เปิดในแท็บใหม่"
+  },
+  "badgeMoveBack": {
+    "message": "ย้ายกลับไปที่หน้าเว็บ"
+  },
+  "badgeStopTyping": {
+    "message": "หยุดพิมพ์ที่นี่"
+  },
+  "badgeClose": {
+    "message": "ปิด"
+  },
+  "badgeNotTyping": {
+    "message": "ไม่ได้พิมพ์"
+  },
+  "newFileLabel": {
+    "message": "ไฟล์ใหม่ของ TypeTarget"
+  },
+  "editorTitle": {
+    "message": "ไฟล์ TypeTarget"
+  },
+  "transcriptPlaceholder": {
+    "message": "ข้อความที่ถอดเสียงจะปรากฏที่นี่ คุณพิมพ์เองที่นี่ได้ด้วย"
+  }
+}

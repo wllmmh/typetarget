@@ -1,0 +1,312 @@
+{
+  "extName": {
+    "message": "TypeTarget — تحويل الكلام إلى نص في أي مكان"
+  },
+  "extDescription": {
+    "message": "تفريغ صوت أي علامة تبويب في المتصفح مباشرةً في أي حقل نص، مجانًا وبنموذج الذكاء الاصطناعي الذي تختاره."
+  },
+  "textDirection": {
+    "message": "rtl"
+  },
+  "statusIdle": {
+    "message": "خامل"
+  },
+  "statusLoadingModel": {
+    "message": "جارٍ تحميل النموذج"
+  },
+  "statusCapturing": {
+    "message": "جارٍ الالتقاط"
+  },
+  "statusTranscribing": {
+    "message": "جارٍ التفريغ"
+  },
+  "statusPaused": {
+    "message": "متوقف مؤقتًا"
+  },
+  "statusError": {
+    "message": "خطأ"
+  },
+  "statusDownloading": {
+    "message": "جارٍ تنزيل النموذج ($RECEIVED$ ميغابايت)",
+    "placeholders": {
+      "received": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusDownloadingPercent": {
+    "message": "جارٍ تنزيل النموذج: $PERCENT$% ($RECEIVED$/$TOTAL$ ميغابايت)",
+    "placeholders": {
+      "percent": {
+        "content": "$1"
+      },
+      "received": {
+        "content": "$2"
+      },
+      "total": {
+        "content": "$3"
+      }
+    }
+  },
+  "engineUnloaded": {
+    "message": "غير محمّل"
+  },
+  "engineLoading": {
+    "message": "جارٍ التحميل…"
+  },
+  "engineReady": {
+    "message": "جاهز"
+  },
+  "engineError": {
+    "message": "فشل"
+  },
+  "sessionReconnecting": {
+    "message": "جارٍ إعادة الاتصال (المحاولة $ATTEMPT$)… $REASON$",
+    "placeholders": {
+      "attempt": {
+        "content": "$1"
+      },
+      "reason": {
+        "content": "$2"
+      }
+    }
+  },
+  "sessionReconnected": {
+    "message": "أُعيد الاتصال $COUNT$ مرة",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "sessionListening": {
+    "message": "يستمع"
+  },
+  "sessionPaused": {
+    "message": "متوقف مؤقتًا"
+  },
+  "modelHeading": {
+    "message": "النموذج"
+  },
+  "fallingBehind": {
+    "message": "يفرّغ هذا الجهاز الكلام أبطأ من الوقت الفعلي باستخدام هذا النموذج المحلي."
+  },
+  "spokenLanguageHeading": {
+    "message": "لغة الكلام"
+  },
+  "spokenLanguageAuto": {
+    "message": "تلقائي"
+  },
+  "apiKeyTitle": {
+    "message": "مفتاح API لـ $PROVIDER$",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyStorageNote": {
+    "message": "يُخزَّن مفتاح API على هذا الجهاز فقط، ويُستخدم فقط لمصادقة الطلبات المرسلة إلى مقدّم الخدمة."
+  },
+  "apiKeyNetworkNote": {
+    "message": "يُرسَل الصوت إلى $PROVIDER$ لمعالجته.",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyPlaceholder": {
+    "message": "الصق مفتاح API الخاص بك لـ $PROVIDER$",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "getApiKey": {
+    "message": "الحصول على مفتاح API"
+  },
+  "done": {
+    "message": "تم"
+  },
+  "listeningToHeading": {
+    "message": "مصدر الصوت"
+  },
+  "noTabSelected": {
+    "message": "لم يتم اختيار علامة تبويب"
+  },
+  "startListening": {
+    "message": "بدء الاستماع"
+  },
+  "stopListening": {
+    "message": "إيقاف الاستماع"
+  },
+  "typingToHeading": {
+    "message": "الكتابة في"
+  },
+  "noFieldSelected": {
+    "message": "لم يتم اختيار حقل"
+  },
+  "startTyping": {
+    "message": "بدء الكتابة"
+  },
+  "stopTyping": {
+    "message": "إيقاف الكتابة"
+  },
+  "showOutline": {
+    "message": "إظهار الإطار"
+  },
+  "diagnosticsHeading": {
+    "message": "التشخيص"
+  },
+  "diagnosticsModel": {
+    "message": "النموذج: $STATE$",
+    "placeholders": {
+      "state": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsAudio": {
+    "message": "الصوت: المقاطع $CHUNKS$، المستوى $LEVEL$",
+    "placeholders": {
+      "chunks": {
+        "content": "$1"
+      },
+      "level": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsAudioIdle": {
+    "message": "الصوت: لا يوجد التقاط"
+  },
+  "diagnosticsNoAudio": {
+    "message": "لا يصدر صوت مسموع من علامة التبويب هذه. تحقّق من أنها تعمل فعلًا وأنها غير مكتومة."
+  },
+  "diagnosticsDropped": {
+    "message": "أُسقط قبل جاهزية النموذج: $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsTranscribed": {
+    "message": "تم التفريغ: النهائية $FINALS$، المُدرجة $INSERTED$",
+    "placeholders": {
+      "finals": {
+        "content": "$1"
+      },
+      "inserted": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInference": {
+    "message": "الاستدلال: اكتمل $FINISHED$/$STARTED$",
+    "placeholders": {
+      "finished": {
+        "content": "$1"
+      },
+      "started": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInferenceFailed": {
+    "message": "، فشل: $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsInferenceLast": {
+    "message": "، الأخير $SECONDS$ ث",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsStatus": {
+    "message": "الحالة: $STATUS$",
+    "placeholders": {
+      "status": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsSession": {
+    "message": "الجلسة: $SESSION$",
+    "placeholders": {
+      "session": {
+        "content": "$1"
+      }
+    }
+  },
+  "modelGroupLocal": {
+    "message": "محلي"
+  },
+  "modelApiKey": {
+    "message": "مفتاح API"
+  },
+  "modelSize": {
+    "message": "$SIZE$ ميغابايت",
+    "placeholders": {
+      "size": {
+        "content": "$1"
+      }
+    }
+  },
+  "menuListenHere": {
+    "message": "الاستماع إلى علامة التبويب هذه"
+  },
+  "menuTypeHere": {
+    "message": "الكتابة في هذا الحقل"
+  },
+  "menuNewFile": {
+    "message": "الكتابة في ملف جديد"
+  },
+  "menuNewTab": {
+    "message": "الكتابة في علامة تبويب جديدة"
+  },
+  "badgeControls": {
+    "message": "مخرجات TypeTarget"
+  },
+  "badgeSave": {
+    "message": "حفظ كملف نصي (txt)"
+  },
+  "badgeMinimize": {
+    "message": "تصغير"
+  },
+  "badgeRestore": {
+    "message": "استعادة"
+  },
+  "badgeOpenInTab": {
+    "message": "فتح في علامة تبويب جديدة"
+  },
+  "badgeMoveBack": {
+    "message": "إعادة إلى الصفحة"
+  },
+  "badgeStopTyping": {
+    "message": "إيقاف الكتابة هنا"
+  },
+  "badgeClose": {
+    "message": "إغلاق"
+  },
+  "badgeNotTyping": {
+    "message": "لا تتم الكتابة"
+  },
+  "newFileLabel": {
+    "message": "ملف TypeTarget جديد"
+  },
+  "editorTitle": {
+    "message": "ملف TypeTarget"
+  },
+  "transcriptPlaceholder": {
+    "message": "يظهر النص المفرَّغ هنا. يمكنك الكتابة هنا أيضًا."
+  }
+}

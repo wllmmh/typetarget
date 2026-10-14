@@ -1,0 +1,312 @@
+{
+  "extName": {
+    "message": "TypeTarget — ఎక్కడైనా మాటను టెక్స్ట్‌గా మార్చండి"
+  },
+  "extDescription": {
+    "message": "బ్రౌజర్ ట్యాబ్ ఆడియోను నేరుగా ఏ టెక్స్ట్ ఫీల్డ్‌లోకైనా రాయండి, మీకు నచ్చిన AI మోడల్‌తో, ఉచితంగా."
+  },
+  "textDirection": {
+    "message": "ltr"
+  },
+  "statusIdle": {
+    "message": "నిష్క్రియం"
+  },
+  "statusLoadingModel": {
+    "message": "మోడల్ లోడ్ అవుతోంది"
+  },
+  "statusCapturing": {
+    "message": "క్యాప్చర్ అవుతోంది"
+  },
+  "statusTranscribing": {
+    "message": "ట్రాన్స్‌క్రైబ్ అవుతోంది"
+  },
+  "statusPaused": {
+    "message": "పాజ్ చేయబడింది"
+  },
+  "statusError": {
+    "message": "ఎర్రర్"
+  },
+  "statusDownloading": {
+    "message": "మోడల్ డౌన్‌లోడ్ అవుతోంది ($RECEIVED$ MB)",
+    "placeholders": {
+      "received": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusDownloadingPercent": {
+    "message": "మోడల్ డౌన్‌లోడ్ అవుతోంది: $PERCENT$% ($RECEIVED$/$TOTAL$ MB)",
+    "placeholders": {
+      "percent": {
+        "content": "$1"
+      },
+      "received": {
+        "content": "$2"
+      },
+      "total": {
+        "content": "$3"
+      }
+    }
+  },
+  "engineUnloaded": {
+    "message": "లోడ్ కాలేదు"
+  },
+  "engineLoading": {
+    "message": "లోడ్ అవుతోంది…"
+  },
+  "engineReady": {
+    "message": "సిద్ధంగా ఉంది"
+  },
+  "engineError": {
+    "message": "విఫలమైంది"
+  },
+  "sessionReconnecting": {
+    "message": "మళ్లీ కనెక్ట్ అవుతోంది (ప్రయత్నం $ATTEMPT$)… $REASON$",
+    "placeholders": {
+      "attempt": {
+        "content": "$1"
+      },
+      "reason": {
+        "content": "$2"
+      }
+    }
+  },
+  "sessionReconnected": {
+    "message": "$COUNT$ సార్లు మళ్లీ కనెక్ట్ అయింది",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "sessionListening": {
+    "message": "వింటోంది"
+  },
+  "sessionPaused": {
+    "message": "పాజ్‌లో ఉంది"
+  },
+  "modelHeading": {
+    "message": "మోడల్"
+  },
+  "fallingBehind": {
+    "message": "ఈ లోకల్ మోడల్‌తో ఈ పరికరం రియల్ టైమ్ కంటే నెమ్మదిగా ట్రాన్స్‌క్రైబ్ చేస్తోంది."
+  },
+  "spokenLanguageHeading": {
+    "message": "మాట్లాడే భాష"
+  },
+  "spokenLanguageAuto": {
+    "message": "ఆటో"
+  },
+  "apiKeyTitle": {
+    "message": "$PROVIDER$ API కీ",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyStorageNote": {
+    "message": "మీ API కీ ఈ పరికరంలో మాత్రమే నిల్వ అవుతుంది, ప్రొవైడర్‌కు పంపే అభ్యర్థనలను ధృవీకరించడానికి మాత్రమే ఉపయోగించబడుతుంది."
+  },
+  "apiKeyNetworkNote": {
+    "message": "ప్రాసెసింగ్ కోసం ఆడియో $PROVIDER$‌కు పంపబడుతుంది.",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyPlaceholder": {
+    "message": "మీ $PROVIDER$ API కీని పేస్ట్ చేయండి",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "getApiKey": {
+    "message": "API కీ పొందండి"
+  },
+  "done": {
+    "message": "పూర్తయింది"
+  },
+  "listeningToHeading": {
+    "message": "ఆడియో మూలం"
+  },
+  "noTabSelected": {
+    "message": "ట్యాబ్ ఏదీ ఎంచుకోలేదు"
+  },
+  "startListening": {
+    "message": "వినడం ప్రారంభించండి"
+  },
+  "stopListening": {
+    "message": "వినడం ఆపండి"
+  },
+  "typingToHeading": {
+    "message": "టైప్ అవుతున్న చోటు"
+  },
+  "noFieldSelected": {
+    "message": "ఫీల్డ్ ఏదీ ఎంచుకోలేదు"
+  },
+  "startTyping": {
+    "message": "టైప్ చేయడం ప్రారంభించండి"
+  },
+  "stopTyping": {
+    "message": "టైప్ చేయడం ఆపండి"
+  },
+  "showOutline": {
+    "message": "అవుట్‌లైన్ చూపండి"
+  },
+  "diagnosticsHeading": {
+    "message": "డయాగ్నస్టిక్స్"
+  },
+  "diagnosticsModel": {
+    "message": "మోడల్: $STATE$",
+    "placeholders": {
+      "state": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsAudio": {
+    "message": "ఆడియో: $CHUNKS$ భాగాలు, స్థాయి $LEVEL$",
+    "placeholders": {
+      "chunks": {
+        "content": "$1"
+      },
+      "level": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsAudioIdle": {
+    "message": "ఆడియో: క్యాప్చర్ కావడం లేదు"
+  },
+  "diagnosticsNoAudio": {
+    "message": "ఆ ట్యాబ్ నుండి వినిపించే ఆడియో లేదు. అది నిజంగా ప్లే అవుతోందని, మ్యూట్ కాలేదని చెక్ చేయండి."
+  },
+  "diagnosticsDropped": {
+    "message": "మోడల్ సిద్ధం కాకముందే వదిలేసినవి: $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsTranscribed": {
+    "message": "ట్రాన్స్‌క్రైబ్ అయినవి: తుది $FINALS$, చేర్చినవి $INSERTED$",
+    "placeholders": {
+      "finals": {
+        "content": "$1"
+      },
+      "inserted": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInference": {
+    "message": "ఇన్ఫరెన్స్: $FINISHED$/$STARTED$ పూర్తయ్యాయి",
+    "placeholders": {
+      "finished": {
+        "content": "$1"
+      },
+      "started": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInferenceFailed": {
+    "message": ", $COUNT$ విఫలం",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsInferenceLast": {
+    "message": ", చివరిది $SECONDS$ సె",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsStatus": {
+    "message": "స్థితి: $STATUS$",
+    "placeholders": {
+      "status": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsSession": {
+    "message": "సెషన్: $SESSION$",
+    "placeholders": {
+      "session": {
+        "content": "$1"
+      }
+    }
+  },
+  "modelGroupLocal": {
+    "message": "లోకల్"
+  },
+  "modelApiKey": {
+    "message": "API కీ"
+  },
+  "modelSize": {
+    "message": "$SIZE$ MB",
+    "placeholders": {
+      "size": {
+        "content": "$1"
+      }
+    }
+  },
+  "menuListenHere": {
+    "message": "ఈ ట్యాబ్‌ను వినండి"
+  },
+  "menuTypeHere": {
+    "message": "ఈ ఫీల్డ్‌లో టైప్ చేయండి"
+  },
+  "menuNewFile": {
+    "message": "కొత్త ఫైల్‌లో టైప్ చేయండి"
+  },
+  "menuNewTab": {
+    "message": "కొత్త ట్యాబ్‌లో టైప్ చేయండి"
+  },
+  "badgeControls": {
+    "message": "TypeTarget అవుట్‌పుట్"
+  },
+  "badgeSave": {
+    "message": ".txt గా సేవ్ చేయండి"
+  },
+  "badgeMinimize": {
+    "message": "కనిష్ఠీకరించండి"
+  },
+  "badgeRestore": {
+    "message": "పునరుద్ధరించండి"
+  },
+  "badgeOpenInTab": {
+    "message": "కొత్త ట్యాబ్‌లో తెరవండి"
+  },
+  "badgeMoveBack": {
+    "message": "తిరిగి పేజీకి తరలించండి"
+  },
+  "badgeStopTyping": {
+    "message": "ఇక్కడ టైప్ చేయడం ఆపండి"
+  },
+  "badgeClose": {
+    "message": "మూసివేయండి"
+  },
+  "badgeNotTyping": {
+    "message": "టైప్ కావడం లేదు"
+  },
+  "newFileLabel": {
+    "message": "TypeTarget కొత్త ఫైల్"
+  },
+  "editorTitle": {
+    "message": "TypeTarget ఫైల్"
+  },
+  "transcriptPlaceholder": {
+    "message": "ట్రాన్స్‌క్రైబ్ చేసిన టెక్స్ట్ ఇక్కడ కనిపిస్తుంది. మీరు ఇక్కడ స్వయంగా కూడా టైప్ చేయవచ్చు."
+  }
+}

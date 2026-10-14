@@ -8,6 +8,8 @@
  * one line at the bottom of the viewport) and Open in new tab, for this box only.
  */
 
+import { t } from "../domain/i18n";
+
 export const NEW_FILE_FIELD_ID = "typetarget-new-file-field";
 
 const MARGIN = "12px";
@@ -49,8 +51,8 @@ export const createNewFileField = (): HTMLTextAreaElement => {
   const field = document.createElement("textarea");
   field.id = NEW_FILE_FIELD_ID;
   field.setAttribute("style", STYLE);
-  field.setAttribute("aria-label", "TypeTarget new file");
-  field.placeholder = "Transcribed text appears here. You can type here too.";
+  field.setAttribute("aria-label", t("newFileLabel"));
+  field.placeholder = t("transcriptPlaceholder");
   field.spellcheck = true;
   document.documentElement.append(field);
   return field;

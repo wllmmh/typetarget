@@ -1,0 +1,312 @@
+{
+  "extName": {
+    "message": "TypeTarget — речь в текст где угодно"
+  },
+  "extDescription": {
+    "message": "Распознаёт звук вкладки браузера и вводит текст прямо в любое поле. Бесплатно, с выбранной вами моделью ИИ."
+  },
+  "textDirection": {
+    "message": "ltr"
+  },
+  "statusIdle": {
+    "message": "Не активно"
+  },
+  "statusLoadingModel": {
+    "message": "Загрузка модели"
+  },
+  "statusCapturing": {
+    "message": "Захват звука"
+  },
+  "statusTranscribing": {
+    "message": "Распознавание"
+  },
+  "statusPaused": {
+    "message": "Пауза"
+  },
+  "statusError": {
+    "message": "Ошибка"
+  },
+  "statusDownloading": {
+    "message": "Загрузка модели ($RECEIVED$ МБ)",
+    "placeholders": {
+      "received": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusDownloadingPercent": {
+    "message": "Загрузка модели: $PERCENT$ % ($RECEIVED$/$TOTAL$ МБ)",
+    "placeholders": {
+      "percent": {
+        "content": "$1"
+      },
+      "received": {
+        "content": "$2"
+      },
+      "total": {
+        "content": "$3"
+      }
+    }
+  },
+  "engineUnloaded": {
+    "message": "не загружена"
+  },
+  "engineLoading": {
+    "message": "загрузка…"
+  },
+  "engineReady": {
+    "message": "готова"
+  },
+  "engineError": {
+    "message": "ошибка"
+  },
+  "sessionReconnecting": {
+    "message": "Повторное подключение (попытка $ATTEMPT$)… $REASON$",
+    "placeholders": {
+      "attempt": {
+        "content": "$1"
+      },
+      "reason": {
+        "content": "$2"
+      }
+    }
+  },
+  "sessionReconnected": {
+    "message": "переподключений: $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "sessionListening": {
+    "message": "прослушивание"
+  },
+  "sessionPaused": {
+    "message": "пауза"
+  },
+  "modelHeading": {
+    "message": "Модель"
+  },
+  "fallingBehind": {
+    "message": "С этой локальной моделью устройство распознаёт речь медленнее, чем в реальном времени."
+  },
+  "spokenLanguageHeading": {
+    "message": "Язык речи"
+  },
+  "spokenLanguageAuto": {
+    "message": "Авто"
+  },
+  "apiKeyTitle": {
+    "message": "API-ключ $PROVIDER$",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyStorageNote": {
+    "message": "API-ключ хранится только на этом устройстве и используется лишь для аутентификации запросов к провайдеру."
+  },
+  "apiKeyNetworkNote": {
+    "message": "Звук отправляется в $PROVIDER$ для обработки.",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyPlaceholder": {
+    "message": "Вставьте API-ключ $PROVIDER$",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "getApiKey": {
+    "message": "Получить API-ключ"
+  },
+  "done": {
+    "message": "Готово"
+  },
+  "listeningToHeading": {
+    "message": "Источник звука"
+  },
+  "noTabSelected": {
+    "message": "Вкладка не выбрана"
+  },
+  "startListening": {
+    "message": "Начать прослушивание"
+  },
+  "stopListening": {
+    "message": "Остановить прослушивание"
+  },
+  "typingToHeading": {
+    "message": "Ввод в"
+  },
+  "noFieldSelected": {
+    "message": "Поле не выбрано"
+  },
+  "startTyping": {
+    "message": "Начать ввод"
+  },
+  "stopTyping": {
+    "message": "Остановить ввод"
+  },
+  "showOutline": {
+    "message": "Показывать рамку"
+  },
+  "diagnosticsHeading": {
+    "message": "Диагностика"
+  },
+  "diagnosticsModel": {
+    "message": "Модель: $STATE$",
+    "placeholders": {
+      "state": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsAudio": {
+    "message": "Звук: блоков $CHUNKS$, уровень $LEVEL$",
+    "placeholders": {
+      "chunks": {
+        "content": "$1"
+      },
+      "level": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsAudioIdle": {
+    "message": "Звук: не захватывается"
+  },
+  "diagnosticsNoAudio": {
+    "message": "Из этой вкладки не слышно звука. Проверьте, что он воспроизводится и не отключён."
+  },
+  "diagnosticsDropped": {
+    "message": "Отброшено до готовности модели: $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsTranscribed": {
+    "message": "Распознано: итоговых $FINALS$, вставлено $INSERTED$",
+    "placeholders": {
+      "finals": {
+        "content": "$1"
+      },
+      "inserted": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInference": {
+    "message": "Вызовы модели: выполнено $FINISHED$/$STARTED$",
+    "placeholders": {
+      "finished": {
+        "content": "$1"
+      },
+      "started": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInferenceFailed": {
+    "message": ", с ошибкой: $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsInferenceLast": {
+    "message": ", последний $SECONDS$ с",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsStatus": {
+    "message": "Статус: $STATUS$",
+    "placeholders": {
+      "status": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsSession": {
+    "message": "Сеанс: $SESSION$",
+    "placeholders": {
+      "session": {
+        "content": "$1"
+      }
+    }
+  },
+  "modelGroupLocal": {
+    "message": "Локальные"
+  },
+  "modelApiKey": {
+    "message": "API-ключ"
+  },
+  "modelSize": {
+    "message": "$SIZE$ МБ",
+    "placeholders": {
+      "size": {
+        "content": "$1"
+      }
+    }
+  },
+  "menuListenHere": {
+    "message": "Слушать эту вкладку"
+  },
+  "menuTypeHere": {
+    "message": "Вводить в это поле"
+  },
+  "menuNewFile": {
+    "message": "Вводить в новый файл"
+  },
+  "menuNewTab": {
+    "message": "Вводить в новую вкладку"
+  },
+  "badgeControls": {
+    "message": "Вывод TypeTarget"
+  },
+  "badgeSave": {
+    "message": "Сохранить как .txt"
+  },
+  "badgeMinimize": {
+    "message": "Свернуть"
+  },
+  "badgeRestore": {
+    "message": "Развернуть"
+  },
+  "badgeOpenInTab": {
+    "message": "Открыть в новой вкладке"
+  },
+  "badgeMoveBack": {
+    "message": "Вернуть на страницу"
+  },
+  "badgeStopTyping": {
+    "message": "Остановить ввод здесь"
+  },
+  "badgeClose": {
+    "message": "Закрыть"
+  },
+  "badgeNotTyping": {
+    "message": "Ввод остановлен"
+  },
+  "newFileLabel": {
+    "message": "Новый файл TypeTarget"
+  },
+  "editorTitle": {
+    "message": "Файл TypeTarget"
+  },
+  "transcriptPlaceholder": {
+    "message": "Здесь появится распознанный текст. Можно печатать и самому."
+  }
+}

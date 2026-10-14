@@ -1,0 +1,312 @@
+{
+  "extName": {
+    "message": "TypeTarget — 随处语音转文字"
+  },
+  "extDescription": {
+    "message": "将浏览器标签页的音频直接转写到任意文本框中，可自选 AI 模型，免费使用。"
+  },
+  "textDirection": {
+    "message": "ltr"
+  },
+  "statusIdle": {
+    "message": "空闲"
+  },
+  "statusLoadingModel": {
+    "message": "正在加载模型"
+  },
+  "statusCapturing": {
+    "message": "正在捕获"
+  },
+  "statusTranscribing": {
+    "message": "正在转写"
+  },
+  "statusPaused": {
+    "message": "已暂停"
+  },
+  "statusError": {
+    "message": "错误"
+  },
+  "statusDownloading": {
+    "message": "正在下载模型（$RECEIVED$ MB）",
+    "placeholders": {
+      "received": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusDownloadingPercent": {
+    "message": "正在下载模型 $PERCENT$%（$RECEIVED$/$TOTAL$ MB）",
+    "placeholders": {
+      "percent": {
+        "content": "$1"
+      },
+      "received": {
+        "content": "$2"
+      },
+      "total": {
+        "content": "$3"
+      }
+    }
+  },
+  "engineUnloaded": {
+    "message": "未加载"
+  },
+  "engineLoading": {
+    "message": "正在加载…"
+  },
+  "engineReady": {
+    "message": "就绪"
+  },
+  "engineError": {
+    "message": "失败"
+  },
+  "sessionReconnecting": {
+    "message": "正在重新连接（第 $ATTEMPT$ 次尝试）… $REASON$",
+    "placeholders": {
+      "attempt": {
+        "content": "$1"
+      },
+      "reason": {
+        "content": "$2"
+      }
+    }
+  },
+  "sessionReconnected": {
+    "message": "已重连 $COUNT$ 次",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "sessionListening": {
+    "message": "正在收听"
+  },
+  "sessionPaused": {
+    "message": "已暂停"
+  },
+  "modelHeading": {
+    "message": "模型"
+  },
+  "fallingBehind": {
+    "message": "使用此本地模型时，此设备的转写速度慢于实时。"
+  },
+  "spokenLanguageHeading": {
+    "message": "语音语言"
+  },
+  "spokenLanguageAuto": {
+    "message": "自动"
+  },
+  "apiKeyTitle": {
+    "message": "$PROVIDER$ API 密钥",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyStorageNote": {
+    "message": "你的 API 密钥仅存储在此设备上，只用于向服务提供方验证请求。"
+  },
+  "apiKeyNetworkNote": {
+    "message": "音频将发送给 $PROVIDER$ 进行处理。",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyPlaceholder": {
+    "message": "粘贴你的 $PROVIDER$ API 密钥",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "getApiKey": {
+    "message": "获取 API 密钥"
+  },
+  "done": {
+    "message": "完成"
+  },
+  "listeningToHeading": {
+    "message": "收听来源"
+  },
+  "noTabSelected": {
+    "message": "未选择标签页"
+  },
+  "startListening": {
+    "message": "开始收听"
+  },
+  "stopListening": {
+    "message": "停止收听"
+  },
+  "typingToHeading": {
+    "message": "输入到"
+  },
+  "noFieldSelected": {
+    "message": "未选择文本框"
+  },
+  "startTyping": {
+    "message": "开始输入"
+  },
+  "stopTyping": {
+    "message": "停止输入"
+  },
+  "showOutline": {
+    "message": "显示轮廓"
+  },
+  "diagnosticsHeading": {
+    "message": "诊断"
+  },
+  "diagnosticsModel": {
+    "message": "模型：$STATE$",
+    "placeholders": {
+      "state": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsAudio": {
+    "message": "音频：$CHUNKS$ 个分块，电平 $LEVEL$",
+    "placeholders": {
+      "chunks": {
+        "content": "$1"
+      },
+      "level": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsAudioIdle": {
+    "message": "音频：未在捕获"
+  },
+  "diagnosticsNoAudio": {
+    "message": "该标签页没有可听见的音频。请确认它确实在播放且未静音。"
+  },
+  "diagnosticsDropped": {
+    "message": "模型就绪前丢弃：$COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsTranscribed": {
+    "message": "已转写：$FINALS$ 条最终结果，已插入 $INSERTED$ 条",
+    "placeholders": {
+      "finals": {
+        "content": "$1"
+      },
+      "inserted": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInference": {
+    "message": "推理：已完成 $FINISHED$/$STARTED$",
+    "placeholders": {
+      "finished": {
+        "content": "$1"
+      },
+      "started": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInferenceFailed": {
+    "message": "，失败 $COUNT$ 次",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsInferenceLast": {
+    "message": "，上次 $SECONDS$ 秒",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsStatus": {
+    "message": "状态：$STATUS$",
+    "placeholders": {
+      "status": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsSession": {
+    "message": "会话：$SESSION$",
+    "placeholders": {
+      "session": {
+        "content": "$1"
+      }
+    }
+  },
+  "modelGroupLocal": {
+    "message": "本地"
+  },
+  "modelApiKey": {
+    "message": "API 密钥"
+  },
+  "modelSize": {
+    "message": "$SIZE$ MB",
+    "placeholders": {
+      "size": {
+        "content": "$1"
+      }
+    }
+  },
+  "menuListenHere": {
+    "message": "收听此标签页"
+  },
+  "menuTypeHere": {
+    "message": "输入到此文本框"
+  },
+  "menuNewFile": {
+    "message": "输入到新文件"
+  },
+  "menuNewTab": {
+    "message": "输入到新标签页"
+  },
+  "badgeControls": {
+    "message": "TypeTarget 输出"
+  },
+  "badgeSave": {
+    "message": "另存为 .txt"
+  },
+  "badgeMinimize": {
+    "message": "最小化"
+  },
+  "badgeRestore": {
+    "message": "还原"
+  },
+  "badgeOpenInTab": {
+    "message": "在新标签页中打开"
+  },
+  "badgeMoveBack": {
+    "message": "移回页面"
+  },
+  "badgeStopTyping": {
+    "message": "停止在此处输入"
+  },
+  "badgeClose": {
+    "message": "关闭"
+  },
+  "badgeNotTyping": {
+    "message": "未在输入"
+  },
+  "newFileLabel": {
+    "message": "TypeTarget 新文件"
+  },
+  "editorTitle": {
+    "message": "TypeTarget 文件"
+  },
+  "transcriptPlaceholder": {
+    "message": "转写的文字会显示在这里。你也可以在这里输入。"
+  }
+}

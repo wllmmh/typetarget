@@ -47,6 +47,24 @@ const setup = (options?: Partial<StreamingOptions>) => {
 };
 
 describe("StreamingTranscriber", () => {
+  it("lets the engine detect the language unless one is set, and applies a change to the next utterance", async () => {
+    const { transcriber, engine, calls, push } = setup();
+    const utterance = async () => {
+      push("loud", 5);
+      push("quiet", 6);
+      await tick();
+      calls.at(-1)?.resolve("text");
+      await transcriber.flush();
+    };
+
+    await utterance();
+    transcriber.setOptions({ language: "fr" });
+    await utterance();
+
+    expect(engine.transcribe).toHaveBeenNthCalledWith(1, expect.any(Float32Array), {});
+    expect(engine.transcribe).toHaveBeenNthCalledWith(2, expect.any(Float32Array), { language: "fr" });
+  });
+
   it("does nothing for silence", async () => {
     const { transcriber, engine, events, push } = setup();
     push("quiet", 50);
@@ -212,7 +230,7 @@ describe("StreamingTranscriber", () => {
     expect(calls).toHaveLength(1); // the queued utterance was never even transcribed
   });
 
-  it("applies a lowered chunk length to the utterance already in progress", async () => {
+  it("applies a lowered cap to the utterance already in progress", async () => {
     const { transcriber, calls, push } = setup({ maxUtteranceMs: 20_000 });
     push("loud", 60); // 6 s of speech: well under the original 20 s cap
     await tick();
@@ -223,5 +241,50 @@ describe("StreamingTranscriber", () => {
     await tick();
 
     expect(calls).toHaveLength(1);
+  });
+
+  describe("stretching the cap to keep up (local Whisper)", () => {
+    /** One utterance cut by the 3 s cap, whose inference the clock says took `inferenceMs`. */
+    const cutAndTranscribe = async (setupResult: ReturnType<typeof setup>, inferenceMs: number) => {
+      const { calls, push } = setupResult;
+      const now = vi.spyOn(Date, "now").mockReturnValue(0);
+      push("loud", 31); // just past 3 s of continuous speech: the base cap cuts it
+      await tick();
+      now.mockReturnValue(inferenceMs);
+      calls.at(-1)?.resolve("text");
+      await tick();
+      now.mockRestore();
+    };
+
+    it("lengthens the cap after an inference slower than it, so continuous speech is cut less often", async () => {
+      const slow = setup({ stretchToKeepUp: true });
+      await cutAndTranscribe(slow, 8_000); // stretches the cap to 10 s
+
+      slow.push("loud", 60); // 6 s more: past 3 s, under 10 s
+      await tick();
+
+      expect(slow.calls).toHaveLength(1);
+    });
+
+    it("goes back to the base cap on reset, so a new session starts live", async () => {
+      const slow = setup({ stretchToKeepUp: true });
+      await cutAndTranscribe(slow, 8_000);
+      slow.transcriber.reset();
+
+      slow.push("loud", 31);
+      await tick();
+
+      expect(slow.calls).toHaveLength(2);
+    });
+
+    it("leaves hosted engines' cap alone, however long a request takes", async () => {
+      const hosted = setup();
+      await cutAndTranscribe(hosted, 8_000);
+
+      hosted.push("loud", 31);
+      await tick();
+
+      expect(hosted.calls).toHaveLength(2);
+    });
   });
 });

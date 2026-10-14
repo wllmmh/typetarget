@@ -1,0 +1,312 @@
+{
+  "extName": {
+    "message": "TypeTarget — যেকোনো জায়গায় কথাকে লেখায় রূপান্তর"
+  },
+  "extDescription": {
+    "message": "ব্রাউজার ট্যাবের অডিও সরাসরি যেকোনো টেক্সট ফিল্ডে লিখে দিন, পছন্দের AI মডেল দিয়ে, বিনামূল্যে।"
+  },
+  "textDirection": {
+    "message": "ltr"
+  },
+  "statusIdle": {
+    "message": "নিষ্ক্রিয়"
+  },
+  "statusLoadingModel": {
+    "message": "মডেল লোড হচ্ছে"
+  },
+  "statusCapturing": {
+    "message": "ক্যাপচার হচ্ছে"
+  },
+  "statusTranscribing": {
+    "message": "ট্রান্সক্রাইব হচ্ছে"
+  },
+  "statusPaused": {
+    "message": "বিরতি দেওয়া হয়েছে"
+  },
+  "statusError": {
+    "message": "ত্রুটি"
+  },
+  "statusDownloading": {
+    "message": "মডেল ডাউনলোড হচ্ছে ($RECEIVED$ MB)",
+    "placeholders": {
+      "received": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusDownloadingPercent": {
+    "message": "মডেল ডাউনলোড হচ্ছে: $PERCENT$% ($RECEIVED$/$TOTAL$ MB)",
+    "placeholders": {
+      "percent": {
+        "content": "$1"
+      },
+      "received": {
+        "content": "$2"
+      },
+      "total": {
+        "content": "$3"
+      }
+    }
+  },
+  "engineUnloaded": {
+    "message": "লোড হয়নি"
+  },
+  "engineLoading": {
+    "message": "লোড হচ্ছে…"
+  },
+  "engineReady": {
+    "message": "প্রস্তুত"
+  },
+  "engineError": {
+    "message": "ব্যর্থ"
+  },
+  "sessionReconnecting": {
+    "message": "আবার সংযোগ করা হচ্ছে (চেষ্টা $ATTEMPT$)… $REASON$",
+    "placeholders": {
+      "attempt": {
+        "content": "$1"
+      },
+      "reason": {
+        "content": "$2"
+      }
+    }
+  },
+  "sessionReconnected": {
+    "message": "$COUNT$ বার আবার সংযুক্ত",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "sessionListening": {
+    "message": "শুনছে"
+  },
+  "sessionPaused": {
+    "message": "বিরতিতে"
+  },
+  "modelHeading": {
+    "message": "মডেল"
+  },
+  "fallingBehind": {
+    "message": "এই লোকাল মডেলে এই ডিভাইসটি রিয়েল টাইমের চেয়ে ধীরে ট্রান্সক্রাইব করছে।"
+  },
+  "spokenLanguageHeading": {
+    "message": "কথ্য ভাষা"
+  },
+  "spokenLanguageAuto": {
+    "message": "অটো"
+  },
+  "apiKeyTitle": {
+    "message": "$PROVIDER$ API কী",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyStorageNote": {
+    "message": "আপনার API কী শুধু এই ডিভাইসে সংরক্ষিত থাকে এবং শুধু প্রদানকারীর কাছে পাঠানো অনুরোধ যাচাই করতে ব্যবহৃত হয়।"
+  },
+  "apiKeyNetworkNote": {
+    "message": "প্রক্রিয়াকরণের জন্য অডিও $PROVIDER$-এ পাঠানো হয়।",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyPlaceholder": {
+    "message": "আপনার $PROVIDER$ API কী পেস্ট করুন",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "getApiKey": {
+    "message": "API কী নিন"
+  },
+  "done": {
+    "message": "হয়ে গেছে"
+  },
+  "listeningToHeading": {
+    "message": "অডিওর উৎস"
+  },
+  "noTabSelected": {
+    "message": "কোনো ট্যাব বেছে নেওয়া হয়নি"
+  },
+  "startListening": {
+    "message": "শোনা শুরু করুন"
+  },
+  "stopListening": {
+    "message": "শোনা বন্ধ করুন"
+  },
+  "typingToHeading": {
+    "message": "যেখানে লেখা হচ্ছে"
+  },
+  "noFieldSelected": {
+    "message": "কোনো ফিল্ড বেছে নেওয়া হয়নি"
+  },
+  "startTyping": {
+    "message": "লেখা শুরু করুন"
+  },
+  "stopTyping": {
+    "message": "লেখা বন্ধ করুন"
+  },
+  "showOutline": {
+    "message": "আউটলাইন দেখান"
+  },
+  "diagnosticsHeading": {
+    "message": "ডায়াগনস্টিকস"
+  },
+  "diagnosticsModel": {
+    "message": "মডেল: $STATE$",
+    "placeholders": {
+      "state": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsAudio": {
+    "message": "অডিও: $CHUNKS$টি অংশ, লেভেল $LEVEL$",
+    "placeholders": {
+      "chunks": {
+        "content": "$1"
+      },
+      "level": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsAudioIdle": {
+    "message": "অডিও: ক্যাপচার হচ্ছে না"
+  },
+  "diagnosticsNoAudio": {
+    "message": "ওই ট্যাব থেকে শোনার মতো কোনো অডিও আসছে না। দেখুন সেটি সত্যিই চলছে এবং মিউট করা নেই।"
+  },
+  "diagnosticsDropped": {
+    "message": "মডেল প্রস্তুত হওয়ার আগে বাদ পড়েছে: $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsTranscribed": {
+    "message": "ট্রান্সক্রাইব হয়েছে: চূড়ান্ত $FINALS$টি, যোগ করা $INSERTED$টি",
+    "placeholders": {
+      "finals": {
+        "content": "$1"
+      },
+      "inserted": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInference": {
+    "message": "ইনফারেন্স: $FINISHED$/$STARTED$ সম্পন্ন",
+    "placeholders": {
+      "finished": {
+        "content": "$1"
+      },
+      "started": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInferenceFailed": {
+    "message": ", $COUNT$টি ব্যর্থ",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsInferenceLast": {
+    "message": ", শেষবার $SECONDS$ সেকেন্ড",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsStatus": {
+    "message": "অবস্থা: $STATUS$",
+    "placeholders": {
+      "status": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsSession": {
+    "message": "সেশন: $SESSION$",
+    "placeholders": {
+      "session": {
+        "content": "$1"
+      }
+    }
+  },
+  "modelGroupLocal": {
+    "message": "লোকাল"
+  },
+  "modelApiKey": {
+    "message": "API কী"
+  },
+  "modelSize": {
+    "message": "$SIZE$ MB",
+    "placeholders": {
+      "size": {
+        "content": "$1"
+      }
+    }
+  },
+  "menuListenHere": {
+    "message": "এই ট্যাবটি শুনুন"
+  },
+  "menuTypeHere": {
+    "message": "এই ফিল্ডে লিখুন"
+  },
+  "menuNewFile": {
+    "message": "নতুন ফাইলে লিখুন"
+  },
+  "menuNewTab": {
+    "message": "নতুন ট্যাবে লিখুন"
+  },
+  "badgeControls": {
+    "message": "TypeTarget আউটপুট"
+  },
+  "badgeSave": {
+    "message": ".txt হিসেবে সেভ করুন"
+  },
+  "badgeMinimize": {
+    "message": "ছোট করুন"
+  },
+  "badgeRestore": {
+    "message": "আগের মতো করুন"
+  },
+  "badgeOpenInTab": {
+    "message": "নতুন ট্যাবে খুলুন"
+  },
+  "badgeMoveBack": {
+    "message": "পেজে ফিরিয়ে নিন"
+  },
+  "badgeStopTyping": {
+    "message": "এখানে লেখা বন্ধ করুন"
+  },
+  "badgeClose": {
+    "message": "বন্ধ করুন"
+  },
+  "badgeNotTyping": {
+    "message": "লেখা হচ্ছে না"
+  },
+  "newFileLabel": {
+    "message": "TypeTarget-এর নতুন ফাইল"
+  },
+  "editorTitle": {
+    "message": "TypeTarget ফাইল"
+  },
+  "transcriptPlaceholder": {
+    "message": "ট্রান্সক্রাইব করা টেক্সট এখানে দেখা যাবে। আপনি এখানে নিজেও লিখতে পারেন।"
+  }
+}

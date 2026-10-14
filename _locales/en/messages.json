@@ -1,0 +1,172 @@
+{
+  "extName": {
+    "message": "TypeTarget — Speech to text anywhere",
+    "description": "The extension's name in Chrome and the Web Store. Keep \"TypeTarget\" as is."
+  },
+  "extDescription": {
+    "message": "Transcribe browser tab audio directly into any text field, with your choice of AI model for free.",
+    "description": "The extension's summary in Chrome and the Web Store. At most 132 characters."
+  },
+  "textDirection": {
+    "message": "ltr",
+    "description": "The direction this language is written in: ltr (left to right) or rtl (right to left). Lays out the popup and editor tab."
+  },
+
+  "statusIdle": { "message": "Idle" },
+  "statusLoadingModel": { "message": "Loading model" },
+  "statusCapturing": { "message": "Capturing" },
+  "statusTranscribing": { "message": "Transcribing" },
+  "statusPaused": { "message": "Paused" },
+  "statusError": { "message": "Error" },
+  "statusDownloading": {
+    "message": "Downloading model ($RECEIVED$ MB)",
+    "description": "A model download whose total size is unknown.",
+    "placeholders": { "received": { "content": "$1", "example": "42" } }
+  },
+  "statusDownloadingPercent": {
+    "message": "Downloading model $PERCENT$% ($RECEIVED$/$TOTAL$ MB)",
+    "placeholders": {
+      "percent": { "content": "$1", "example": "40" },
+      "received": { "content": "$2", "example": "12" },
+      "total": { "content": "$3", "example": "31" }
+    }
+  },
+
+  "engineUnloaded": { "message": "not loaded", "description": "The transcription model's state, after \"Model:\" in Diagnostics." },
+  "engineLoading": { "message": "loading…" },
+  "engineReady": { "message": "ready" },
+  "engineError": { "message": "failed" },
+
+  "sessionReconnecting": {
+    "message": "Reconnecting (attempt $ATTEMPT$)… $REASON$",
+    "description": "$REASON$ is an error message from the provider, in English.",
+    "placeholders": {
+      "attempt": { "content": "$1", "example": "2" },
+      "reason": { "content": "$2", "example": "Connection closed." }
+    }
+  },
+  "sessionReconnected": {
+    "message": "reconnected $COUNT$×",
+    "placeholders": { "count": { "content": "$1", "example": "3" } }
+  },
+  "sessionListening": { "message": "listening" },
+  "sessionPaused": { "message": "paused" },
+
+  "modelHeading": { "message": "Model" },
+  "fallingBehind": {
+    "message": "This device is transcribing slower than real time with this local model."
+  },
+  "spokenLanguageHeading": {
+    "message": "Spoken language",
+    "description": "The language people speak in the captured audio, which the transcription model expects."
+  },
+  "spokenLanguageAuto": {
+    "message": "Auto",
+    "description": "Spoken language option: the model detects the language by itself. Keep it short."
+  },
+
+  "apiKeyTitle": {
+    "message": "$PROVIDER$ API key",
+    "placeholders": { "provider": { "content": "$1", "example": "Groq" } }
+  },
+  "apiKeyStorageNote": {
+    "message": "Your API key is stored on this device only, used solely to authenticate requests to the provider."
+  },
+  "apiKeyNetworkNote": {
+    "message": "Audio is sent to $PROVIDER$ for processing.",
+    "placeholders": { "provider": { "content": "$1", "example": "Google" } }
+  },
+  "apiKeyPlaceholder": {
+    "message": "Paste your $PROVIDER$ API key",
+    "placeholders": { "provider": { "content": "$1", "example": "Groq" } }
+  },
+  "getApiKey": { "message": "Get API Key" },
+  "done": { "message": "Done" },
+
+  "listeningToHeading": { "message": "Listening to", "description": "Heading above the name of the tab being transcribed." },
+  "noTabSelected": { "message": "No tab selected" },
+  "startListening": { "message": "Start listening" },
+  "stopListening": { "message": "Stop listening" },
+  "typingToHeading": { "message": "Typing to", "description": "Heading above the name of the text box the transcript goes into." },
+  "noFieldSelected": { "message": "No field selected" },
+  "startTyping": { "message": "Start typing" },
+  "stopTyping": { "message": "Stop typing" },
+  "showOutline": { "message": "Show outline", "description": "Setting: draw an outline, timer and buttons on the text box being typed into." },
+
+  "diagnosticsHeading": { "message": "Diagnostics" },
+  "diagnosticsModel": {
+    "message": "Model: $STATE$",
+    "placeholders": { "state": { "content": "$1", "example": "ready" } }
+  },
+  "diagnosticsAudio": {
+    "message": "Audio: $CHUNKS$ chunks, level $LEVEL$",
+    "placeholders": {
+      "chunks": { "content": "$1", "example": "120" },
+      "level": { "content": "$2", "example": "0.153" }
+    }
+  },
+  "diagnosticsAudioIdle": { "message": "Audio: not capturing" },
+  "diagnosticsNoAudio": { "message": "No audible audio from that tab. Check it is actually playing and not muted." },
+  "diagnosticsDropped": {
+    "message": "Dropped before model ready: $COUNT$",
+    "placeholders": { "count": { "content": "$1", "example": "5" } }
+  },
+  "diagnosticsTranscribed": {
+    "message": "Transcribed: $FINALS$ finals, $INSERTED$ inserted",
+    "placeholders": {
+      "finals": { "content": "$1", "example": "12" },
+      "inserted": { "content": "$2", "example": "12" }
+    }
+  },
+  "diagnosticsInference": {
+    "message": "Inference: $FINISHED$/$STARTED$ done",
+    "placeholders": {
+      "finished": { "content": "$1", "example": "11" },
+      "started": { "content": "$2", "example": "12" }
+    }
+  },
+  "diagnosticsInferenceFailed": {
+    "message": ", $COUNT$ failed",
+    "description": "Appended to \"Inference: …\"; keep the leading separator.",
+    "placeholders": { "count": { "content": "$1", "example": "1" } }
+  },
+  "diagnosticsInferenceLast": {
+    "message": ", last $SECONDS$s",
+    "description": "Appended to \"Inference: …\"; keep the leading separator.",
+    "placeholders": { "seconds": { "content": "$1", "example": "1.4" } }
+  },
+  "diagnosticsStatus": {
+    "message": "Status: $STATUS$",
+    "placeholders": { "status": { "content": "$1", "example": "Transcribing" } }
+  },
+  "diagnosticsSession": {
+    "message": "Session: $SESSION$",
+    "placeholders": { "session": { "content": "$1", "example": "listening" } }
+  },
+
+  "modelGroupLocal": { "message": "Local", "description": "Model menu heading for models that run on this computer." },
+  "modelApiKey": { "message": "API key" },
+  "modelSize": {
+    "message": "$SIZE$ MB",
+    "placeholders": { "size": { "content": "$1", "example": "31" } }
+  },
+
+  "menuListenHere": { "message": "Listen to this tab" },
+  "menuTypeHere": { "message": "Type to this field" },
+  "menuNewFile": { "message": "Type to new file" },
+  "menuNewTab": { "message": "Type to new tab" },
+
+  "badgeControls": { "message": "TypeTarget output", "description": "Accessible name of the buttons on the text box being typed into." },
+  "badgeSave": { "message": "Save as .txt" },
+  "badgeMinimize": { "message": "Minimize" },
+  "badgeRestore": { "message": "Restore" },
+  "badgeOpenInTab": { "message": "Open in new tab" },
+  "badgeMoveBack": { "message": "Move back to page" },
+  "badgeStopTyping": { "message": "Stop typing here" },
+  "badgeClose": { "message": "Close" },
+  "badgeNotTyping": { "message": "Not typing" },
+
+  "newFileLabel": { "message": "TypeTarget new file" },
+  "editorTitle": { "message": "TypeTarget file" },
+  "transcriptPlaceholder": { "message": "Transcribed text appears here. You can type here too." }
+}

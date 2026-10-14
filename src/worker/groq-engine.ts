@@ -95,7 +95,8 @@ export class GroqEngine implements TranscriptionEngine {
     const form = new FormData();
     form.append("file", new Blob([float32ToWav(audio, SAMPLE_RATE)], { type: "audio/wav" }), "utterance.wav");
     form.append("model", this.groqModel);
-    form.append("language", options?.language ?? "en");
+    // Left out, Groq detects the spoken language.
+    if (options?.language) form.append("language", options.language);
     form.append("response_format", "json");
     form.append("temperature", "0");
 

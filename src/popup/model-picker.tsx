@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { MODEL_CATALOG, type ModelId, type ModelInfo } from "../domain/models";
 import type { ApiKeyProvider } from "../domain/api-key";
+import { t } from "../domain/i18n";
+import { SelectCaret } from "./select-box";
 
 /** The picker's sections: one per provider, in catalog order, so each model is listed
  * once under its provider's name instead of repeating it on every option. */
@@ -15,27 +17,15 @@ const MODEL_GROUPS: [string, ModelInfo[]][] = Object.entries(
 );
 
 const sizeText = (model: ModelInfo): string | null =>
-  model.approxSizeMb !== undefined ? `${model.approxSizeMb} MB` : null;
+  model.approxSizeMb !== undefined ? t("modelSize", model.approxSizeMb) : null;
+
+/** Hosted groups are named after their provider, which stays as is; "Local" is a word, so it is translated. */
+const groupLabel = ([model]: ModelInfo[]): string | undefined =>
+  model?.provider === "whisper-cpp" ? t("modelGroupLocal") : model?.name;
 
 /** The provider whose key this model needs; null for local models. */
 const keyProviderOf = ({ provider, requiresApiKey }: ModelInfo): ApiKeyProvider | null =>
   requiresApiKey && provider !== "whisper-cpp" ? provider : null;
-
-/** What the group asks of the user, right-aligned like a row's size: a first-use download, or a key they can set here. */
-const GroupNote = ({
-  keyProvider,
-  onEditKey,
-}: {
-  keyProvider: ApiKeyProvider | null;
-  onEditKey: (provider: ApiKeyProvider) => void;
-}) =>
-  keyProvider === null ? (
-    <span className="model-picker-note">downloads on first use</span>
-  ) : (
-    <button type="button" className="model-picker-key-action" onClick={() => onEditKey(keyProvider)}>
-      API key
-    </button>
-  );
 
 type ModelPickerProps = {
   value: ModelId;
@@ -82,31 +72,36 @@ export const ModelPicker = ({ value, disabled, savedKeyProviders, onChange, onEd
     <div className="model-picker" ref={rootRef}>
       <button
         type="button"
-        className={keyMissing ? "model-picker-trigger key-missing" : "model-picker-trigger"}
+        className={keyMissing ? "select-box model-picker-trigger key-missing" : "select-box model-picker-trigger"}
         disabled={disabled}
         aria-expanded={open}
         onClick={() => setOpen((wasOpen) => !wasOpen)}
       >
         <span className="model-picker-value">{MODEL_CATALOG[value].label}</span>
-        <span className="model-picker-caret" aria-hidden="true">
-          ▾
-        </span>
+        <SelectCaret />
       </button>
       {open && (
         <div className="model-picker-panel">
           {MODEL_GROUPS.map(([name, models]) => {
             const keyProvider = models.map(keyProviderOf).find((provider) => provider !== null) ?? null;
+            const label = groupLabel(models) ?? name;
             return (
-              <div key={name} role="group" aria-label={name}>
+              <div key={name} role="group" aria-label={label}>
                 <div className="model-picker-group">
-                  {name}
-                  <GroupNote
-                    keyProvider={keyProvider}
-                    onEditKey={(provider) => {
-                      setOpen(false);
-                      onEditKey(provider);
-                    }}
-                  />
+                  {label}
+                  {/* A hosted provider's key is set from its heading, right-aligned like a row's size. */}
+                  {keyProvider !== null && (
+                    <button
+                      type="button"
+                      className="model-picker-key-action"
+                      onClick={() => {
+                        setOpen(false);
+                        onEditKey(keyProvider);
+                      }}
+                    >
+                      {t("modelApiKey")}
+                    </button>
+                  )}
                 </div>
                 {models.map((model) => (
                   <button

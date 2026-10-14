@@ -6,6 +6,7 @@
 import { envelope, isEnvelope, type BackgroundToOffscreen, type OffscreenReply } from "../domain/messages";
 import type { ModelId } from "../domain/models";
 import type { ApiKeyProvider } from "../domain/api-key";
+import type { SpokenLanguage } from "../domain/languages";
 import { getTabCaptureStreamId } from "./tab-capture";
 import { ensureOffscreenDocument, closeOffscreenDocument, hasOffscreenDocument } from "./offscreen-manager";
 
@@ -118,9 +119,9 @@ export class CaptureController {
     }
   }
 
-  /** Retunes the running pipeline. Safe to call when nothing is capturing; the message just goes nowhere. */
-  async setChunkMs(chunkMs: number): Promise<void> {
-    const reply = await sendToOffscreen({ kind: "set-chunk-ms", chunkMs });
+  /** Retunes the running pipeline from the next utterance. Safe to call when nothing is capturing. */
+  async setSpokenLanguage(language: SpokenLanguage | null): Promise<void> {
+    const reply = await sendToOffscreen({ kind: "set-spoken-language", language });
     if (reply.kind === "error") {
       throw new CaptureError(reply.message, reply.code);
     }

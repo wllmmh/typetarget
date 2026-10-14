@@ -1,8 +1,8 @@
 import type { ModelId } from "../domain/models";
 import type { CapturableTab, DestinationRef, ListeningSession, PublicAppState } from "../domain/messages";
 import { DEFAULT_MODEL, type EngineStatus } from "../domain/models";
-import { CHUNK_MS_DEFAULT } from "../domain/tuning";
 import type { ApiKeyProvider } from "../domain/api-key";
+import type { SpokenLanguage } from "../domain/languages";
 import type { InferenceStats } from "../worker/instrumented-engine";
 import type { TranscriptionStatus } from "../domain/transcript";
 
@@ -26,7 +26,8 @@ export type AppState = {
   destination: DestinationRef | null;
   destinationLabel: string | null;
   selectedModel: ModelId;
-  chunkMs: number;
+  /** null: the Whisper models detect the spoken language (docs/adr/0016-transcription-detects-the-spoken-language.md). */
+  spokenLanguage: SpokenLanguage | null;
   /** The popup's "Show outline": off, nothing is drawn on the page's own text
    * boxes and the toolbar icon shows the state instead (docs/adr/0013-option-to-hide-indicators-on-the-page.md). */
   showPageIndicators: boolean;
@@ -51,7 +52,7 @@ export const createInitialState = (): AppState => ({
   destination: null,
   destinationLabel: null,
   selectedModel: DEFAULT_MODEL,
-  chunkMs: CHUNK_MS_DEFAULT,
+  spokenLanguage: null,
   showPageIndicators: true,
   isSelectingDestination: false,
   lastError: null,
@@ -72,7 +73,7 @@ export const toPublicState = (state: AppState): PublicAppState => ({
   inference: state.inference,
   destinationLabel: state.destinationLabel,
   selectedModel: state.selectedModel,
-  chunkMs: state.chunkMs,
+  spokenLanguage: state.spokenLanguage,
   showPageIndicators: state.showPageIndicators,
   isSelectingDestination: state.isSelectingDestination,
   lastError: state.lastError,

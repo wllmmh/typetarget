@@ -10,6 +10,7 @@ import { installContentBridge } from "../content/bridge";
 import { destinationSession } from "../content/destination-session";
 import { envelope, isEnvelope, type EditorReply, type EditorToBackground } from "../domain/messages";
 import { isFromServiceWorker } from "../domain/sender";
+import { t } from "../domain/i18n";
 
 installContentBridge(isFromServiceWorker, { alwaysShowIndicators: true });
 
@@ -27,5 +28,13 @@ const start = async (field: HTMLTextAreaElement): Promise<void> => {
   destinationSession.pickFocused(); // reported to the background through the bridge, like any pick
 };
 
+document.documentElement.lang = chrome.i18n.getUILanguage();
+document.documentElement.dir = t("textDirection");
+document.title = t("editorTitle");
+
 const field = document.getElementById("text");
-if (field instanceof HTMLTextAreaElement) void start(field);
+if (field instanceof HTMLTextAreaElement) {
+  field.setAttribute("aria-label", t("editorTitle"));
+  field.placeholder = t("transcriptPlaceholder");
+  void start(field);
+}

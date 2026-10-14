@@ -15,6 +15,7 @@
  * only what changed (state is broadcast every second while capturing).
  */
 import type { AppState } from "./state";
+import { t } from "../domain/i18n";
 
 export const MENU_ROOT_ID = "typetarget";
 export const MENU_LISTEN_HERE_ID = "typetarget-listen-here";
@@ -69,15 +70,15 @@ export class ContextMenu {
       chrome.contextMenus.removeAll(() => {
         chrome.contextMenus.create({ id: MENU_ROOT_ID, title: "TypeTarget", contexts: ["all"] }, warnIfFailed);
         chrome.contextMenus.create(
-          { id: MENU_LISTEN_HERE_ID, parentId: MENU_ROOT_ID, title: "Listen to this tab", contexts: ["all"] },
+          { id: MENU_LISTEN_HERE_ID, parentId: MENU_ROOT_ID, title: t("menuListenHere"), contexts: ["all"] },
           warnIfFailed,
         );
         chrome.contextMenus.create(
-          { id: MENU_STOP_ID, parentId: MENU_ROOT_ID, title: "Stop listening", enabled: false, contexts: ["all"] },
+          { id: MENU_STOP_ID, parentId: MENU_ROOT_ID, title: t("stopListening"), enabled: false, contexts: ["all"] },
           warnIfFailed,
         );
         chrome.contextMenus.create(
-          { id: MENU_OUTPUT_ID, parentId: MENU_ROOT_ID, title: "Type to this field", contexts: ["editable"] },
+          { id: MENU_OUTPUT_ID, parentId: MENU_ROOT_ID, title: t("menuTypeHere"), contexts: ["editable"] },
           warnIfFailed,
         );
         // Chrome can't say what was clicked until an item is chosen, only show items by the kind
@@ -89,22 +90,22 @@ export class ContextMenu {
           {
             id: MENU_OUTPUT_DISABLED_ID,
             parentId: MENU_ROOT_ID,
-            title: "Type to this field",
+            title: t("menuTypeHere"),
             enabled: false,
             contexts: ["page", "frame", "selection", "link", "image", "video", "audio"],
           },
           warnIfFailed,
         );
         chrome.contextMenus.create(
-          { id: MENU_NEW_FILE_ID, parentId: MENU_ROOT_ID, title: "Type to new file", contexts: ["all"] },
+          { id: MENU_NEW_FILE_ID, parentId: MENU_ROOT_ID, title: t("menuNewFile"), contexts: ["all"] },
           warnIfFailed,
         );
         chrome.contextMenus.create(
-          { id: MENU_NEW_TAB_ID, parentId: MENU_ROOT_ID, title: "Type to new tab", contexts: ["all"] },
+          { id: MENU_NEW_TAB_ID, parentId: MENU_ROOT_ID, title: t("menuNewTab"), contexts: ["all"] },
           warnIfFailed,
         );
         chrome.contextMenus.create(
-          { id: MENU_STOP_TYPING_ID, parentId: MENU_ROOT_ID, title: "Stop typing", enabled: false, contexts: ["all"] },
+          { id: MENU_STOP_TYPING_ID, parentId: MENU_ROOT_ID, title: t("stopTyping"), enabled: false, contexts: ["all"] },
           () => {
             warnIfFailed();
             resolve();

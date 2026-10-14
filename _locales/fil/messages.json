@@ -1,0 +1,312 @@
+{
+  "extName": {
+    "message": "TypeTarget — Boses tungo sa teksto kahit saan"
+  },
+  "extDescription": {
+    "message": "I-transcribe ang audio ng tab ng browser diretso sa anumang text field, libre, gamit ang AI model na gusto mo."
+  },
+  "textDirection": {
+    "message": "ltr"
+  },
+  "statusIdle": {
+    "message": "Idle"
+  },
+  "statusLoadingModel": {
+    "message": "Nilo-load ang model"
+  },
+  "statusCapturing": {
+    "message": "Kinukuha ang audio"
+  },
+  "statusTranscribing": {
+    "message": "Tina-transcribe"
+  },
+  "statusPaused": {
+    "message": "Naka-pause"
+  },
+  "statusError": {
+    "message": "Error"
+  },
+  "statusDownloading": {
+    "message": "Dina-download ang model ($RECEIVED$ MB)",
+    "placeholders": {
+      "received": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusDownloadingPercent": {
+    "message": "Dina-download ang model $PERCENT$% ($RECEIVED$/$TOTAL$ MB)",
+    "placeholders": {
+      "percent": {
+        "content": "$1"
+      },
+      "received": {
+        "content": "$2"
+      },
+      "total": {
+        "content": "$3"
+      }
+    }
+  },
+  "engineUnloaded": {
+    "message": "hindi naka-load"
+  },
+  "engineLoading": {
+    "message": "nilo-load…"
+  },
+  "engineReady": {
+    "message": "handa na"
+  },
+  "engineError": {
+    "message": "nabigo"
+  },
+  "sessionReconnecting": {
+    "message": "Muling kumokonekta (subok $ATTEMPT$)… $REASON$",
+    "placeholders": {
+      "attempt": {
+        "content": "$1"
+      },
+      "reason": {
+        "content": "$2"
+      }
+    }
+  },
+  "sessionReconnected": {
+    "message": "muling nakakonekta nang $COUNT$×",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "sessionListening": {
+    "message": "nakikinig"
+  },
+  "sessionPaused": {
+    "message": "naka-pause"
+  },
+  "modelHeading": {
+    "message": "Model"
+  },
+  "fallingBehind": {
+    "message": "Mas mabagal kaysa real time ang pag-transcribe ng device na ito gamit ang local model na ito."
+  },
+  "spokenLanguageHeading": {
+    "message": "Wikang sinasalita"
+  },
+  "spokenLanguageAuto": {
+    "message": "Auto"
+  },
+  "apiKeyTitle": {
+    "message": "API key ng $PROVIDER$",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyStorageNote": {
+    "message": "Sa device na ito lang naka-store ang iyong API key, at ginagamit lang ito para i-authenticate ang mga request sa provider."
+  },
+  "apiKeyNetworkNote": {
+    "message": "Ipinapadala ang audio sa $PROVIDER$ para iproseso.",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyPlaceholder": {
+    "message": "I-paste ang iyong API key ng $PROVIDER$",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "getApiKey": {
+    "message": "Kumuha ng API Key"
+  },
+  "done": {
+    "message": "Tapos na"
+  },
+  "listeningToHeading": {
+    "message": "Pinakikinggan"
+  },
+  "noTabSelected": {
+    "message": "Walang napiling tab"
+  },
+  "startListening": {
+    "message": "Simulang makinig"
+  },
+  "stopListening": {
+    "message": "Ihinto ang pakikinig"
+  },
+  "typingToHeading": {
+    "message": "Tina-type sa"
+  },
+  "noFieldSelected": {
+    "message": "Walang napiling field"
+  },
+  "startTyping": {
+    "message": "Simulang mag-type"
+  },
+  "stopTyping": {
+    "message": "Ihinto ang pag-type"
+  },
+  "showOutline": {
+    "message": "Ipakita ang outline"
+  },
+  "diagnosticsHeading": {
+    "message": "Diagnostics"
+  },
+  "diagnosticsModel": {
+    "message": "Model: $STATE$",
+    "placeholders": {
+      "state": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsAudio": {
+    "message": "Audio: $CHUNKS$ chunk, level $LEVEL$",
+    "placeholders": {
+      "chunks": {
+        "content": "$1"
+      },
+      "level": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsAudioIdle": {
+    "message": "Audio: hindi kumukuha"
+  },
+  "diagnosticsNoAudio": {
+    "message": "Walang naririnig na audio mula sa tab na iyon. Tingnan kung talagang nagpe-play ito at hindi naka-mute."
+  },
+  "diagnosticsDropped": {
+    "message": "Itinapon bago handa ang model: $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsTranscribed": {
+    "message": "Na-transcribe: $FINALS$ final, $INSERTED$ naipasok",
+    "placeholders": {
+      "finals": {
+        "content": "$1"
+      },
+      "inserted": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInference": {
+    "message": "Inference: $FINISHED$/$STARTED$ tapos",
+    "placeholders": {
+      "finished": {
+        "content": "$1"
+      },
+      "started": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInferenceFailed": {
+    "message": ", $COUNT$ nabigo",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsInferenceLast": {
+    "message": ", huli $SECONDS$s",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsStatus": {
+    "message": "Status: $STATUS$",
+    "placeholders": {
+      "status": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsSession": {
+    "message": "Session: $SESSION$",
+    "placeholders": {
+      "session": {
+        "content": "$1"
+      }
+    }
+  },
+  "modelGroupLocal": {
+    "message": "Lokal"
+  },
+  "modelApiKey": {
+    "message": "API key"
+  },
+  "modelSize": {
+    "message": "$SIZE$ MB",
+    "placeholders": {
+      "size": {
+        "content": "$1"
+      }
+    }
+  },
+  "menuListenHere": {
+    "message": "Pakinggan ang tab na ito"
+  },
+  "menuTypeHere": {
+    "message": "Mag-type sa field na ito"
+  },
+  "menuNewFile": {
+    "message": "Mag-type sa bagong file"
+  },
+  "menuNewTab": {
+    "message": "Mag-type sa bagong tab"
+  },
+  "badgeControls": {
+    "message": "Output ng TypeTarget"
+  },
+  "badgeSave": {
+    "message": "I-save bilang .txt"
+  },
+  "badgeMinimize": {
+    "message": "I-minimize"
+  },
+  "badgeRestore": {
+    "message": "I-restore"
+  },
+  "badgeOpenInTab": {
+    "message": "Buksan sa bagong tab"
+  },
+  "badgeMoveBack": {
+    "message": "Ibalik sa page"
+  },
+  "badgeStopTyping": {
+    "message": "Ihinto ang pag-type dito"
+  },
+  "badgeClose": {
+    "message": "Isara"
+  },
+  "badgeNotTyping": {
+    "message": "Hindi nagta-type"
+  },
+  "newFileLabel": {
+    "message": "Bagong file ng TypeTarget"
+  },
+  "editorTitle": {
+    "message": "File ng TypeTarget"
+  },
+  "transcriptPlaceholder": {
+    "message": "Lalabas dito ang na-transcribe na text. Puwede ka ring mag-type dito."
+  }
+}

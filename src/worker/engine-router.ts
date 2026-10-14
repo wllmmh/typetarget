@@ -30,6 +30,10 @@ export type EngineRouterConfig = {
 
 export class EngineRouter implements TranscriptionEngine {
   private active: ProviderImpl | null = null;
+  /** Every option set so far, applied to each transcriber as it becomes active: settings sent
+   * before a model loads (the offscreen document replays them when it creates the worker) or
+   * while another provider was active would otherwise be lost. */
+  private options: Partial<StreamingOptions> = {};
 
   constructor(private readonly config: EngineRouterConfig) {}
 
@@ -43,6 +47,7 @@ export class EngineRouter implements TranscriptionEngine {
       });
     }
     this.active = next;
+    next.transcriber.setOptions(this.options);
     await next.engine.load(modelId);
   }
 
@@ -76,6 +81,7 @@ export class EngineRouter implements TranscriptionEngine {
   }
 
   setOptions(options: Partial<StreamingOptions>): void {
+    this.options = { ...this.options, ...options };
     this.active?.transcriber.setOptions(options);
   }
 }

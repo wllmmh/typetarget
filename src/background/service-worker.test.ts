@@ -117,11 +117,21 @@ describe("popup requests", () => {
     expect(JSON.stringify(await getState())).not.toContain(API_KEY);
   });
 
-  it("see the settings saved before a restart", async () => {
-    Object.assign(fake.storage.local.data, { selectedModel: "base", chunkMs: 9_000, showPageIndicators: false });
+  it("save the spoken language, refusing a code TypeTarget doesn't offer", async () => {
     await startServiceWorker();
 
-    expect(await getState()).toMatchObject({ selectedModel: "base", chunkMs: 9_000, showPageIndicators: false });
+    expect(await popup({ kind: "set-spoken-language", language: "fr" })).toEqual({ kind: "ok" });
+    expect(await popup({ kind: "set-spoken-language", language: "klingon" })).toMatchObject({ kind: "error", code: "invalid-language" });
+
+    expect((await getState()).spokenLanguage).toBe("fr");
+    expect(fake.storage.local.data.spokenLanguage).toBe("fr");
+  });
+
+  it("see the settings saved before a restart", async () => {
+    Object.assign(fake.storage.local.data, { selectedModel: "base", spokenLanguage: "fr", showPageIndicators: false });
+    await startServiceWorker();
+
+    expect(await getState()).toMatchObject({ selectedModel: "base", spokenLanguage: "fr", showPageIndicators: false });
   });
 });
 
@@ -136,6 +146,19 @@ describe("capture", () => {
     const startAt = sent.findIndex((m) => m.kind === "start-capture");
     expect(sent[startAt]).toEqual({ kind: "start-capture", streamId: "stream-1" });
     expect(sent.findIndex((m) => m.kind === "load-model")).toBeGreaterThan(startAt);
+  });
+
+  it("tells the pipeline the spoken language on start, and when it changes while listening", async () => {
+    await startServiceWorker();
+    await popup({ kind: "set-spoken-language", language: "de" });
+    await startListening();
+    await popup({ kind: "set-spoken-language", language: null });
+
+    const sent = fake.runtime.sendMessage.mock.calls.map(([message]) => (message as Envelope<{ kind: string }>).payload);
+    expect(sent.filter((m) => m.kind === "set-spoken-language")).toEqual([
+      { kind: "set-spoken-language", language: "de" },
+      { kind: "set-spoken-language", language: null },
+    ]);
   });
 
   it("types the offscreen document's finals into the picked field's own frame, and nobody else's", async () => {

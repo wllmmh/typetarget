@@ -1,0 +1,312 @@
+{
+  "extName": {
+    "message": "TypeTarget — Zamiana mowy na tekst wszędzie"
+  },
+  "extDescription": {
+    "message": "Transkrybuj dźwięk z karty przeglądarki bezpośrednio do dowolnego pola tekstowego. Za darmo, z wybranym modelem AI."
+  },
+  "textDirection": {
+    "message": "ltr"
+  },
+  "statusIdle": {
+    "message": "Bezczynny"
+  },
+  "statusLoadingModel": {
+    "message": "Wczytywanie modelu"
+  },
+  "statusCapturing": {
+    "message": "Przechwytywanie"
+  },
+  "statusTranscribing": {
+    "message": "Transkrypcja"
+  },
+  "statusPaused": {
+    "message": "Wstrzymano"
+  },
+  "statusError": {
+    "message": "Błąd"
+  },
+  "statusDownloading": {
+    "message": "Pobieranie modelu ($RECEIVED$ MB)",
+    "placeholders": {
+      "received": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusDownloadingPercent": {
+    "message": "Pobieranie modelu: $PERCENT$% ($RECEIVED$/$TOTAL$ MB)",
+    "placeholders": {
+      "percent": {
+        "content": "$1"
+      },
+      "received": {
+        "content": "$2"
+      },
+      "total": {
+        "content": "$3"
+      }
+    }
+  },
+  "engineUnloaded": {
+    "message": "niewczytany"
+  },
+  "engineLoading": {
+    "message": "wczytywanie…"
+  },
+  "engineReady": {
+    "message": "gotowy"
+  },
+  "engineError": {
+    "message": "błąd"
+  },
+  "sessionReconnecting": {
+    "message": "Ponowne łączenie (próba $ATTEMPT$)… $REASON$",
+    "placeholders": {
+      "attempt": {
+        "content": "$1"
+      },
+      "reason": {
+        "content": "$2"
+      }
+    }
+  },
+  "sessionReconnected": {
+    "message": "ponowne połączenia: $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "sessionListening": {
+    "message": "słuchanie"
+  },
+  "sessionPaused": {
+    "message": "wstrzymano"
+  },
+  "modelHeading": {
+    "message": "Model"
+  },
+  "fallingBehind": {
+    "message": "To urządzenie transkrybuje z tym modelem lokalnym wolniej niż w czasie rzeczywistym."
+  },
+  "spokenLanguageHeading": {
+    "message": "Język mówiony"
+  },
+  "spokenLanguageAuto": {
+    "message": "Automatycznie"
+  },
+  "apiKeyTitle": {
+    "message": "Klucz API $PROVIDER$",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyStorageNote": {
+    "message": "Klucz API jest przechowywany tylko na tym urządzeniu i używany wyłącznie do uwierzytelniania żądań u dostawcy."
+  },
+  "apiKeyNetworkNote": {
+    "message": "Dźwięk jest wysyłany do $PROVIDER$ w celu przetworzenia.",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyPlaceholder": {
+    "message": "Wklej swój klucz API $PROVIDER$",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "getApiKey": {
+    "message": "Uzyskaj klucz API"
+  },
+  "done": {
+    "message": "Gotowe"
+  },
+  "listeningToHeading": {
+    "message": "Źródło dźwięku"
+  },
+  "noTabSelected": {
+    "message": "Nie wybrano karty"
+  },
+  "startListening": {
+    "message": "Zacznij słuchać"
+  },
+  "stopListening": {
+    "message": "Przestań słuchać"
+  },
+  "typingToHeading": {
+    "message": "Wpisywanie do"
+  },
+  "noFieldSelected": {
+    "message": "Nie wybrano pola"
+  },
+  "startTyping": {
+    "message": "Zacznij wpisywać"
+  },
+  "stopTyping": {
+    "message": "Przestań wpisywać"
+  },
+  "showOutline": {
+    "message": "Pokaż obramowanie"
+  },
+  "diagnosticsHeading": {
+    "message": "Diagnostyka"
+  },
+  "diagnosticsModel": {
+    "message": "Model: $STATE$",
+    "placeholders": {
+      "state": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsAudio": {
+    "message": "Dźwięk: liczba bloków $CHUNKS$, poziom $LEVEL$",
+    "placeholders": {
+      "chunks": {
+        "content": "$1"
+      },
+      "level": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsAudioIdle": {
+    "message": "Dźwięk: brak przechwytywania"
+  },
+  "diagnosticsNoAudio": {
+    "message": "Z tej karty nie słychać dźwięku. Sprawdź, czy naprawdę jest odtwarzany i nie jest wyciszony."
+  },
+  "diagnosticsDropped": {
+    "message": "Odrzucone przed gotowością modelu: $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsTranscribed": {
+    "message": "Przetranskrybowano: końcowe $FINALS$, wstawione $INSERTED$",
+    "placeholders": {
+      "finals": {
+        "content": "$1"
+      },
+      "inserted": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInference": {
+    "message": "Inferencja: ukończono $FINISHED$/$STARTED$",
+    "placeholders": {
+      "finished": {
+        "content": "$1"
+      },
+      "started": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInferenceFailed": {
+    "message": ", nieudane: $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsInferenceLast": {
+    "message": ", ostatnia $SECONDS$ s",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsStatus": {
+    "message": "Stan: $STATUS$",
+    "placeholders": {
+      "status": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsSession": {
+    "message": "Sesja: $SESSION$",
+    "placeholders": {
+      "session": {
+        "content": "$1"
+      }
+    }
+  },
+  "modelGroupLocal": {
+    "message": "Lokalne"
+  },
+  "modelApiKey": {
+    "message": "Klucz API"
+  },
+  "modelSize": {
+    "message": "$SIZE$ MB",
+    "placeholders": {
+      "size": {
+        "content": "$1"
+      }
+    }
+  },
+  "menuListenHere": {
+    "message": "Słuchaj tej karty"
+  },
+  "menuTypeHere": {
+    "message": "Wpisuj do tego pola"
+  },
+  "menuNewFile": {
+    "message": "Wpisuj do nowego pliku"
+  },
+  "menuNewTab": {
+    "message": "Wpisuj do nowej karty"
+  },
+  "badgeControls": {
+    "message": "Wyjście TypeTarget"
+  },
+  "badgeSave": {
+    "message": "Zapisz jako .txt"
+  },
+  "badgeMinimize": {
+    "message": "Minimalizuj"
+  },
+  "badgeRestore": {
+    "message": "Przywróć"
+  },
+  "badgeOpenInTab": {
+    "message": "Otwórz w nowej karcie"
+  },
+  "badgeMoveBack": {
+    "message": "Przenieś z powrotem na stronę"
+  },
+  "badgeStopTyping": {
+    "message": "Przestań tu wpisywać"
+  },
+  "badgeClose": {
+    "message": "Zamknij"
+  },
+  "badgeNotTyping": {
+    "message": "Nie wpisuje"
+  },
+  "newFileLabel": {
+    "message": "Nowy plik TypeTarget"
+  },
+  "editorTitle": {
+    "message": "Plik TypeTarget"
+  },
+  "transcriptPlaceholder": {
+    "message": "Tu pojawi się przetranskrybowany tekst. Możesz tu też pisać samodzielnie."
+  }
+}

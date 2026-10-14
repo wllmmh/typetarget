@@ -1,0 +1,312 @@
+{
+  "extName": {
+    "message": "TypeTarget — Her yerde konuşmayı metne çevirin"
+  },
+  "extDescription": {
+    "message": "Tarayıcı sekmesindeki sesi doğrudan herhangi bir metin alanına yazıya dökün; ücretsiz ve istediğiniz yapay zekâ modeliyle."
+  },
+  "textDirection": {
+    "message": "ltr"
+  },
+  "statusIdle": {
+    "message": "Boşta"
+  },
+  "statusLoadingModel": {
+    "message": "Model yükleniyor"
+  },
+  "statusCapturing": {
+    "message": "Yakalanıyor"
+  },
+  "statusTranscribing": {
+    "message": "Yazıya dökülüyor"
+  },
+  "statusPaused": {
+    "message": "Duraklatıldı"
+  },
+  "statusError": {
+    "message": "Hata"
+  },
+  "statusDownloading": {
+    "message": "Model indiriliyor ($RECEIVED$ MB)",
+    "placeholders": {
+      "received": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusDownloadingPercent": {
+    "message": "Model indiriliyor: %$PERCENT$ ($RECEIVED$/$TOTAL$ MB)",
+    "placeholders": {
+      "percent": {
+        "content": "$1"
+      },
+      "received": {
+        "content": "$2"
+      },
+      "total": {
+        "content": "$3"
+      }
+    }
+  },
+  "engineUnloaded": {
+    "message": "yüklenmedi"
+  },
+  "engineLoading": {
+    "message": "yükleniyor…"
+  },
+  "engineReady": {
+    "message": "hazır"
+  },
+  "engineError": {
+    "message": "başarısız"
+  },
+  "sessionReconnecting": {
+    "message": "Yeniden bağlanılıyor ($ATTEMPT$. deneme)… $REASON$",
+    "placeholders": {
+      "attempt": {
+        "content": "$1"
+      },
+      "reason": {
+        "content": "$2"
+      }
+    }
+  },
+  "sessionReconnected": {
+    "message": "$COUNT$ kez yeniden bağlandı",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "sessionListening": {
+    "message": "dinleniyor"
+  },
+  "sessionPaused": {
+    "message": "duraklatıldı"
+  },
+  "modelHeading": {
+    "message": "Model"
+  },
+  "fallingBehind": {
+    "message": "Bu cihaz, bu yerel modelle gerçek zamandan daha yavaş yazıya döküyor."
+  },
+  "spokenLanguageHeading": {
+    "message": "Konuşma dili"
+  },
+  "spokenLanguageAuto": {
+    "message": "Otomatik"
+  },
+  "apiKeyTitle": {
+    "message": "$PROVIDER$ API anahtarı",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyStorageNote": {
+    "message": "API anahtarınız yalnızca bu cihazda saklanır ve yalnızca sağlayıcıya giden istekleri doğrulamak için kullanılır."
+  },
+  "apiKeyNetworkNote": {
+    "message": "Ses, işlenmek üzere $PROVIDER$ hizmetine gönderilir.",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyPlaceholder": {
+    "message": "$PROVIDER$ API anahtarınızı yapıştırın",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "getApiKey": {
+    "message": "API Anahtarı Al"
+  },
+  "done": {
+    "message": "Bitti"
+  },
+  "listeningToHeading": {
+    "message": "Dinlenen sekme"
+  },
+  "noTabSelected": {
+    "message": "Sekme seçilmedi"
+  },
+  "startListening": {
+    "message": "Dinlemeyi başlat"
+  },
+  "stopListening": {
+    "message": "Dinlemeyi durdur"
+  },
+  "typingToHeading": {
+    "message": "Yazılan yer"
+  },
+  "noFieldSelected": {
+    "message": "Alan seçilmedi"
+  },
+  "startTyping": {
+    "message": "Yazmayı başlat"
+  },
+  "stopTyping": {
+    "message": "Yazmayı durdur"
+  },
+  "showOutline": {
+    "message": "Çerçeveyi göster"
+  },
+  "diagnosticsHeading": {
+    "message": "Tanılama"
+  },
+  "diagnosticsModel": {
+    "message": "Model: $STATE$",
+    "placeholders": {
+      "state": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsAudio": {
+    "message": "Ses: $CHUNKS$ parça, seviye $LEVEL$",
+    "placeholders": {
+      "chunks": {
+        "content": "$1"
+      },
+      "level": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsAudioIdle": {
+    "message": "Ses: yakalanmıyor"
+  },
+  "diagnosticsNoAudio": {
+    "message": "O sekmeden duyulabilir ses gelmiyor. Gerçekten çaldığını ve sesinin kapalı olmadığını kontrol edin."
+  },
+  "diagnosticsDropped": {
+    "message": "Model hazır olmadan atılan: $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsTranscribed": {
+    "message": "Yazıya dökülen: $FINALS$ kesin, $INSERTED$ eklendi",
+    "placeholders": {
+      "finals": {
+        "content": "$1"
+      },
+      "inserted": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInference": {
+    "message": "Çıkarım: $FINISHED$/$STARTED$ tamamlandı",
+    "placeholders": {
+      "finished": {
+        "content": "$1"
+      },
+      "started": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInferenceFailed": {
+    "message": ", $COUNT$ başarısız",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsInferenceLast": {
+    "message": ", son $SECONDS$ sn",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsStatus": {
+    "message": "Durum: $STATUS$",
+    "placeholders": {
+      "status": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsSession": {
+    "message": "Oturum: $SESSION$",
+    "placeholders": {
+      "session": {
+        "content": "$1"
+      }
+    }
+  },
+  "modelGroupLocal": {
+    "message": "Yerel"
+  },
+  "modelApiKey": {
+    "message": "API anahtarı"
+  },
+  "modelSize": {
+    "message": "$SIZE$ MB",
+    "placeholders": {
+      "size": {
+        "content": "$1"
+      }
+    }
+  },
+  "menuListenHere": {
+    "message": "Bu sekmeyi dinle"
+  },
+  "menuTypeHere": {
+    "message": "Bu alana yaz"
+  },
+  "menuNewFile": {
+    "message": "Yeni dosyaya yaz"
+  },
+  "menuNewTab": {
+    "message": "Yeni sekmeye yaz"
+  },
+  "badgeControls": {
+    "message": "TypeTarget çıktısı"
+  },
+  "badgeSave": {
+    "message": ".txt olarak kaydet"
+  },
+  "badgeMinimize": {
+    "message": "Simge durumuna küçült"
+  },
+  "badgeRestore": {
+    "message": "Geri yükle"
+  },
+  "badgeOpenInTab": {
+    "message": "Yeni sekmede aç"
+  },
+  "badgeMoveBack": {
+    "message": "Sayfaya geri taşı"
+  },
+  "badgeStopTyping": {
+    "message": "Buraya yazmayı durdur"
+  },
+  "badgeClose": {
+    "message": "Kapat"
+  },
+  "badgeNotTyping": {
+    "message": "Yazılmıyor"
+  },
+  "newFileLabel": {
+    "message": "Yeni TypeTarget dosyası"
+  },
+  "editorTitle": {
+    "message": "TypeTarget dosyası"
+  },
+  "transcriptPlaceholder": {
+    "message": "Yazıya dökülen metin burada görünür. Buraya kendiniz de yazabilirsiniz."
+  }
+}

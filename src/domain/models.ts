@@ -87,8 +87,9 @@ export const MODEL_CATALOG: Record<ModelId, ModelInfo> = {
     network: true,
     requiresApiKey: true,
   },
-  // Groq's hosted Whisper (docs/specs/groq-speech-to-text.md). Multilingual models, pinned to English like the
-  // rest of the app. Sends each finalized utterance to Groq using the user's own key.
+  // Groq's hosted Whisper (docs/specs/groq-speech-to-text.md). Multilingual models; the spoken
+  // language is detected per utterance. Sends each finalized utterance to Groq using the user's
+  // own key.
   "groq-whisper-large-v3-turbo": {
     id: "groq-whisper-large-v3-turbo",
     provider: "groq",
@@ -125,7 +126,9 @@ export type ConnectionStatus =
 
 /** Options passed per-inference call; kept minimal and backend-agnostic. */
 export type TranscriptionOptions = {
-  language?: "en";
+  /** The spoken language as an ISO 639-1 code. Omitted, the engine detects it from the audio
+   * (docs/adr/0016-transcription-detects-the-spoken-language.md). */
+  language?: string;
 };
 
 export type TranscriptionResult = {

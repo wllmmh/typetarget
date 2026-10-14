@@ -1,0 +1,312 @@
+{
+  "extName": {
+    "message": "TypeTarget — мовлення в текст будь-де"
+  },
+  "extDescription": {
+    "message": "Розпізнає звук вкладки браузера й вводить текст просто в будь-яке поле. Безкоштовно, з обраною вами моделлю ШІ."
+  },
+  "textDirection": {
+    "message": "ltr"
+  },
+  "statusIdle": {
+    "message": "Неактивно"
+  },
+  "statusLoadingModel": {
+    "message": "Завантаження моделі"
+  },
+  "statusCapturing": {
+    "message": "Захоплення звуку"
+  },
+  "statusTranscribing": {
+    "message": "Розпізнавання"
+  },
+  "statusPaused": {
+    "message": "Пауза"
+  },
+  "statusError": {
+    "message": "Помилка"
+  },
+  "statusDownloading": {
+    "message": "Завантаження моделі ($RECEIVED$ МБ)",
+    "placeholders": {
+      "received": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusDownloadingPercent": {
+    "message": "Завантаження моделі: $PERCENT$% ($RECEIVED$/$TOTAL$ МБ)",
+    "placeholders": {
+      "percent": {
+        "content": "$1"
+      },
+      "received": {
+        "content": "$2"
+      },
+      "total": {
+        "content": "$3"
+      }
+    }
+  },
+  "engineUnloaded": {
+    "message": "не завантажено"
+  },
+  "engineLoading": {
+    "message": "завантаження…"
+  },
+  "engineReady": {
+    "message": "готово"
+  },
+  "engineError": {
+    "message": "помилка"
+  },
+  "sessionReconnecting": {
+    "message": "Повторне підключення (спроба $ATTEMPT$)… $REASON$",
+    "placeholders": {
+      "attempt": {
+        "content": "$1"
+      },
+      "reason": {
+        "content": "$2"
+      }
+    }
+  },
+  "sessionReconnected": {
+    "message": "перепідключень: $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "sessionListening": {
+    "message": "прослуховування"
+  },
+  "sessionPaused": {
+    "message": "пауза"
+  },
+  "modelHeading": {
+    "message": "Модель"
+  },
+  "fallingBehind": {
+    "message": "З цією локальною моделлю пристрій розпізнає мовлення повільніше, ніж у реальному часі."
+  },
+  "spokenLanguageHeading": {
+    "message": "Мова мовлення"
+  },
+  "spokenLanguageAuto": {
+    "message": "Авто"
+  },
+  "apiKeyTitle": {
+    "message": "Ключ API $PROVIDER$",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyStorageNote": {
+    "message": "Ключ API зберігається лише на цьому пристрої й використовується тільки для автентифікації запитів до постачальника."
+  },
+  "apiKeyNetworkNote": {
+    "message": "Звук надсилається в $PROVIDER$ для обробки.",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyPlaceholder": {
+    "message": "Вставте ключ API $PROVIDER$",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "getApiKey": {
+    "message": "Отримати ключ API"
+  },
+  "done": {
+    "message": "Готово"
+  },
+  "listeningToHeading": {
+    "message": "Джерело звуку"
+  },
+  "noTabSelected": {
+    "message": "Вкладку не вибрано"
+  },
+  "startListening": {
+    "message": "Почати прослуховування"
+  },
+  "stopListening": {
+    "message": "Зупинити прослуховування"
+  },
+  "typingToHeading": {
+    "message": "Введення в"
+  },
+  "noFieldSelected": {
+    "message": "Поле не вибрано"
+  },
+  "startTyping": {
+    "message": "Почати введення"
+  },
+  "stopTyping": {
+    "message": "Зупинити введення"
+  },
+  "showOutline": {
+    "message": "Показувати рамку"
+  },
+  "diagnosticsHeading": {
+    "message": "Діагностика"
+  },
+  "diagnosticsModel": {
+    "message": "Модель: $STATE$",
+    "placeholders": {
+      "state": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsAudio": {
+    "message": "Звук: блоків $CHUNKS$, рівень $LEVEL$",
+    "placeholders": {
+      "chunks": {
+        "content": "$1"
+      },
+      "level": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsAudioIdle": {
+    "message": "Звук: не захоплюється"
+  },
+  "diagnosticsNoAudio": {
+    "message": "З цієї вкладки не чути звуку. Перевірте, що він справді відтворюється і не вимкнений."
+  },
+  "diagnosticsDropped": {
+    "message": "Відкинуто до готовності моделі: $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsTranscribed": {
+    "message": "Розпізнано: остаточних $FINALS$, вставлено $INSERTED$",
+    "placeholders": {
+      "finals": {
+        "content": "$1"
+      },
+      "inserted": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInference": {
+    "message": "Виклики моделі: виконано $FINISHED$/$STARTED$",
+    "placeholders": {
+      "finished": {
+        "content": "$1"
+      },
+      "started": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInferenceFailed": {
+    "message": ", з помилкою: $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsInferenceLast": {
+    "message": ", останній $SECONDS$ с",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsStatus": {
+    "message": "Статус: $STATUS$",
+    "placeholders": {
+      "status": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsSession": {
+    "message": "Сеанс: $SESSION$",
+    "placeholders": {
+      "session": {
+        "content": "$1"
+      }
+    }
+  },
+  "modelGroupLocal": {
+    "message": "Локальні"
+  },
+  "modelApiKey": {
+    "message": "Ключ API"
+  },
+  "modelSize": {
+    "message": "$SIZE$ МБ",
+    "placeholders": {
+      "size": {
+        "content": "$1"
+      }
+    }
+  },
+  "menuListenHere": {
+    "message": "Слухати цю вкладку"
+  },
+  "menuTypeHere": {
+    "message": "Вводити в це поле"
+  },
+  "menuNewFile": {
+    "message": "Вводити в новий файл"
+  },
+  "menuNewTab": {
+    "message": "Вводити в нову вкладку"
+  },
+  "badgeControls": {
+    "message": "Вивід TypeTarget"
+  },
+  "badgeSave": {
+    "message": "Зберегти як .txt"
+  },
+  "badgeMinimize": {
+    "message": "Згорнути"
+  },
+  "badgeRestore": {
+    "message": "Розгорнути"
+  },
+  "badgeOpenInTab": {
+    "message": "Відкрити в новій вкладці"
+  },
+  "badgeMoveBack": {
+    "message": "Повернути на сторінку"
+  },
+  "badgeStopTyping": {
+    "message": "Зупинити введення тут"
+  },
+  "badgeClose": {
+    "message": "Закрити"
+  },
+  "badgeNotTyping": {
+    "message": "Введення зупинено"
+  },
+  "newFileLabel": {
+    "message": "Новий файл TypeTarget"
+  },
+  "editorTitle": {
+    "message": "Файл TypeTarget"
+  },
+  "transcriptPlaceholder": {
+    "message": "Тут з’явиться розпізнаний текст. Можна друкувати й самостійно."
+  }
+}

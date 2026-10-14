@@ -1,0 +1,312 @@
+{
+  "extName": {
+    "message": "TypeTarget — कुठेही बोलण्याचे मजकुरात रूपांतर"
+  },
+  "extDescription": {
+    "message": "ब्राउझर टॅबमधील ऑडिओ थेट कोणत्याही मजकूर फील्डमध्ये लिहा, तुमच्या आवडीच्या AI मॉडेलसह, मोफत."
+  },
+  "textDirection": {
+    "message": "ltr"
+  },
+  "statusIdle": {
+    "message": "निष्क्रिय"
+  },
+  "statusLoadingModel": {
+    "message": "मॉडेल लोड होत आहे"
+  },
+  "statusCapturing": {
+    "message": "कॅप्चर होत आहे"
+  },
+  "statusTranscribing": {
+    "message": "ट्रान्सक्राइब होत आहे"
+  },
+  "statusPaused": {
+    "message": "थांबवले"
+  },
+  "statusError": {
+    "message": "त्रुटी"
+  },
+  "statusDownloading": {
+    "message": "मॉडेल डाउनलोड होत आहे ($RECEIVED$ MB)",
+    "placeholders": {
+      "received": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusDownloadingPercent": {
+    "message": "मॉडेल डाउनलोड होत आहे: $PERCENT$% ($RECEIVED$/$TOTAL$ MB)",
+    "placeholders": {
+      "percent": {
+        "content": "$1"
+      },
+      "received": {
+        "content": "$2"
+      },
+      "total": {
+        "content": "$3"
+      }
+    }
+  },
+  "engineUnloaded": {
+    "message": "लोड झाले नाही"
+  },
+  "engineLoading": {
+    "message": "लोड होत आहे…"
+  },
+  "engineReady": {
+    "message": "तयार"
+  },
+  "engineError": {
+    "message": "अयशस्वी"
+  },
+  "sessionReconnecting": {
+    "message": "पुन्हा कनेक्ट होत आहे (प्रयत्न $ATTEMPT$)… $REASON$",
+    "placeholders": {
+      "attempt": {
+        "content": "$1"
+      },
+      "reason": {
+        "content": "$2"
+      }
+    }
+  },
+  "sessionReconnected": {
+    "message": "$COUNT$ वेळा पुन्हा कनेक्ट झाले",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "sessionListening": {
+    "message": "ऐकत आहे"
+  },
+  "sessionPaused": {
+    "message": "थांबवले"
+  },
+  "modelHeading": {
+    "message": "मॉडेल"
+  },
+  "fallingBehind": {
+    "message": "या लोकल मॉडेलसह हे डिव्हाइस रिअल टाइमपेक्षा हळू ट्रान्सक्राइब करत आहे."
+  },
+  "spokenLanguageHeading": {
+    "message": "बोलली जाणारी भाषा"
+  },
+  "spokenLanguageAuto": {
+    "message": "ऑटो"
+  },
+  "apiKeyTitle": {
+    "message": "$PROVIDER$ API की",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyStorageNote": {
+    "message": "तुमची API की फक्त याच डिव्हाइसवर साठवली जाते आणि फक्त प्रोव्हायडरकडे जाणाऱ्या विनंत्या प्रमाणित करण्यासाठी वापरली जाते."
+  },
+  "apiKeyNetworkNote": {
+    "message": "प्रक्रियेसाठी ऑडिओ $PROVIDER$ कडे पाठवला जातो.",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyPlaceholder": {
+    "message": "तुमची $PROVIDER$ API की पेस्ट करा",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "getApiKey": {
+    "message": "API की मिळवा"
+  },
+  "done": {
+    "message": "झाले"
+  },
+  "listeningToHeading": {
+    "message": "ऑडिओचा स्रोत"
+  },
+  "noTabSelected": {
+    "message": "कोणताही टॅब निवडलेला नाही"
+  },
+  "startListening": {
+    "message": "ऐकणे सुरू करा"
+  },
+  "stopListening": {
+    "message": "ऐकणे थांबवा"
+  },
+  "typingToHeading": {
+    "message": "येथे टाइप होत आहे"
+  },
+  "noFieldSelected": {
+    "message": "कोणतेही फील्ड निवडलेले नाही"
+  },
+  "startTyping": {
+    "message": "टाइप करणे सुरू करा"
+  },
+  "stopTyping": {
+    "message": "टाइप करणे थांबवा"
+  },
+  "showOutline": {
+    "message": "बाह्यरेषा दाखवा"
+  },
+  "diagnosticsHeading": {
+    "message": "निदान"
+  },
+  "diagnosticsModel": {
+    "message": "मॉडेल: $STATE$",
+    "placeholders": {
+      "state": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsAudio": {
+    "message": "ऑडिओ: $CHUNKS$ भाग, पातळी $LEVEL$",
+    "placeholders": {
+      "chunks": {
+        "content": "$1"
+      },
+      "level": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsAudioIdle": {
+    "message": "ऑडिओ: कॅप्चर होत नाही"
+  },
+  "diagnosticsNoAudio": {
+    "message": "त्या टॅबमधून ऐकू येईल असा ऑडिओ येत नाही. तो खरोखर चालू आहे आणि म्यूट नाही हे तपासा."
+  },
+  "diagnosticsDropped": {
+    "message": "मॉडेल तयार होण्यापूर्वी वगळले: $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsTranscribed": {
+    "message": "ट्रान्सक्राइब झाले: अंतिम $FINALS$, घातले $INSERTED$",
+    "placeholders": {
+      "finals": {
+        "content": "$1"
+      },
+      "inserted": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInference": {
+    "message": "इन्फरन्स: $FINISHED$/$STARTED$ पूर्ण",
+    "placeholders": {
+      "finished": {
+        "content": "$1"
+      },
+      "started": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInferenceFailed": {
+    "message": ", $COUNT$ अयशस्वी",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsInferenceLast": {
+    "message": ", शेवटचे $SECONDS$ सेकंद",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsStatus": {
+    "message": "स्थिती: $STATUS$",
+    "placeholders": {
+      "status": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsSession": {
+    "message": "सत्र: $SESSION$",
+    "placeholders": {
+      "session": {
+        "content": "$1"
+      }
+    }
+  },
+  "modelGroupLocal": {
+    "message": "लोकल"
+  },
+  "modelApiKey": {
+    "message": "API की"
+  },
+  "modelSize": {
+    "message": "$SIZE$ MB",
+    "placeholders": {
+      "size": {
+        "content": "$1"
+      }
+    }
+  },
+  "menuListenHere": {
+    "message": "हा टॅब ऐका"
+  },
+  "menuTypeHere": {
+    "message": "या फील्डमध्ये टाइप करा"
+  },
+  "menuNewFile": {
+    "message": "नवीन फाइलमध्ये टाइप करा"
+  },
+  "menuNewTab": {
+    "message": "नवीन टॅबमध्ये टाइप करा"
+  },
+  "badgeControls": {
+    "message": "TypeTarget आउटपुट"
+  },
+  "badgeSave": {
+    "message": ".txt म्हणून सेव्ह करा"
+  },
+  "badgeMinimize": {
+    "message": "लहान करा"
+  },
+  "badgeRestore": {
+    "message": "पूर्ववत करा"
+  },
+  "badgeOpenInTab": {
+    "message": "नवीन टॅबमध्ये उघडा"
+  },
+  "badgeMoveBack": {
+    "message": "पुन्हा पेजवर हलवा"
+  },
+  "badgeStopTyping": {
+    "message": "येथे टाइप करणे थांबवा"
+  },
+  "badgeClose": {
+    "message": "बंद करा"
+  },
+  "badgeNotTyping": {
+    "message": "टाइप होत नाही"
+  },
+  "newFileLabel": {
+    "message": "TypeTarget ची नवीन फाइल"
+  },
+  "editorTitle": {
+    "message": "TypeTarget फाइल"
+  },
+  "transcriptPlaceholder": {
+    "message": "ट्रान्सक्राइब केलेला मजकूर येथे दिसेल. तुम्ही येथे स्वतःही टाइप करू शकता."
+  }
+}

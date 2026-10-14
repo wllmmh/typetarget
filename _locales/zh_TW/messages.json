@@ -1,0 +1,312 @@
+{
+  "extName": {
+    "message": "TypeTarget — 隨處語音轉文字"
+  },
+  "extDescription": {
+    "message": "將瀏覽器分頁的音訊直接轉錄到任何文字欄位，可自選 AI 模型，免費使用。"
+  },
+  "textDirection": {
+    "message": "ltr"
+  },
+  "statusIdle": {
+    "message": "閒置"
+  },
+  "statusLoadingModel": {
+    "message": "正在載入模型"
+  },
+  "statusCapturing": {
+    "message": "正在擷取"
+  },
+  "statusTranscribing": {
+    "message": "正在轉錄"
+  },
+  "statusPaused": {
+    "message": "已暫停"
+  },
+  "statusError": {
+    "message": "錯誤"
+  },
+  "statusDownloading": {
+    "message": "正在下載模型（$RECEIVED$ MB）",
+    "placeholders": {
+      "received": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusDownloadingPercent": {
+    "message": "正在下載模型 $PERCENT$%（$RECEIVED$/$TOTAL$ MB）",
+    "placeholders": {
+      "percent": {
+        "content": "$1"
+      },
+      "received": {
+        "content": "$2"
+      },
+      "total": {
+        "content": "$3"
+      }
+    }
+  },
+  "engineUnloaded": {
+    "message": "未載入"
+  },
+  "engineLoading": {
+    "message": "正在載入…"
+  },
+  "engineReady": {
+    "message": "就緒"
+  },
+  "engineError": {
+    "message": "失敗"
+  },
+  "sessionReconnecting": {
+    "message": "正在重新連線（第 $ATTEMPT$ 次嘗試）… $REASON$",
+    "placeholders": {
+      "attempt": {
+        "content": "$1"
+      },
+      "reason": {
+        "content": "$2"
+      }
+    }
+  },
+  "sessionReconnected": {
+    "message": "已重新連線 $COUNT$ 次",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "sessionListening": {
+    "message": "正在聆聽"
+  },
+  "sessionPaused": {
+    "message": "已暫停"
+  },
+  "modelHeading": {
+    "message": "模型"
+  },
+  "fallingBehind": {
+    "message": "使用這個本機模型時，這部裝置的轉錄速度比即時慢。"
+  },
+  "spokenLanguageHeading": {
+    "message": "語音語言"
+  },
+  "spokenLanguageAuto": {
+    "message": "自動"
+  },
+  "apiKeyTitle": {
+    "message": "$PROVIDER$ API 金鑰",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyStorageNote": {
+    "message": "你的 API 金鑰只會儲存在這部裝置上，僅用於向服務供應商驗證要求。"
+  },
+  "apiKeyNetworkNote": {
+    "message": "音訊會傳送給 $PROVIDER$ 處理。",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyPlaceholder": {
+    "message": "貼上你的 $PROVIDER$ API 金鑰",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "getApiKey": {
+    "message": "取得 API 金鑰"
+  },
+  "done": {
+    "message": "完成"
+  },
+  "listeningToHeading": {
+    "message": "聆聽來源"
+  },
+  "noTabSelected": {
+    "message": "未選取分頁"
+  },
+  "startListening": {
+    "message": "開始聆聽"
+  },
+  "stopListening": {
+    "message": "停止聆聽"
+  },
+  "typingToHeading": {
+    "message": "輸入至"
+  },
+  "noFieldSelected": {
+    "message": "未選取欄位"
+  },
+  "startTyping": {
+    "message": "開始輸入"
+  },
+  "stopTyping": {
+    "message": "停止輸入"
+  },
+  "showOutline": {
+    "message": "顯示外框"
+  },
+  "diagnosticsHeading": {
+    "message": "診斷"
+  },
+  "diagnosticsModel": {
+    "message": "模型：$STATE$",
+    "placeholders": {
+      "state": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsAudio": {
+    "message": "音訊：$CHUNKS$ 個區塊，音量 $LEVEL$",
+    "placeholders": {
+      "chunks": {
+        "content": "$1"
+      },
+      "level": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsAudioIdle": {
+    "message": "音訊：未擷取"
+  },
+  "diagnosticsNoAudio": {
+    "message": "該分頁沒有可聽見的音訊。請確認它確實正在播放且未靜音。"
+  },
+  "diagnosticsDropped": {
+    "message": "模型就緒前捨棄：$COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsTranscribed": {
+    "message": "已轉錄：$FINALS$ 段最終結果，已插入 $INSERTED$ 段",
+    "placeholders": {
+      "finals": {
+        "content": "$1"
+      },
+      "inserted": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInference": {
+    "message": "推論：已完成 $FINISHED$/$STARTED$",
+    "placeholders": {
+      "finished": {
+        "content": "$1"
+      },
+      "started": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInferenceFailed": {
+    "message": "，失敗 $COUNT$ 次",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsInferenceLast": {
+    "message": "，上次 $SECONDS$ 秒",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsStatus": {
+    "message": "狀態：$STATUS$",
+    "placeholders": {
+      "status": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsSession": {
+    "message": "工作階段：$SESSION$",
+    "placeholders": {
+      "session": {
+        "content": "$1"
+      }
+    }
+  },
+  "modelGroupLocal": {
+    "message": "本機"
+  },
+  "modelApiKey": {
+    "message": "API 金鑰"
+  },
+  "modelSize": {
+    "message": "$SIZE$ MB",
+    "placeholders": {
+      "size": {
+        "content": "$1"
+      }
+    }
+  },
+  "menuListenHere": {
+    "message": "聆聽這個分頁"
+  },
+  "menuTypeHere": {
+    "message": "輸入至這個欄位"
+  },
+  "menuNewFile": {
+    "message": "輸入至新檔案"
+  },
+  "menuNewTab": {
+    "message": "輸入至新分頁"
+  },
+  "badgeControls": {
+    "message": "TypeTarget 輸出"
+  },
+  "badgeSave": {
+    "message": "另存為 .txt"
+  },
+  "badgeMinimize": {
+    "message": "最小化"
+  },
+  "badgeRestore": {
+    "message": "還原"
+  },
+  "badgeOpenInTab": {
+    "message": "在新分頁中開啟"
+  },
+  "badgeMoveBack": {
+    "message": "移回頁面"
+  },
+  "badgeStopTyping": {
+    "message": "停止在此處輸入"
+  },
+  "badgeClose": {
+    "message": "關閉"
+  },
+  "badgeNotTyping": {
+    "message": "未在輸入"
+  },
+  "newFileLabel": {
+    "message": "TypeTarget 新檔案"
+  },
+  "editorTitle": {
+    "message": "TypeTarget 檔案"
+  },
+  "transcriptPlaceholder": {
+    "message": "轉錄的文字會顯示在這裡。你也可以在這裡輸入。"
+  }
+}

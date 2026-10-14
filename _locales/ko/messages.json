@@ -1,0 +1,312 @@
+{
+  "extName": {
+    "message": "TypeTarget — 어디서나 음성을 텍스트로"
+  },
+  "extDescription": {
+    "message": "브라우저 탭의 오디오를 원하는 텍스트 입력란에 바로 받아 적습니다. 원하는 AI 모델로 무료로 사용하세요."
+  },
+  "textDirection": {
+    "message": "ltr"
+  },
+  "statusIdle": {
+    "message": "대기 중"
+  },
+  "statusLoadingModel": {
+    "message": "모델 로드 중"
+  },
+  "statusCapturing": {
+    "message": "캡처 중"
+  },
+  "statusTranscribing": {
+    "message": "텍스트 변환 중"
+  },
+  "statusPaused": {
+    "message": "일시중지됨"
+  },
+  "statusError": {
+    "message": "오류"
+  },
+  "statusDownloading": {
+    "message": "모델 다운로드 중($RECEIVED$MB)",
+    "placeholders": {
+      "received": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusDownloadingPercent": {
+    "message": "모델 다운로드 중 $PERCENT$%($RECEIVED$/$TOTAL$MB)",
+    "placeholders": {
+      "percent": {
+        "content": "$1"
+      },
+      "received": {
+        "content": "$2"
+      },
+      "total": {
+        "content": "$3"
+      }
+    }
+  },
+  "engineUnloaded": {
+    "message": "로드되지 않음"
+  },
+  "engineLoading": {
+    "message": "로드 중…"
+  },
+  "engineReady": {
+    "message": "준비됨"
+  },
+  "engineError": {
+    "message": "실패"
+  },
+  "sessionReconnecting": {
+    "message": "다시 연결 중(시도 $ATTEMPT$회)… $REASON$",
+    "placeholders": {
+      "attempt": {
+        "content": "$1"
+      },
+      "reason": {
+        "content": "$2"
+      }
+    }
+  },
+  "sessionReconnected": {
+    "message": "$COUNT$회 재연결됨",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "sessionListening": {
+    "message": "듣는 중"
+  },
+  "sessionPaused": {
+    "message": "일시중지됨"
+  },
+  "modelHeading": {
+    "message": "모델"
+  },
+  "fallingBehind": {
+    "message": "이 기기에서는 이 로컬 모델의 텍스트 변환 속도가 실시간보다 느립니다."
+  },
+  "spokenLanguageHeading": {
+    "message": "음성 언어"
+  },
+  "spokenLanguageAuto": {
+    "message": "자동"
+  },
+  "apiKeyTitle": {
+    "message": "$PROVIDER$ API 키",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyStorageNote": {
+    "message": "API 키는 이 기기에만 저장되며 제공업체에 보내는 요청을 인증하는 데만 사용됩니다."
+  },
+  "apiKeyNetworkNote": {
+    "message": "오디오는 처리를 위해 $PROVIDER$(으)로 전송됩니다.",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyPlaceholder": {
+    "message": "$PROVIDER$ API 키 붙여넣기",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "getApiKey": {
+    "message": "API 키 받기"
+  },
+  "done": {
+    "message": "완료"
+  },
+  "listeningToHeading": {
+    "message": "듣는 탭"
+  },
+  "noTabSelected": {
+    "message": "선택된 탭 없음"
+  },
+  "startListening": {
+    "message": "듣기 시작"
+  },
+  "stopListening": {
+    "message": "듣기 중지"
+  },
+  "typingToHeading": {
+    "message": "입력 위치"
+  },
+  "noFieldSelected": {
+    "message": "선택된 입력란 없음"
+  },
+  "startTyping": {
+    "message": "입력 시작"
+  },
+  "stopTyping": {
+    "message": "입력 중지"
+  },
+  "showOutline": {
+    "message": "윤곽선 표시"
+  },
+  "diagnosticsHeading": {
+    "message": "진단"
+  },
+  "diagnosticsModel": {
+    "message": "모델: $STATE$",
+    "placeholders": {
+      "state": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsAudio": {
+    "message": "오디오: 청크 $CHUNKS$개, 레벨 $LEVEL$",
+    "placeholders": {
+      "chunks": {
+        "content": "$1"
+      },
+      "level": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsAudioIdle": {
+    "message": "오디오: 캡처 안 함"
+  },
+  "diagnosticsNoAudio": {
+    "message": "이 탭에서 들리는 오디오가 없습니다. 실제로 재생 중이고 음소거되지 않았는지 확인하세요."
+  },
+  "diagnosticsDropped": {
+    "message": "모델 준비 전 버림: $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsTranscribed": {
+    "message": "변환됨: 확정 $FINALS$개, 삽입 $INSERTED$개",
+    "placeholders": {
+      "finals": {
+        "content": "$1"
+      },
+      "inserted": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInference": {
+    "message": "추론: $FINISHED$/$STARTED$ 완료",
+    "placeholders": {
+      "finished": {
+        "content": "$1"
+      },
+      "started": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInferenceFailed": {
+    "message": ", 실패 $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsInferenceLast": {
+    "message": ", 마지막 $SECONDS$초",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsStatus": {
+    "message": "상태: $STATUS$",
+    "placeholders": {
+      "status": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsSession": {
+    "message": "세션: $SESSION$",
+    "placeholders": {
+      "session": {
+        "content": "$1"
+      }
+    }
+  },
+  "modelGroupLocal": {
+    "message": "로컬"
+  },
+  "modelApiKey": {
+    "message": "API 키"
+  },
+  "modelSize": {
+    "message": "$SIZE$MB",
+    "placeholders": {
+      "size": {
+        "content": "$1"
+      }
+    }
+  },
+  "menuListenHere": {
+    "message": "이 탭 듣기"
+  },
+  "menuTypeHere": {
+    "message": "이 입력란에 입력"
+  },
+  "menuNewFile": {
+    "message": "새 파일에 입력"
+  },
+  "menuNewTab": {
+    "message": "새 탭에 입력"
+  },
+  "badgeControls": {
+    "message": "TypeTarget 출력"
+  },
+  "badgeSave": {
+    "message": ".txt로 저장"
+  },
+  "badgeMinimize": {
+    "message": "최소화"
+  },
+  "badgeRestore": {
+    "message": "복원"
+  },
+  "badgeOpenInTab": {
+    "message": "새 탭에서 열기"
+  },
+  "badgeMoveBack": {
+    "message": "페이지로 되돌리기"
+  },
+  "badgeStopTyping": {
+    "message": "여기에 입력 중지"
+  },
+  "badgeClose": {
+    "message": "닫기"
+  },
+  "badgeNotTyping": {
+    "message": "입력 안 함"
+  },
+  "newFileLabel": {
+    "message": "TypeTarget 새 파일"
+  },
+  "editorTitle": {
+    "message": "TypeTarget 파일"
+  },
+  "transcriptPlaceholder": {
+    "message": "변환된 텍스트가 여기에 표시됩니다. 여기에 직접 입력할 수도 있습니다."
+  }
+}

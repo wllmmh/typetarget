@@ -13,6 +13,7 @@ import { createNewFileField, setNewFileFieldMinimized } from "./new-file-field";
 import { saveTextFile, textOf } from "./save-text-file";
 import { isUserEvent } from "./user-event";
 import type { SessionIndicator } from "../domain/messages";
+import { t } from "../domain/i18n";
 
 export type PickedDestination = {
   elementId: string;
@@ -230,7 +231,7 @@ class DestinationSession {
         this.closeNewFileField();
       },
       onSave: () => saveTextFile(textOf(field)),
-      closeLabel: "Close",
+      closeLabel: t("badgeClose"),
     });
   }
 

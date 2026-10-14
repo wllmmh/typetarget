@@ -1,0 +1,312 @@
+{
+  "extName": {
+    "message": "TypeTarget — कहीं भी बोली को टेक्स्ट में बदलें"
+  },
+  "extDescription": {
+    "message": "ब्राउज़र टैब के ऑडियो को सीधे किसी भी टेक्स्ट फ़ील्ड में लिखें, अपनी पसंद के AI मॉडल के साथ, मुफ़्त में।"
+  },
+  "textDirection": {
+    "message": "ltr"
+  },
+  "statusIdle": {
+    "message": "निष्क्रिय"
+  },
+  "statusLoadingModel": {
+    "message": "मॉडल लोड हो रहा है"
+  },
+  "statusCapturing": {
+    "message": "कैप्चर हो रहा है"
+  },
+  "statusTranscribing": {
+    "message": "ट्रांसक्राइब हो रहा है"
+  },
+  "statusPaused": {
+    "message": "रोका गया"
+  },
+  "statusError": {
+    "message": "गड़बड़ी"
+  },
+  "statusDownloading": {
+    "message": "मॉडल डाउनलोड हो रहा है ($RECEIVED$ MB)",
+    "placeholders": {
+      "received": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusDownloadingPercent": {
+    "message": "मॉडल डाउनलोड हो रहा है: $PERCENT$% ($RECEIVED$/$TOTAL$ MB)",
+    "placeholders": {
+      "percent": {
+        "content": "$1"
+      },
+      "received": {
+        "content": "$2"
+      },
+      "total": {
+        "content": "$3"
+      }
+    }
+  },
+  "engineUnloaded": {
+    "message": "लोड नहीं हुआ"
+  },
+  "engineLoading": {
+    "message": "लोड हो रहा है…"
+  },
+  "engineReady": {
+    "message": "तैयार"
+  },
+  "engineError": {
+    "message": "विफल"
+  },
+  "sessionReconnecting": {
+    "message": "फिर से कनेक्ट हो रहा है (प्रयास $ATTEMPT$)… $REASON$",
+    "placeholders": {
+      "attempt": {
+        "content": "$1"
+      },
+      "reason": {
+        "content": "$2"
+      }
+    }
+  },
+  "sessionReconnected": {
+    "message": "$COUNT$ बार फिर से कनेक्ट हुआ",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "sessionListening": {
+    "message": "सुन रहा है"
+  },
+  "sessionPaused": {
+    "message": "रुका हुआ"
+  },
+  "modelHeading": {
+    "message": "मॉडल"
+  },
+  "fallingBehind": {
+    "message": "इस लोकल मॉडल के साथ यह डिवाइस रीयल टाइम से धीमी गति से ट्रांसक्राइब कर रहा है।"
+  },
+  "spokenLanguageHeading": {
+    "message": "बोली जाने वाली भाषा"
+  },
+  "spokenLanguageAuto": {
+    "message": "ऑटो"
+  },
+  "apiKeyTitle": {
+    "message": "$PROVIDER$ API कुंजी",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyStorageNote": {
+    "message": "आपकी API कुंजी सिर्फ़ इसी डिवाइस पर सेव होती है और केवल प्रोवाइडर को भेजे गए अनुरोधों की पुष्टि के लिए इस्तेमाल होती है।"
+  },
+  "apiKeyNetworkNote": {
+    "message": "ऑडियो प्रोसेसिंग के लिए $PROVIDER$ को भेजा जाता है।",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyPlaceholder": {
+    "message": "अपनी $PROVIDER$ API कुंजी चिपकाएं",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "getApiKey": {
+    "message": "API कुंजी पाएं"
+  },
+  "done": {
+    "message": "हो गया"
+  },
+  "listeningToHeading": {
+    "message": "ऑडियो का स्रोत"
+  },
+  "noTabSelected": {
+    "message": "कोई टैब नहीं चुना गया"
+  },
+  "startListening": {
+    "message": "सुनना शुरू करें"
+  },
+  "stopListening": {
+    "message": "सुनना बंद करें"
+  },
+  "typingToHeading": {
+    "message": "यहां टाइप हो रहा है"
+  },
+  "noFieldSelected": {
+    "message": "कोई फ़ील्ड नहीं चुना गया"
+  },
+  "startTyping": {
+    "message": "टाइप करना शुरू करें"
+  },
+  "stopTyping": {
+    "message": "टाइप करना बंद करें"
+  },
+  "showOutline": {
+    "message": "आउटलाइन दिखाएं"
+  },
+  "diagnosticsHeading": {
+    "message": "डायग्नोस्टिक्स"
+  },
+  "diagnosticsModel": {
+    "message": "मॉडल: $STATE$",
+    "placeholders": {
+      "state": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsAudio": {
+    "message": "ऑडियो: $CHUNKS$ हिस्से, लेवल $LEVEL$",
+    "placeholders": {
+      "chunks": {
+        "content": "$1"
+      },
+      "level": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsAudioIdle": {
+    "message": "ऑडियो: कैप्चर नहीं हो रहा"
+  },
+  "diagnosticsNoAudio": {
+    "message": "उस टैब से कोई सुनाई देने लायक ऑडियो नहीं आ रहा। जांचें कि वह सच में चल रहा है और म्यूट नहीं है।"
+  },
+  "diagnosticsDropped": {
+    "message": "मॉडल तैयार होने से पहले छोड़े गए: $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsTranscribed": {
+    "message": "ट्रांसक्राइब किए गए: $FINALS$ फ़ाइनल, $INSERTED$ डाले गए",
+    "placeholders": {
+      "finals": {
+        "content": "$1"
+      },
+      "inserted": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInference": {
+    "message": "इन्फ़रेंस: $FINISHED$/$STARTED$ पूरे",
+    "placeholders": {
+      "finished": {
+        "content": "$1"
+      },
+      "started": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInferenceFailed": {
+    "message": ", $COUNT$ विफल",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsInferenceLast": {
+    "message": ", पिछला $SECONDS$ सेकंड",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsStatus": {
+    "message": "स्थिति: $STATUS$",
+    "placeholders": {
+      "status": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsSession": {
+    "message": "सेशन: $SESSION$",
+    "placeholders": {
+      "session": {
+        "content": "$1"
+      }
+    }
+  },
+  "modelGroupLocal": {
+    "message": "लोकल"
+  },
+  "modelApiKey": {
+    "message": "API कुंजी"
+  },
+  "modelSize": {
+    "message": "$SIZE$ MB",
+    "placeholders": {
+      "size": {
+        "content": "$1"
+      }
+    }
+  },
+  "menuListenHere": {
+    "message": "यह टैब सुनें"
+  },
+  "menuTypeHere": {
+    "message": "इस फ़ील्ड में टाइप करें"
+  },
+  "menuNewFile": {
+    "message": "नई फ़ाइल में टाइप करें"
+  },
+  "menuNewTab": {
+    "message": "नए टैब में टाइप करें"
+  },
+  "badgeControls": {
+    "message": "TypeTarget आउटपुट"
+  },
+  "badgeSave": {
+    "message": ".txt के रूप में सेव करें"
+  },
+  "badgeMinimize": {
+    "message": "छोटा करें"
+  },
+  "badgeRestore": {
+    "message": "पहले जैसा करें"
+  },
+  "badgeOpenInTab": {
+    "message": "नए टैब में खोलें"
+  },
+  "badgeMoveBack": {
+    "message": "वापस पेज पर ले जाएं"
+  },
+  "badgeStopTyping": {
+    "message": "यहां टाइप करना बंद करें"
+  },
+  "badgeClose": {
+    "message": "बंद करें"
+  },
+  "badgeNotTyping": {
+    "message": "टाइप नहीं हो रहा"
+  },
+  "newFileLabel": {
+    "message": "TypeTarget की नई फ़ाइल"
+  },
+  "editorTitle": {
+    "message": "TypeTarget फ़ाइल"
+  },
+  "transcriptPlaceholder": {
+    "message": "ट्रांसक्राइब किया गया टेक्स्ट यहां दिखेगा। आप यहां खुद भी टाइप कर सकते हैं।"
+  }
+}

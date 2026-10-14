@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { installFakeChrome, type FakeChrome } from "../test/fake-chrome";
 import { createInitialState } from "./state";
 import { persistState, restorePersistedState, restrictLocalStorageToExtension } from "./persisted-state";
-import { CHUNK_MS_MAX } from "../domain/tuning";
 import { DEFAULT_MODEL } from "../domain/models";
 
 let fake: FakeChrome;
@@ -45,7 +44,7 @@ describe("persistState / restorePersistedState", () => {
     state.pendingSourceTabId = 3;
     await persistState(state);
 
-    expect(Object.keys(fake.storage.local.data).sort()).toEqual(["apiKeys", "chunkMs", "selectedModel", "showPageIndicators"]);
+    expect(Object.keys(fake.storage.local.data).sort()).toEqual(["apiKeys", "selectedModel", "showPageIndicators", "spokenLanguage"]);
     expect(Object.keys(fake.storage.session.data)).toEqual(["binding"]);
   });
 
@@ -83,13 +82,18 @@ describe("persistState / restorePersistedState", () => {
     expect(state.apiKeys).toEqual({});
   });
 
-  it("round-trips the chunk length, clamping a value left by an older build", async () => {
-    fake.storage.local.data.chunkMs = 999_000;
-    const state = createInitialState();
+  it("round-trips the spoken language, and detects it for a code TypeTarget doesn't offer", async () => {
+    const saved = createInitialState();
+    saved.spokenLanguage = "fr";
+    await persistState(saved);
+    const restored = createInitialState();
+    await restorePersistedState(restored);
+    expect(restored.spokenLanguage).toBe("fr");
 
-    await restorePersistedState(state);
-
-    expect(state.chunkMs).toBe(CHUNK_MS_MAX);
+    fake.storage.local.data.spokenLanguage = "klingon";
+    const junk = createInitialState();
+    await restorePersistedState(junk);
+    expect(junk.spokenLanguage).toBeNull();
   });
 
   it("falls back to defaults for junk left by an older build", async () => {

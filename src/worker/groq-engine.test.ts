@@ -53,11 +53,20 @@ describe("GroqEngine.transcribe", () => {
     expect(init.method).toBe("POST");
     expect(init.headers).toEqual({ Authorization: "Bearer gsk_test_key" });
     expect(form.get("model")).toBe("whisper-large-v3-turbo");
-    expect(form.get("language")).toBe("en");
+    expect(form.get("language")).toBeNull(); // Groq detects the spoken language
     const file = form.get("file");
     expect(file).toBeInstanceOf(Blob);
     expect((file as Blob).type).toBe("audio/wav");
     expect((file as Blob).size).toBe(44 + 16_000 * 2);
+  });
+
+  it("sends a given language instead of letting Groq detect it", async () => {
+    const { engine, fetchFn } = createEngine("gsk_test_key", () => jsonResponse(200, { text: "Bonjour." }));
+    await engine.load("groq-whisper-large-v3-turbo");
+
+    await engine.transcribe(new Float32Array(16_000), { language: "fr" });
+
+    expect(lastRequest(fetchFn).form.get("language")).toBe("fr");
   });
 
   it("maps the non-turbo model to Groq's whisper-large-v3", async () => {

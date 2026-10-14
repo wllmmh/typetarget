@@ -1,4 +1,5 @@
 import { vi } from "vitest";
+import enMessages from "../../_locales/en/messages.json";
 
 /**
  * Minimal fake of the subset of the `chrome.*` extension API this codebase touches.
@@ -67,7 +68,34 @@ export type FakeChrome = {
     local: FakeStorageArea;
     session: FakeStorageArea;
   };
+  i18n: FakeI18n;
 };
+
+export type FakeI18n = {
+  getMessage: ReturnType<typeof vi.fn>;
+  getUILanguage: ReturnType<typeof vi.fn>;
+};
+
+type CatalogEntry = { message: string; placeholders?: Record<string, { content: string }> };
+const englishCatalog: Record<string, CatalogEntry> = enMessages;
+
+/**
+ * chrome.i18n as an English browser has it, so tests assert the text English users see. Fills
+ * placeholders the way Chrome does: `$NAME$` becomes its placeholder's content, whose `$1`… are
+ * the substitutions. An unknown key gives "", as in Chrome.
+ */
+export const createFakeI18n = (): FakeI18n => ({
+  getMessage: vi.fn((key: string, substitutions: string | string[] = []) => {
+    const entry = englishCatalog[key];
+    if (!entry) return "";
+    const subs = typeof substitutions === "string" ? [substitutions] : substitutions;
+    const fill = (content: string) => content.replace(/\$(\d)/g, (_, n: string) => subs[Number(n) - 1] ?? "");
+    return entry.message.replace(/\$([a-z0-9_]+)\$/gi, (_, name: string) =>
+      fill(entry.placeholders?.[name.toLowerCase()]?.content ?? ""),
+    );
+  }),
+  getUILanguage: vi.fn(() => "en"),
+});
 
 export type FakeStorageArea = {
   get: ReturnType<typeof vi.fn>;
@@ -151,6 +179,7 @@ export const createFakeChrome = (): FakeChrome => ({
     local: createFakeStorageArea(),
     session: createFakeStorageArea(),
   },
+  i18n: createFakeI18n(),
 });
 
 export const installFakeChrome = (): FakeChrome => {

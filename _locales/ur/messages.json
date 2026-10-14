@@ -1,0 +1,312 @@
+{
+  "extName": {
+    "message": "TypeTarget — کہیں بھی بولی کو متن میں بدلیں"
+  },
+  "extDescription": {
+    "message": "براؤزر ٹیب کی آڈیو کو براہِ راست کسی بھی ٹیکسٹ فیلڈ میں لکھیں، اپنی پسند کے AI ماڈل کے ساتھ، مفت۔"
+  },
+  "textDirection": {
+    "message": "rtl"
+  },
+  "statusIdle": {
+    "message": "غیر فعال"
+  },
+  "statusLoadingModel": {
+    "message": "ماڈل لوڈ ہو رہا ہے"
+  },
+  "statusCapturing": {
+    "message": "کیپچر ہو رہا ہے"
+  },
+  "statusTranscribing": {
+    "message": "ٹرانسکرائب ہو رہا ہے"
+  },
+  "statusPaused": {
+    "message": "موقوف"
+  },
+  "statusError": {
+    "message": "خرابی"
+  },
+  "statusDownloading": {
+    "message": "ماڈل ڈاؤن لوڈ ہو رہا ہے ($RECEIVED$ MB)",
+    "placeholders": {
+      "received": {
+        "content": "$1"
+      }
+    }
+  },
+  "statusDownloadingPercent": {
+    "message": "ماڈل ڈاؤن لوڈ ہو رہا ہے: $PERCENT$% ($RECEIVED$/$TOTAL$ MB)",
+    "placeholders": {
+      "percent": {
+        "content": "$1"
+      },
+      "received": {
+        "content": "$2"
+      },
+      "total": {
+        "content": "$3"
+      }
+    }
+  },
+  "engineUnloaded": {
+    "message": "لوڈ نہیں ہوا"
+  },
+  "engineLoading": {
+    "message": "لوڈ ہو رہا ہے…"
+  },
+  "engineReady": {
+    "message": "تیار"
+  },
+  "engineError": {
+    "message": "ناکام"
+  },
+  "sessionReconnecting": {
+    "message": "دوبارہ منسلک ہو رہا ہے (کوشش $ATTEMPT$)… $REASON$",
+    "placeholders": {
+      "attempt": {
+        "content": "$1"
+      },
+      "reason": {
+        "content": "$2"
+      }
+    }
+  },
+  "sessionReconnected": {
+    "message": "$COUNT$ بار دوبارہ منسلک ہوا",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "sessionListening": {
+    "message": "سن رہا ہے"
+  },
+  "sessionPaused": {
+    "message": "موقوف"
+  },
+  "modelHeading": {
+    "message": "ماڈل"
+  },
+  "fallingBehind": {
+    "message": "اس مقامی ماڈل کے ساتھ یہ آلہ حقیقی وقت سے سست ٹرانسکرائب کر رہا ہے۔"
+  },
+  "spokenLanguageHeading": {
+    "message": "بولی جانے والی زبان"
+  },
+  "spokenLanguageAuto": {
+    "message": "خودکار"
+  },
+  "apiKeyTitle": {
+    "message": "$PROVIDER$ API کلید",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyStorageNote": {
+    "message": "آپ کی API کلید صرف اسی آلے پر محفوظ ہوتی ہے اور صرف فراہم کنندہ کو بھیجی گئی درخواستوں کی توثیق کے لیے استعمال ہوتی ہے۔"
+  },
+  "apiKeyNetworkNote": {
+    "message": "آڈیو پروسیسنگ کے لیے $PROVIDER$ کو بھیجی جاتی ہے۔",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "apiKeyPlaceholder": {
+    "message": "اپنی $PROVIDER$ API کلید چسپاں کریں",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
+  "getApiKey": {
+    "message": "API کلید حاصل کریں"
+  },
+  "done": {
+    "message": "ہو گیا"
+  },
+  "listeningToHeading": {
+    "message": "آڈیو کا ذریعہ"
+  },
+  "noTabSelected": {
+    "message": "کوئی ٹیب منتخب نہیں"
+  },
+  "startListening": {
+    "message": "سننا شروع کریں"
+  },
+  "stopListening": {
+    "message": "سننا بند کریں"
+  },
+  "typingToHeading": {
+    "message": "یہاں ٹائپ ہو رہا ہے"
+  },
+  "noFieldSelected": {
+    "message": "کوئی فیلڈ منتخب نہیں"
+  },
+  "startTyping": {
+    "message": "ٹائپ کرنا شروع کریں"
+  },
+  "stopTyping": {
+    "message": "ٹائپ کرنا بند کریں"
+  },
+  "showOutline": {
+    "message": "خاکہ دکھائیں"
+  },
+  "diagnosticsHeading": {
+    "message": "تشخیص"
+  },
+  "diagnosticsModel": {
+    "message": "ماڈل: $STATE$",
+    "placeholders": {
+      "state": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsAudio": {
+    "message": "آڈیو: حصے $CHUNKS$، سطح $LEVEL$",
+    "placeholders": {
+      "chunks": {
+        "content": "$1"
+      },
+      "level": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsAudioIdle": {
+    "message": "آڈیو: کیپچر نہیں ہو رہی"
+  },
+  "diagnosticsNoAudio": {
+    "message": "اس ٹیب سے کوئی قابلِ سماعت آڈیو نہیں آ رہی۔ چیک کریں کہ وہ واقعی چل رہی ہے اور خاموش نہیں ہے۔"
+  },
+  "diagnosticsDropped": {
+    "message": "ماڈل تیار ہونے سے پہلے چھوڑے گئے: $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsTranscribed": {
+    "message": "ٹرانسکرائب شدہ: حتمی $FINALS$، داخل کردہ $INSERTED$",
+    "placeholders": {
+      "finals": {
+        "content": "$1"
+      },
+      "inserted": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInference": {
+    "message": "انفرنس: مکمل $FINISHED$/$STARTED$",
+    "placeholders": {
+      "finished": {
+        "content": "$1"
+      },
+      "started": {
+        "content": "$2"
+      }
+    }
+  },
+  "diagnosticsInferenceFailed": {
+    "message": "، ناکام: $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsInferenceLast": {
+    "message": "، آخری $SECONDS$ سیکنڈ",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsStatus": {
+    "message": "حالت: $STATUS$",
+    "placeholders": {
+      "status": {
+        "content": "$1"
+      }
+    }
+  },
+  "diagnosticsSession": {
+    "message": "سیشن: $SESSION$",
+    "placeholders": {
+      "session": {
+        "content": "$1"
+      }
+    }
+  },
+  "modelGroupLocal": {
+    "message": "مقامی"
+  },
+  "modelApiKey": {
+    "message": "API کلید"
+  },
+  "modelSize": {
+    "message": "$SIZE$ MB",
+    "placeholders": {
+      "size": {
+        "content": "$1"
+      }
+    }
+  },
+  "menuListenHere": {
+    "message": "یہ ٹیب سنیں"
+  },
+  "menuTypeHere": {
+    "message": "اس فیلڈ میں ٹائپ کریں"
+  },
+  "menuNewFile": {
+    "message": "نئی فائل میں ٹائپ کریں"
+  },
+  "menuNewTab": {
+    "message": "نئے ٹیب میں ٹائپ کریں"
+  },
+  "badgeControls": {
+    "message": "TypeTarget آؤٹ پٹ"
+  },
+  "badgeSave": {
+    "message": "ٹیکسٹ فائل (txt) کے طور پر محفوظ کریں"
+  },
+  "badgeMinimize": {
+    "message": "چھوٹا کریں"
+  },
+  "badgeRestore": {
+    "message": "بحال کریں"
+  },
+  "badgeOpenInTab": {
+    "message": "نئے ٹیب میں کھولیں"
+  },
+  "badgeMoveBack": {
+    "message": "واپس صفحے پر لے جائیں"
+  },
+  "badgeStopTyping": {
+    "message": "یہاں ٹائپ کرنا بند کریں"
+  },
+  "badgeClose": {
+    "message": "بند کریں"
+  },
+  "badgeNotTyping": {
+    "message": "ٹائپ نہیں ہو رہا"
+  },
+  "newFileLabel": {
+    "message": "TypeTarget کی نئی فائل"
+  },
+  "editorTitle": {
+    "message": "TypeTarget فائل"
+  },
+  "transcriptPlaceholder": {
+    "message": "ٹرانسکرائب شدہ متن یہاں ظاہر ہوگا۔ آپ یہاں خود بھی ٹائپ کر سکتے ہیں۔"
+  }
+}

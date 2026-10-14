@@ -8,6 +8,7 @@ import {
 import { isFromServiceWorker } from "../domain/sender";
 import type { ModelId } from "../domain/models";
 import type { ApiKeyProvider } from "../domain/api-key";
+import type { SpokenLanguage } from "../domain/languages";
 import type { AsrWorkerEvent } from "../worker/worker-protocol";
 import { createAsrWorkerClient, type AsrWorkerClient } from "./asr-worker-client";
 import { startTabCapture, type StartCaptureResult } from "./capture";
@@ -39,9 +40,11 @@ let engineReady = false;
 // The worker is created on first use, not at document load: it's cheap, but nothing
 // needs it until a model is requested.
 let asrWorker: AsrWorkerClient | null = null;
-let chunkMs: number | null = null;
-/** Same reason as chunkMs: the worker may not exist yet when a key is set, and is
- * re-supplied on creation so a key entered before capture starts is not lost. */
+/** Remembered as well as forwarded: the worker may not exist yet when it is set, and is
+ * re-tuned on creation so a choice made before capture starts is not lost. Undefined until the
+ * background sends one; null means detect. */
+let spokenLanguage: SpokenLanguage | null | undefined;
+/** Same reason as spokenLanguage. */
 let apiKeys: Partial<Record<ApiKeyProvider, string>> = {};
 const asrEventListeners = new Set<(event: AsrWorkerEvent) => void>();
 
@@ -54,7 +57,7 @@ const sendToBackground = (message: OffscreenToBackground) => {
 const getAsrWorker = (): AsrWorkerClient => {
   if (asrWorker) return asrWorker;
   asrWorker = createWorker();
-  if (chunkMs !== null) asrWorker.send({ kind: "set-chunk-ms", chunkMs });
+  if (spokenLanguage !== undefined) asrWorker.send({ kind: "set-spoken-language", language: spokenLanguage });
   for (const [provider, apiKey] of Object.entries(apiKeys) as [ApiKeyProvider, string][]) {
     asrWorker.send({ kind: "set-api-key", provider, apiKey });
   }
@@ -158,11 +161,9 @@ const handleMessage = async (msg: BackgroundToOffscreen): Promise<OffscreenReply
       getAsrWorker().send({ kind: "unload-model" });
       return { kind: "ok" };
     }
-    case "set-chunk-ms": {
-      // Remembered as well as forwarded: the worker may not exist yet, and is re-tuned on
-      // creation so a setting changed before capture starts is not lost.
-      chunkMs = msg.chunkMs;
-      asrWorker?.send({ kind: "set-chunk-ms", chunkMs });
+    case "set-spoken-language": {
+      spokenLanguage = msg.language;
+      asrWorker?.send({ kind: "set-spoken-language", language: spokenLanguage });
       return { kind: "ok" };
     }
     case "set-api-key": {

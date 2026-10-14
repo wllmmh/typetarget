@@ -4,18 +4,21 @@ import { useBackgroundState } from "./use-background-state";
 import type { PublicAppState } from "../domain/messages";
 import { MODEL_CATALOG, type ModelId } from "../domain/models";
 import { ModelPicker } from "./model-picker";
+import { NativeSelect } from "./select-box";
 import { API_KEY_PAGES, API_KEY_PROVIDER_NAMES, type ApiKeyProvider } from "../domain/api-key";
-import { CHUNK_MS_MAX, CHUNK_MS_MIN, CHUNK_MS_STEP } from "../domain/tuning";
+import { UTTERANCE_CAP_MS } from "../domain/tuning";
 import { formatElapsed } from "../domain/elapsed";
+import { t, type MessageKey } from "../domain/i18n";
+import { SPOKEN_LANGUAGES, SPOKEN_LANGUAGE_NAMES } from "../domain/languages";
 import "./popup.css";
 
-const STATUS_LABEL: Record<string, string> = {
-  idle: "Idle",
-  "loading-model": "Loading model",
-  capturing: "Capturing",
-  transcribing: "Transcribing",
-  paused: "Paused",
-  error: "Error",
+const STATUS_LABEL: Record<string, MessageKey> = {
+  idle: "statusIdle",
+  "loading-model": "statusLoadingModel",
+  capturing: "statusCapturing",
+  transcribing: "statusTranscribing",
+  paused: "statusPaused",
+  error: "statusError",
 };
 
 const MB = 1024 * 1024;
@@ -27,12 +30,25 @@ const MB = 1024 * 1024;
  */
 const SAVED_KEY_MASK = "••••••••••••";
 
-const ENGINE_LABEL: Record<string, string> = {
-  unloaded: "not loaded",
-  loading: "loading…",
-  ready: "ready",
-  error: "failed",
+const ENGINE_LABEL: Record<string, MessageKey> = {
+  unloaded: "engineUnloaded",
+  loading: "engineLoading",
+  ready: "engineReady",
+  error: "engineError",
 };
+
+/**
+ * Every language the Whisper models can be told to expect, each by its own name, in the same
+ * order whatever the UI's language: English collation, which is Unicode's default order across
+ * scripts (Latin-script names first, the rest grouped by script). Not "und", which Chrome resolves
+ * to the browser's language, and Japanese, for one, moves the Han-script names.
+ */
+const SPOKEN_LANGUAGE_OPTIONS = (() => {
+  const { compare } = new Intl.Collator("en");
+  return SPOKEN_LANGUAGES.map((code) => ({ code, name: SPOKEN_LANGUAGE_NAMES[code] })).sort((a, b) =>
+    compare(a.name, b.name),
+  );
+})();
 
 /** Below the energy VAD's threshold (see worker/energy-vad.ts) nothing will ever be transcribed. */
 const QUIET_LEVEL = 0.02;
@@ -42,12 +58,18 @@ const QUIET_LEVEL = 0.02;
  * the byte counts "Loading model" is indistinguishable from a hang.
  */
 const statusText = (state: PublicAppState): string => {
-  const label = STATUS_LABEL[state.status] ?? state.status;
+  const labelKey = STATUS_LABEL[state.status];
+  const label = labelKey ? t(labelKey) : state.status;
   const { modelDownload } = state;
   if (!modelDownload) return label;
-  if (modelDownload.totalBytes <= 0) return `Downloading model (${Math.round(modelDownload.receivedBytes / MB)} MB)`;
+  if (modelDownload.totalBytes <= 0) return t("statusDownloading", Math.round(modelDownload.receivedBytes / MB));
   const percent = Math.floor((modelDownload.receivedBytes / modelDownload.totalBytes) * 100);
-  return `Downloading model ${percent}% (${Math.round(modelDownload.receivedBytes / MB)}/${Math.round(modelDownload.totalBytes / MB)} MB)`;
+  return t(
+    "statusDownloadingPercent",
+    percent,
+    Math.round(modelDownload.receivedBytes / MB),
+    Math.round(modelDownload.totalBytes / MB),
+  );
 };
 
 /** Re-renders every second while `active`, for the listening timer. */
@@ -66,13 +88,13 @@ const useNow = (active: boolean): number => {
 const sessionCaption = (state: PublicAppState): string => {
   const { session } = state;
   if (!session) return "";
-  if (session.reconnecting) return `Reconnecting (attempt ${session.reconnecting.attempt})… ${session.reconnecting.reason}`;
+  if (session.reconnecting) return t("sessionReconnecting", session.reconnecting.attempt, session.reconnecting.reason);
   // Only Gemini holds a long-lived connection (and so can have reconnected); Groq is a request per utterance.
   const reconnected =
     MODEL_CATALOG[state.selectedModel].provider === "gemini-live" && session.reconnects > 0
-      ? `reconnected ${session.reconnects}×`
+      ? t("sessionReconnected", session.reconnects)
       : "";
-  return [state.status === "paused" ? "paused" : "listening", reconnected].filter(Boolean).join(" · ");
+  return [t(state.status === "paused" ? "sessionPaused" : "sessionListening"), reconnected].filter(Boolean).join(" · ");
 };
 
 /**
@@ -94,9 +116,6 @@ export const App = () => {
   const state = useBackgroundState();
   const [loadError, setLoadError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  /** Local while dragging so the readout tracks the thumb; null means "follow the background". */
-  const [draggedChunkMs, setDraggedChunkMs] = useState<number | null>(null);
-  const chunkCommitTimer = useRef<number | null>(null);
   const apiKeyDialogRef = useRef<HTMLDialogElement>(null);
   const apiKeyInputRef = useRef<HTMLInputElement>(null);
   /** Which provider's key the dialog edits: the one whose group header opened it, not the selected model's. */
@@ -129,21 +148,8 @@ export const App = () => {
     state.status === "transcribing" ||
     state.status === "paused";
 
-  const chunkMs = draggedChunkMs ?? state.chunkMs;
   // Named only while capturing: before Start, the pending tab is just whichever tab the popup opened over.
   const sourceTab = isCapturing ? state.knownTabs.find((tab) => tab.tabId === state.sourceTabId) : undefined;
-
-  /**
-   * Debounced: a drag fires a change per step, and each one persists to storage and retunes
-   * the running pipeline, which is not worth doing sixty times on the way to a value.
-   */
-  const handleChunkChange = (nextChunkMs: number) => {
-    setDraggedChunkMs(nextChunkMs);
-    if (chunkCommitTimer.current !== null) clearTimeout(chunkCommitTimer.current);
-    chunkCommitTimer.current = window.setTimeout(() => {
-      void sendToBackground({ kind: "set-chunk-ms", chunkMs: nextChunkMs });
-    }, 200);
-  };
 
   const handleStart = async () => {
     if (state.pendingSourceTabId === null) return;
@@ -163,14 +169,20 @@ export const App = () => {
     setBusy(false);
   };
 
+  /** Applies while listening, from the next utterance. "" is Auto. */
+  const handleSpokenLanguageChange = async (value: string) => {
+    const res = await sendToBackground({ kind: "set-spoken-language", language: value === "" ? null : value });
+    if (res.kind === "error") setLoadError(res.message);
+  };
+
   const handleModelChange = async (modelId: ModelId) => {
     const res = await sendToBackground({ kind: "set-model", modelId });
     if (res.kind === "error") setLoadError(res.message);
   };
 
   /**
-   * Commits on blur, not the chunk slider's per-keystroke debounce — a debounce
-   * mid-paste makes no sense for a discrete secret. The mask means untouched, and an empty
+   * Commits on blur, not per keystroke: a key is a discrete secret, and saving it mid-paste
+   * makes no sense. The mask means untouched, and an empty
    * field is left for Done to treat as a removal. After a save the field shows the mask again
    * rather than leaving the raw key in the DOM.
    */
@@ -207,14 +219,16 @@ export const App = () => {
   };
 
   const { provider: modelProvider } = MODEL_CATALOG[state.selectedModel];
+  /** Gemini detects the spoken language itself and takes no setting for it. */
+  const spokenLanguageSettable = modelProvider !== "gemini-live";
   /**
-   * Whether a local model keeps up depends on the machine, and on most it won't. An utterance
-   * is at most one chunk of audio, so a call that takes longer than a chunk means this machine
-   * transcribes slower than real time and the backlog grows while speech continues. Only
-   * judged while capturing: the counters outlive Stop, and the model may have changed since.
+   * Whether a local model keeps up depends on the machine, and on most it won't. A call slower
+   * than the base cap means the worker is stretching the cap to keep up (domain/tuning.ts), so
+   * text arrives further behind the speaker than on a faster machine. Only judged while
+   * capturing: the counters outlive Stop, and the model may have changed since.
    */
   const fallingBehind =
-    isCapturing && modelProvider === "whisper-cpp" && (state.inference?.lastMs ?? 0) > state.chunkMs;
+    isCapturing && modelProvider === "whisper-cpp" && (state.inference?.lastMs ?? 0) > UTTERANCE_CAP_MS;
   const keyDialogModel = Object.values(MODEL_CATALOG).find((model) => model.provider === keyDialogProvider);
   const keySaved = keyDialogProvider !== null && state.apiKeyProviders.includes(keyDialogProvider);
 
@@ -228,6 +242,7 @@ export const App = () => {
   };
 
   const hasOutput = state.destinationLabel !== null;
+  const engineLabel = ENGINE_LABEL[state.engineState];
 
   /** Start typing is the right-click menu's "Type to new file", on the tab the popup opened over. */
   const handleOutputToggle = async () => {
@@ -247,7 +262,7 @@ export const App = () => {
     
 
       <section>
-        <h2>Model</h2>
+        <h2>{t("modelHeading")}</h2>
         <div className="model-row">
           <ModelPicker
             value={state.selectedModel}
@@ -258,44 +273,43 @@ export const App = () => {
           />
         </div>
         {fallingBehind && (
-          <p className="error">
-            This computer is transcribing slower than real time with this model. A Groq or Gemini model keeps up on any
-            computer.
-          </p>
+          <p className="error">{t("fallingBehind")}</p>
         )}
       </section>
 
       <section>
-        <h2 className="chunk-length-heading">
-          Chunk length
-          <span className="hint chunk-length-hint">{(chunkMs / 1000).toFixed(0)}s max</span>
-        </h2>
-        <input
-          type="range"
-          min={CHUNK_MS_MIN}
-          max={CHUNK_MS_MAX}
-          step={CHUNK_MS_STEP}
-          value={chunkMs}
-          onChange={(e) => handleChunkChange(Number(e.target.value))}
-        />
+        <h2 id="spoken-language-heading">{t("spokenLanguageHeading")}</h2>
+        <NativeSelect
+          aria-labelledby="spoken-language-heading"
+          // Shows Auto for Gemini without touching the saved choice, which returns with a Whisper model.
+          value={spokenLanguageSettable ? (state.spokenLanguage ?? "") : ""}
+          disabled={!spokenLanguageSettable}
+          onChange={(e) => void handleSpokenLanguageChange(e.target.value)}
+        >
+          <option value="">{t("spokenLanguageAuto")}</option>
+          {SPOKEN_LANGUAGE_OPTIONS.map(({ code, name }) => (
+            // lang: each name is in its own language, for screen readers and the right font.
+            <option key={code} value={code} lang={code}>
+              {name}
+            </option>
+          ))}
+        </NativeSelect>
       </section>
 
       <dialog ref={apiKeyDialogRef} onClose={() => setApiKeyError(null)}>
         {keyDialogProvider && (
           <>
-            <h2>{API_KEY_PROVIDER_NAMES[keyDialogProvider]} API key</h2>
-            <p className="hint">Your API key is stored on this device only, used solely to authenticate requests to the provider.</p>
-            {keyDialogModel?.network && (
-              <p className="hint">Audio is sent to {keyDialogModel.name} for processing.</p>
-            )}
+            <h2>{t("apiKeyTitle", API_KEY_PROVIDER_NAMES[keyDialogProvider])}</h2>
+            <p className="hint">{t("apiKeyStorageNote")}</p>
+            {keyDialogModel?.network && <p className="hint">{t("apiKeyNetworkNote", keyDialogModel.name)}</p>}
             {apiKeyError && <p className="error">{apiKeyError}</p>}
             {/* Keyed by provider so a half-typed key never carries over into another provider's field. */}
             <input
               key={keyDialogProvider}
               ref={apiKeyInputRef}
               type="password"
-              aria-label={`${API_KEY_PROVIDER_NAMES[keyDialogProvider]} API key`}
-              placeholder={`Paste your ${API_KEY_PROVIDER_NAMES[keyDialogProvider]} API key`}
+              aria-label={t("apiKeyTitle", API_KEY_PROVIDER_NAMES[keyDialogProvider])}
+              placeholder={t("apiKeyPlaceholder", API_KEY_PROVIDER_NAMES[keyDialogProvider])}
               defaultValue={keySaved ? SAVED_KEY_MASK : ""}
               // Selected so that typing or pasting replaces the mask instead of landing after it.
               onFocus={(e) => e.currentTarget.select()}
@@ -306,20 +320,22 @@ export const App = () => {
         <div className="dialog-actions">
           {keyDialogProvider && API_KEY_PAGES[keyDialogProvider] && (
             <button type="button" onClick={() => void chrome.tabs.create({ url: API_KEY_PAGES[keyDialogProvider] })}>
-              Get API Key
+              {t("getApiKey")}
             </button>
           )}
           <button type="button" className="dialog-done" onClick={() => void handleApiKeyDone()}>
-            Done
+            {t("done")}
           </button>
         </div>
       </dialog>
 
       <section>
-        <h2>Listening to</h2>
+        <h2>{t("listeningToHeading")}</h2>
         {loadError && <p className="error">{loadError}</p>}
         <p className="target-line">
-          <span className="target-name">{sourceTab ? sourceTab.title : "No tab selected"}</span>
+          <span className="target-name" dir="auto">
+            {sourceTab ? sourceTab.title : t("noTabSelected")}
+          </span>
           {state.session && (
             <span className={`session-timer-clock${state.session.reconnecting ? " reconnecting" : ""}`} role="timer">
               {formatElapsed(now - state.session.since)}
@@ -329,30 +345,30 @@ export const App = () => {
         <div className="controls">
           {isCapturing ? (
             <button type="button" className="stop" disabled={busy} onClick={handleStop}>
-              <StopIcon /> Stop listening
+              <StopIcon /> {t("stopListening")}
             </button>
           ) : (
             <button type="button" disabled={busy || state.pendingSourceTabId === null} onClick={handleStart}>
-              <PlayIcon /> Start listening
+              <PlayIcon /> {t("startListening")}
             </button>
           )}
         </div>
       </section>
 
       <section>
-        <h2>Typing to</h2>
-        <p className="target-name" title={state.destinationLabel ?? undefined}>
-          {state.destinationLabel ?? "No field selected"}
+        <h2>{t("typingToHeading")}</h2>
+        <p className="target-name" dir="auto" title={state.destinationLabel ?? undefined}>
+          {state.destinationLabel ?? t("noFieldSelected")}
         </p>
         <div className="controls">
           <button type="button" className={hasOutput ? "stop" : undefined} disabled={busy} onClick={handleOutputToggle}>
             {hasOutput ? (
               <>
-                <StopIcon /> Stop typing
+                <StopIcon /> {t("stopTyping")}
               </>
             ) : (
               <>
-                <PlayIcon /> Start typing
+                <PlayIcon /> {t("startTyping")}
               </>
             )}
           </button>
@@ -363,40 +379,34 @@ export const App = () => {
             checked={state.showPageIndicators}
             onChange={(e) => void sendToBackground({ kind: "set-show-page-indicators", show: e.target.checked })}
           />
-          Show outline
+          {t("showOutline")}
         </label>
       </section>
 
       <section>
-        <h2>Diagnostics</h2>
-        <p>Model: {ENGINE_LABEL[state.engineState] ?? state.engineState}</p>
+        <h2>{t("diagnosticsHeading")}</h2>
+        <p>{t("diagnosticsModel", engineLabel ? t(engineLabel) : state.engineState)}</p>
         {state.pipeline ? (
           <>
-            <p>
-              Audio: {state.pipeline.batches} chunks, level {state.pipeline.peakLevel.toFixed(3)}
-            </p>
+            <p>{t("diagnosticsAudio", state.pipeline.batches, state.pipeline.peakLevel.toFixed(3))}</p>
             {state.pipeline.peakLevel < QUIET_LEVEL && (
-              <p className="error">
-                No audible audio from that tab. Check it is actually playing and not muted.
-              </p>
+              <p className="error">{t("diagnosticsNoAudio")}</p>
             )}
-            {state.pipeline.droppedBatches > 0 && <p>Dropped before model ready: {state.pipeline.droppedBatches}</p>}
+            {state.pipeline.droppedBatches > 0 && <p>{t("diagnosticsDropped", state.pipeline.droppedBatches)}</p>}
           </>
         ) : (
-          <p>Audio: not capturing</p>
+          <p>{t("diagnosticsAudioIdle")}</p>
         )}
-        <p>
-          Transcribed: {state.transcript.finals} finals, {state.transcript.inserted} inserted
-        </p>
+        <p>{t("diagnosticsTranscribed", state.transcript.finals, state.transcript.inserted)}</p>
         {state.inference && (
           <p>
-            Inference: {state.inference.finished}/{state.inference.started} done
-            {state.inference.failed > 0 && `, ${state.inference.failed} failed`}
-            {state.inference.lastMs !== null && `, last ${(state.inference.lastMs / 1000).toFixed(1)}s`}
+            {t("diagnosticsInference", state.inference.finished, state.inference.started)}
+            {state.inference.failed > 0 && t("diagnosticsInferenceFailed", state.inference.failed)}
+            {state.inference.lastMs !== null && t("diagnosticsInferenceLast", (state.inference.lastMs / 1000).toFixed(1))}
           </p>
         )}
-        <p>Status: {statusText(state)}</p>
-        {state.session && <p>Session: {sessionCaption(state)}</p>}
+        <p>{t("diagnosticsStatus", statusText(state))}</p>
+        {state.session && <p>{t("diagnosticsSession", sessionCaption(state))}</p>}
         {state.modelDownload && state.modelDownload.totalBytes > 0 && (
           <progress value={state.modelDownload.receivedBytes} max={state.modelDownload.totalBytes} />
         )}

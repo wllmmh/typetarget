@@ -14,6 +14,7 @@
  * move the output into a new-file box or editor tab; in that editor tab, Move back to page does.
  */
 import { formatElapsed } from "../domain/elapsed";
+import { t } from "../domain/i18n";
 import type { SessionIndicator } from "../domain/messages";
 import { DESTINATION_COLOR, setDestinationColor } from "./highlight";
 import { isUserEvent } from "./user-event";
@@ -162,7 +163,7 @@ const createControls = (): HTMLElement => {
   el.id = SESSION_BADGE_CONTROLS_ID;
   el.setAttribute("style", CONTROLS_STYLE);
   el.setAttribute("role", "group");
-  el.setAttribute("aria-label", "TypeTarget output");
+  el.setAttribute("aria-label", t("badgeControls"));
   // Keeps focus (and the caret) in the output box, and keeps the page from treating the press
   // as a click outside its own widget, e.g. a chat composer that collapses on outside clicks.
   // Capture-phase page listeners still see it; nothing here can stop those.
@@ -182,17 +183,17 @@ const controlsLayout = ({ windowControls, onMoveBack, closeLabel }: BadgeActions
 
 const fillControls = (el: HTMLElement, { windowControls, onMoveBack, closeLabel }: BadgeActions): void => {
   el.replaceChildren(
-    createButton("Save as .txt", SAVE_SHAPE, () => actions?.onSave()),
+    createButton(t("badgeSave"), SAVE_SHAPE, () => actions?.onSave()),
     ...(windowControls
       ? [
           windowControls.minimized
-            ? createButton("Restore", RESTORE_SHAPE, () => actions?.windowControls?.onToggleMinimize())
-            : createButton("Minimize", MINIMIZE_SHAPE, () => actions?.windowControls?.onToggleMinimize()),
-          createButton("Open in new tab", OPEN_IN_TAB_SHAPE, () => actions?.windowControls?.onOpenInTab()),
+            ? createButton(t("badgeRestore"), RESTORE_SHAPE, () => actions?.windowControls?.onToggleMinimize())
+            : createButton(t("badgeMinimize"), MINIMIZE_SHAPE, () => actions?.windowControls?.onToggleMinimize()),
+          createButton(t("badgeOpenInTab"), OPEN_IN_TAB_SHAPE, () => actions?.windowControls?.onOpenInTab()),
         ]
       : []),
-    ...(onMoveBack ? [createButton("Move back to page", MOVE_BACK_SHAPE, () => actions?.onMoveBack?.())] : []),
-    createButton(closeLabel ?? "Stop typing here", CLOSE_SHAPE, () => actions?.onClose()),
+    ...(onMoveBack ? [createButton(t("badgeMoveBack"), MOVE_BACK_SHAPE, () => actions?.onMoveBack?.())] : []),
+    createButton(closeLabel ?? t("badgeStopTyping"), CLOSE_SHAPE, () => actions?.onClose()),
   );
 };
 
@@ -220,7 +221,7 @@ const render = (): void => {
   }
   labelNode.data =
     indicator.state === "not-typing"
-      ? "Not typing"
+      ? t("badgeNotTyping")
       : `TypeTarget ${formatElapsed(indicator.state === "stopped" ? 0 : Date.now() - indicator.since)}`;
   badge.style.background = COLOR[indicator.state];
   if (controls) controls.style.background = COLOR[indicator.state];

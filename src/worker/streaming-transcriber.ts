@@ -14,8 +14,8 @@
  * in-flight work. A partial that completes after its utterance was finalized is dropped.
  */
 import type { TranscriptEvent } from "../domain/transcript";
-import type { TranscriptionEngine } from "../domain/models";
-import { CHUNK_MS_DEFAULT } from "../domain/tuning";
+import type { TranscriptionEngine, TranscriptionOptions } from "../domain/models";
+import { stretchedUtteranceCapMs, UTTERANCE_CAP_MS } from "../domain/tuning";
 import type { VoiceActivityDetector } from "../domain/vad";
 import { RollingAudioBuffer } from "./rolling-audio-buffer";
 import type { TranscriptStabilizer } from "./stabilizer";
@@ -36,6 +36,14 @@ export type StreamingOptions = {
   partialIntervalMs: number;
   /** An utterance is force-finalized at this length (Whisper's window is 30 s). */
   maxUtteranceMs: number;
+  /**
+   * Local Whisper: after each final, set `maxUtteranceMs` from how long its inference took, so a
+   * machine too slow for the base cap keeps up with a longer one (see domain/tuning.ts). Hosted
+   * engines keep the base cap: they are fast, and staying live matters more.
+   */
+  stretchToKeepUp: boolean;
+  /** Passed to every inference call; null lets the engine detect the language. */
+  language: string | null;
 };
 
 /** Not tuned by measurement; benchmark on target hardware before claiming latency (see docs/devlog/). */
@@ -43,7 +51,9 @@ export const DEFAULT_STREAMING_OPTIONS: StreamingOptions = {
   enablePartials: false,
   preRollMs: 300,
   partialIntervalMs: 1000,
-  maxUtteranceMs: CHUNK_MS_DEFAULT, // user-tunable; see domain/tuning.ts
+  maxUtteranceMs: UTTERANCE_CAP_MS,
+  stretchToKeepUp: false,
+  language: null,
 };
 
 export type StreamingTranscriberDeps = {
@@ -59,6 +69,8 @@ const samplesToMs = (samples: number) => (samples / SAMPLE_RATE) * 1000;
 export class StreamingTranscriber {
   private readonly buffer = new RollingAudioBuffer();
   private options: StreamingOptions;
+  /** What a stretched cap goes back to on reset, so a new session doesn't inherit the last one's. */
+  private readonly baseMaxUtteranceMs: number;
   private totalSamples = 0;
   private inSpeech = false;
   private samplesAtLastPartial = 0;
@@ -79,6 +91,7 @@ export class StreamingTranscriber {
     options: Partial<StreamingOptions> = {},
   ) {
     this.options = { ...DEFAULT_STREAMING_OPTIONS, ...options };
+    this.baseMaxUtteranceMs = this.options.maxUtteranceMs;
   }
 
   /**
@@ -149,6 +162,12 @@ export class StreamingTranscriber {
     this.utteranceId++;
     this.generation++;
     this.samplesAtLastPartial = this.totalSamples;
+    this.options.maxUtteranceMs = this.baseMaxUtteranceMs;
+  }
+
+  /** Read when each inference starts, so a language changed mid-session applies to the next one. */
+  private transcriptionOptions(): TranscriptionOptions {
+    return this.options.language === null ? {} : { language: this.options.language };
   }
 
   private startPartial(timestamp: number): void {
@@ -159,7 +178,7 @@ export class StreamingTranscriber {
     this.pending = this.pending.then(async () => {
       try {
         if (generation !== this.generation) return;
-        const { text } = await this.deps.engine.transcribe(audio);
+        const { text } = await this.deps.engine.transcribe(audio, this.transcriptionOptions());
         if (id !== this.utteranceId) return;
         const event = this.deps.stabilizer.onHypothesis(text, timestamp);
         if (event) this.deps.onEvent(event);
@@ -184,8 +203,10 @@ export class StreamingTranscriber {
       // runs the session it belongs to may be over (see `generation`).
       if (generation !== this.generation) return;
       try {
-        const { text } = await this.deps.engine.transcribe(audio);
+        const startedAt = Date.now();
+        const { text } = await this.deps.engine.transcribe(audio, this.transcriptionOptions());
         if (generation !== this.generation) return; // reset while this was in flight
+        if (this.options.stretchToKeepUp) this.options.maxUtteranceMs = stretchedUtteranceCapMs(Date.now() - startedAt);
         const event = this.deps.stabilizer.onFinal(text, timestamp);
         if (event) this.deps.onEvent(event);
       } catch (err) {

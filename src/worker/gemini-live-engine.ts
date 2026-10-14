@@ -40,7 +40,7 @@ import type {
 } from "../domain/models";
 import type { TranscriptEvent } from "../domain/transcript";
 import type { VoiceActivityDetector } from "../domain/vad";
-import { CHUNK_MS_DEFAULT } from "../domain/tuning";
+import { UTTERANCE_CAP_MS } from "../domain/tuning";
 import type { StreamingOptions } from "./streaming-transcriber";
 import { TranscriptStabilizer } from "./stabilizer";
 import { EnergyVad } from "./energy-vad";
@@ -159,7 +159,7 @@ export class GeminiLiveEngine implements TranscriptionEngine {
   private readonly stabilizer = new TranscriptStabilizer();
   private readonly vad: VoiceActivityDetector;
   private awaitingFinal: (() => void) | null = null;
-  private maxUtteranceMs = CHUNK_MS_DEFAULT;
+  private maxUtteranceMs = UTTERANCE_CAP_MS;
   /** Audio of the open utterance — sent, or, while disconnected, waiting to be. Kept until
    * the utterance ends so a lost connection can replay it. */
   private current: Float32Array[] = [];
@@ -301,7 +301,7 @@ export class GeminiLiveEngine implements TranscriptionEngine {
     });
   }
 
-  /** The chunk-length setting caps how long one utterance may run before it is sent. */
+  /** Caps how long one utterance may run before it is sent (see domain/tuning.ts). */
   setOptions(options: Partial<StreamingOptions>): void {
     if (options.maxUtteranceMs !== undefined) this.maxUtteranceMs = options.maxUtteranceMs;
   }

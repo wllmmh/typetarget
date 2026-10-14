@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createInitialState, type AppState } from "./state";
+import { createFakeI18n } from "../test/fake-chrome";
 import { buildMenuModel, ContextMenu, MENU_LISTEN_HERE_ID, MENU_OUTPUT_DISABLED_ID, MENU_OUTPUT_ID, MENU_NEW_FILE_ID, MENU_NEW_TAB_ID, MENU_STOP_ID, MENU_STOP_TYPING_ID } from "./context-menu";
 
 const tab = (tabId: number, title: string) => ({ tabId, title, url: `https://example.com/${tabId}` });
@@ -39,7 +40,7 @@ describe("ContextMenu", () => {
       if (typeof cb === "function") cb();
     };
     menus = { create: vi.fn(callBack), update: vi.fn(callBack), remove: vi.fn(callBack), removeAll: vi.fn(callBack) };
-    vi.stubGlobal("chrome", { contextMenus: menus, runtime: { lastError: undefined } });
+    vi.stubGlobal("chrome", { contextMenus: menus, runtime: { lastError: undefined }, i18n: createFakeI18n() });
   });
 
   afterEach(() => {

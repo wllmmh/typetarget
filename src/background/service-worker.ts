@@ -18,7 +18,7 @@ import {
 } from "../domain/messages";
 import { isFromExtensionPage } from "../domain/sender";
 import type { ModelId } from "../domain/models";
-import { clampChunkMs } from "../domain/tuning";
+import { isSpokenLanguage } from "../domain/languages";
 import { isPlausibleApiKey, API_KEY_PROVIDER_NAMES, type ApiKeyProvider } from "../domain/api-key";
 import { createInitialState, toPublicState } from "./state";
 import { pruneKnownTabs, recordKnownTab, removeKnownTab, sameKnownTabs, updateKnownTab } from "./known-tabs";
@@ -289,7 +289,7 @@ const startCapture = async (sourceTabId: number): Promise<BackgroundResponse> =>
   commitState();
   try {
     await captureController.start(sourceTabId, state.selectedModel, state.apiKeys);
-    void captureController.setChunkMs(state.chunkMs).catch(() => {});
+    void captureController.setSpokenLanguage(state.spokenLanguage).catch(() => {});
     state.status = "capturing";
     // A network engine restarts `since` once its connection opens (see transcript-router.ts).
     state.session = { since: Date.now(), reconnects: 0, reconnecting: null };
@@ -347,15 +347,18 @@ const setModel = (modelId: ModelId): BackgroundResponse => {
 };
 
 /**
- * Chunk length is tunable while capturing: it is forwarded to the running pipeline as well as
- * persisted, so the effect can be judged live instead of only after a restart.
+ * Tunable while capturing: it is forwarded to the running pipeline as well as persisted, and
+ * applies from the next utterance. Best effort: if the offscreen document has gone, the next
+ * start sends the value anyway.
  */
-const setChunkMs = async (chunkMs: number): Promise<BackgroundResponse> => {
-  state.chunkMs = clampChunkMs(chunkMs);
+const setSpokenLanguage = async (language: string | null): Promise<BackgroundResponse> => {
+  if (language !== null && !isSpokenLanguage(language)) {
+    return { kind: "error", code: "invalid-language", message: "That language isn't one TypeTarget offers." };
+  }
+  state.spokenLanguage = language;
   commitState();
   if (isCapturing(state.status)) {
-    // Best effort: if the offscreen document has gone, the next start sends the value anyway.
-    await captureController.setChunkMs(state.chunkMs).catch(() => {});
+    await captureController.setSpokenLanguage(state.spokenLanguage).catch(() => {});
   }
   return { kind: "ok" };
 };
@@ -371,7 +374,7 @@ const setShowPageIndicators = (show: boolean): BackgroundResponse => {
 
 /**
  * Unlike the model choice, an API key can be entered or changed at any time — see
- * domain/api-key.ts — and, like chunk length, is forwarded to a running session
+ * domain/api-key.ts — and, like the spoken language, is forwarded to a running session
  * instead of requiring a restart. An empty key clears whatever was stored.
  */
 const setApiKey = async (provider: ApiKeyProvider, apiKey: string): Promise<BackgroundResponse> => {
@@ -601,8 +604,8 @@ const handlePopupRequest = async (req: PopupRequest): Promise<BackgroundResponse
       return setPaused(false);
     case "set-model":
       return setModel(req.modelId);
-    case "set-chunk-ms":
-      return setChunkMs(req.chunkMs);
+    case "set-spoken-language":
+      return setSpokenLanguage(req.language);
     case "set-show-page-indicators":
       return setShowPageIndicators(req.show);
     case "set-api-key":
