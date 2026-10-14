@@ -46,6 +46,8 @@ All notable changes to this project are documented here. The format follows
   free tier's time limit.
 - Capture continues across a service-worker restart, and stops with an error when the
   source tab's audio ends.
+- Popup styled like Chrome's own UI: pill buttons, hairline-divided sections, rounded
+  menus and dialogs, in light and dark to match the system theme.
 
 ### Security
 - Websites can't detect that TypeTarget is installed: no file is web-accessible.

@@ -1,20 +1,60 @@
+/*
+ * Colors and shapes follow Chrome's own UI (the Material 3 refresh of its settings pages and
+ * menus) so the popup reads as part of the browser. The tokens switch with the system theme,
+ * which is what Chrome's own popups follow.
+ */
 :root {
   color-scheme: light dark;
   font-family: system-ui, sans-serif;
+
+  --tt-surface: #fff;
+  --tt-menu: #fff;
+  --tt-text: #1f1f1f;
+  --tt-text-secondary: #444746;
+  --tt-outline: #747775;
+  --tt-divider: #c4c7c5;
+  --tt-primary: #0b57d0;
+  --tt-on-primary: #fff;
+  --tt-error: #b3261e;
+  --tt-warning: #f9ab00;
+  --tt-hover: color-mix(in srgb, var(--tt-text) 8%, transparent);
+  --tt-primary-tint: color-mix(in srgb, var(--tt-primary) 10%, transparent);
+  --tt-disabled: color-mix(in srgb, var(--tt-text) 38%, transparent);
+  --tt-disabled-fill: color-mix(in srgb, var(--tt-text) 12%, transparent);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --tt-surface: #1f1f1f;
+    --tt-menu: #2d2e30;
+    --tt-text: #e3e3e3;
+    --tt-text-secondary: #c4c7c5;
+    --tt-outline: #8e918f;
+    --tt-divider: #444746;
+    --tt-primary: #a8c7fa;
+    --tt-on-primary: #062e6f;
+    --tt-error: #f2b8b5;
+    --tt-warning: #fdd663;
+  }
 }
 
 body {
   margin: 0;
   width: 320px;
+  background: var(--tt-surface);
+  color: var(--tt-text);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .popup {
-  padding: 12px 16px 16px;
+  padding: 12px 16px 8px;
 }
 
 .popup h1 {
-  font-size: 16px;
-  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 500;
+  margin: 0 0 8px;
 }
 
 .popup-title {
@@ -27,12 +67,16 @@ body {
   border-radius: 4px;
 }
 
+/* Chrome's settings pages divide groups with a hairline. */
+.popup section {
+  padding: 10px 0 12px;
+  border-top: 1px solid var(--tt-divider);
+}
+
 .popup h2 {
   font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  opacity: 0.65;
-  margin: 10px 0 4px;
+  font-weight: 500;
+  margin: 0 0 6px;
 }
 
 /* Chrome caps a popup at 600px tall and scrolls beyond that, so text blocks stay tight. */
@@ -59,8 +103,24 @@ body {
   justify-content: space-between;
   gap: 6px;
   width: 100%;
-  padding: 4px;
+  padding: 6px 12px;
+  border: 1px solid var(--tt-outline);
+  border-radius: 8px;
+  background: var(--tt-surface);
+  color: var(--tt-text);
+  font: inherit;
   text-align: left;
+  cursor: pointer;
+}
+
+.model-picker-trigger:hover:not(:disabled) {
+  background: var(--tt-hover);
+}
+
+.model-picker-trigger:disabled {
+  color: var(--tt-disabled);
+  border-color: var(--tt-disabled-fill);
+  cursor: default;
 }
 
 .model-picker-value {
@@ -78,12 +138,14 @@ body {
   right: 0;
   max-height: 300px;
   overflow-y: auto;
-  margin-top: 2px;
-  background: Field;
-  color: FieldText;
-  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
-  border-radius: 6px;
-  box-shadow: 0 4px 12px rgb(0 0 0 / 0.25);
+  margin-top: 4px;
+  padding: 4px 0;
+  background: var(--tt-menu);
+  color: var(--tt-text);
+  border-radius: 8px;
+  box-shadow:
+    0 1px 3px rgb(0 0 0 / 0.3),
+    0 4px 8px 3px rgb(0 0 0 / 0.15);
 }
 
 .model-picker-group {
@@ -91,23 +153,24 @@ body {
   justify-content: space-between;
   align-items: baseline;
   gap: 8px;
-  padding: 6px 10px 2px 8px;
+  padding: 6px 12px 2px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
+  color: var(--tt-text-secondary);
 }
 
 /* Normal weight and the row sizes' look, so the provider's name stays the heading. */
 .model-picker-note {
   font-weight: 400;
-  opacity: 0.7;
 }
 
 .model-picker-key-action {
   padding: 0;
   border: none;
   background: transparent;
-  color: LinkText;
+  color: var(--tt-primary);
   font: inherit;
+  font-size: 11px;
   font-weight: 400;
   text-decoration: underline;
   cursor: pointer;
@@ -126,33 +189,38 @@ body {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #e0a100;
+  background: var(--tt-warning);
 }
 
 .model-picker-option {
   display: flex;
   justify-content: space-between;
   gap: 8px;
-  width: calc(100% - 8px);
-  margin: 0 4px;
-  padding: 3px 6px;
+  width: 100%;
+  margin: 0;
+  padding: 6px 12px;
   border: none;
   background: transparent;
   color: inherit;
+  font: inherit;
   text-align: left;
-  border-radius: 4px;
+  cursor: pointer;
 }
 
-.model-picker-option:hover,
+.model-picker-option:hover {
+  background: var(--tt-hover);
+}
+
 .model-picker-option[aria-pressed="true"] {
-  background: color-mix(in srgb, currentColor 14%, transparent);
+  background: var(--tt-primary-tint);
+  color: var(--tt-primary);
 }
 
 .model-picker-size {
   flex: none;
   font-size: 11px;
   font-variant-numeric: tabular-nums;
-  opacity: 0.7;
+  color: var(--tt-text-secondary);
 }
 
 .chunk-length-heading {
@@ -163,9 +231,7 @@ body {
 }
 
 .chunk-length-hint {
-  text-transform: none;
-  letter-spacing: normal;
-  margin: 0;
+  font-weight: 400;
   white-space: nowrap;
 }
 
@@ -176,13 +242,54 @@ body {
   margin-top: 8px;
 }
 
-.controls button {
-  flex: 1 1 0; /* equal widths, in every row */
+/* Chrome's pill buttons: outlined in the accent color, filled for the action that matters. */
+.controls button,
+.dialog-actions button {
   min-width: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: 6px;
+  padding: 6px 16px;
+  border: 1px solid var(--tt-outline);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--tt-primary);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.controls button {
+  flex: 1 1 0; /* equal widths, in every row */
+}
+
+.controls button,
+.dialog-actions .dialog-done {
+  border-color: transparent;
+  background: var(--tt-primary);
+  color: var(--tt-on-primary);
+}
+
+.dialog-actions button:not(.dialog-done):hover {
+  background: var(--tt-primary-tint);
+}
+
+.controls button:hover:not(:disabled),
+.dialog-actions .dialog-done:hover {
+  background: color-mix(in srgb, var(--tt-primary) 88%, var(--tt-text));
+}
+
+.controls button:disabled {
+  background: var(--tt-disabled-fill);
+  color: var(--tt-disabled);
+  cursor: default;
+}
+
+.popup button:focus-visible,
+.popup input:focus-visible {
+  outline: 2px solid var(--tt-primary);
+  outline-offset: 2px;
 }
 
 /* "Listening to" line: the tab's title with the timer inline to its right, like the on-page label. */
@@ -207,7 +314,13 @@ body {
 }
 
 .session-timer-clock.reconnecting {
-  color: #6b7280;
+  color: var(--tt-text-secondary);
+}
+
+.popup input[type="range"],
+.popup input[type="checkbox"],
+.popup progress {
+  accent-color: var(--tt-primary);
 }
 
 .popup input[type="range"] {
@@ -215,32 +328,40 @@ body {
   margin: 0;
 }
 
+.popup progress {
+  width: 100%;
+  margin-top: 4px;
+}
+
 .toggle-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   margin-top: 8px;
 }
 
 .hint {
   font-size: 11px;
-  opacity: 0.7;
+  color: var(--tt-text-secondary);
   margin: 4px 0 0;
 }
 
 .error {
-  color: #c0392b;
+  color: var(--tt-error);
   font-size: 12px;
 }
 
-/* The select menu's colors rather than the popup's, so the dialog stands out from the page behind it. */
+/* The menu's colors rather than the popup's, so the dialog stands out from the page behind it. */
 .popup dialog {
-  background: Field;
-  color: FieldText;
+  background: var(--tt-menu);
+  color: var(--tt-text);
   width: 260px;
-  padding: 14px 16px;
+  padding: 16px;
   border: none;
-  border-radius: 6px;
+  border-radius: 12px;
+  box-shadow:
+    0 1px 3px rgb(0 0 0 / 0.3),
+    0 4px 8px 3px rgb(0 0 0 / 0.15);
 }
 
 .popup dialog h2 {
@@ -250,15 +371,24 @@ body {
 .popup dialog input[type="password"] {
   display: block;
   width: 100%;
-  margin-top: 3px;
-  padding: 4px;
+  margin-top: 8px;
+  padding: 8px 12px;
   box-sizing: border-box;
+  border: 1px solid var(--tt-outline);
+  border-radius: 8px;
+  background: var(--tt-surface);
+  color: var(--tt-text);
+  font: inherit;
+}
+
+.popup dialog input[type="password"]:focus {
+  border-color: var(--tt-primary);
 }
 
 .popup dialog .dialog-actions {
   display: flex;
   gap: 8px;
-  margin-top: 14px;
+  margin-top: 16px;
 }
 
 /* Pushed right; Get API Key, when shown, stays on the left. */
