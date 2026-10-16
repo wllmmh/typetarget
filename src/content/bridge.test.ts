@@ -81,7 +81,7 @@ describe("installContentBridge", () => {
     expect(reply).toHaveBeenCalledWith(envelope(expect.objectContaining({ kind: "error", code: "no-focused-text-box" })));
   });
 
-  it("opens a new-file box when asked by the right-click menu, and reports it as the pick", () => {
+  it("opens a new-file box when asked by the right-click menu, and reports it as the pick", async () => {
     installContentBridge();
 
     deliver({ kind: "open-new-file-field" });
@@ -90,7 +90,7 @@ describe("installContentBridge", () => {
     expect(document.activeElement).toBe(field);
     expect(fake.runtime.sendMessage).toHaveBeenCalledWith(envelope(expect.objectContaining({ kind: "destination-picked", label: "TypeTarget new file" })));
     deliver({ kind: "insert-text", text: "hello", separator: " " });
-    expect(field).toHaveValue("hello");
+    await vi.waitFor(() => expect(field).toHaveValue("hello")); // typed out over a few frames
   });
 
   it("asks the background to stop typing when the badge's X is clicked", () => {

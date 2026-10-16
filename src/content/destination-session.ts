@@ -11,6 +11,7 @@ import { insertTranscriptText, toInsertionTarget } from "./insert-text";
 import { setSessionBadge, type BadgeActions } from "./session-badge";
 import { createNewFileField, setNewFileFieldMinimized } from "./new-file-field";
 import { saveTextFile, textOf } from "./save-text-file";
+import { typeOut, type TypeOut } from "./type-out";
 import { isUserEvent } from "./user-event";
 import type { SessionIndicator } from "../domain/messages";
 import { t } from "../domain/i18n";
@@ -36,11 +37,19 @@ class DestinationSession {
   private newFileTextHandedOver = false;
   /** The new-file box is still on the page after Stop typing, but is no longer the output. */
   private newFileDetached = false;
+  /** Text still being typed out into the new-file box. Anything that reads the box's text or
+   * moves the insertion boundary finishes it first. */
+  private typing: TypeOut | null = null;
   /** Off, TypeTarget draws nothing on the page's own text boxes: no outline, badge or hover
    * highlight, so the page can't see it there. The "Type to new file" box is TypeTarget's own
    * element, visible anyway, so it keeps its outline and buttons (its X is the only way to
    * close a kept box). */
   private showIndicators = true;
+
+  private finishTyping(): void {
+    this.typing?.finish();
+    this.typing = null;
+  }
 
   private showsIndicatorsOn(el: Element): boolean {
     return this.showIndicators || el === this.newFileField;
@@ -84,6 +93,7 @@ class DestinationSession {
         minimized: this.newFileMinimized,
         onToggleMinimize: () => this.setNewFileMinimized(!this.newFileMinimized),
         onOpenInTab: () => {
+          this.finishTyping();
           this.newFileTextHandedOver = true;
           this.onOpenInTabRequested?.(textOf(field));
         },
@@ -116,6 +126,7 @@ class DestinationSession {
   };
 
   private pick(el: HTMLElement): void {
+    this.finishTyping();
     this.stopSelecting();
     // The output moved to another box in this frame: the new-file box closes, and its text moves
     // with the output, as it does to an editor tab or to a box in another frame.
@@ -193,6 +204,7 @@ class DestinationSession {
    * already open is reused rather than stacked under a second.
    */
   openNewFileField(text?: string, minimized = false): void {
+    this.finishTyping();
     if (!this.newFileField?.isConnected) this.newFileField = createNewFileField();
     this.newFileTextHandedOver = false; // re-picked, a box reused here owns its text again
     this.newFileDetached = false;
@@ -237,6 +249,7 @@ class DestinationSession {
 
   /** Downloads the destination's current text (what was transcribed and typed) as a .txt file. */
   saveToFile(): void {
+    this.finishTyping();
     const el = this.pickedElementId ? getRegisteredElement(this.pickedElementId) : null;
     if (el instanceof HTMLElement) saveTextFile(textOf(el));
   }
@@ -247,6 +260,7 @@ class DestinationSession {
    * a second time.
    */
   takeDestinationText(): string | null {
+    this.finishTyping();
     const el = this.pickedElementId ? getRegisteredElement(this.pickedElementId) : null;
     if (!(el instanceof HTMLElement)) return null;
     if (el === this.newFileField) this.newFileTextHandedOver = true;
@@ -267,6 +281,7 @@ class DestinationSession {
    * with its text, no longer typed into; only its X removes it.
    */
   clearDestination(keepNewFileField = false): string | null {
+    this.finishTyping();
     const el = this.pickedElementId ? getRegisteredElement(this.pickedElementId) : null;
     this.pickedElementId = null;
     this.insertionOffset = 0;
@@ -294,14 +309,27 @@ class DestinationSession {
     setSessionBadge(el && this.showsIndicatorsOn(el) ? el : null, indicator, this.badgeActionsFor(el));
   }
 
-  /** Inserts finalized text at the tracked boundary. Returns false if the destination is gone. */
+  /**
+   * Inserts finalized text at the tracked boundary. Returns false if the destination is gone.
+   * The new-file box gets it typed out (see type-out.ts), after whatever is still being typed;
+   * a page's own text box gets it at once, as its scripts may react to every change.
+   */
   insert(text: string, separator: string): boolean {
     if (!this.pickedElementId) return false;
     const el = getRegisteredElement(this.pickedElementId);
     if (!el) return false;
     const target = toInsertionTarget(el as HTMLElement);
     if (!target) return false;
-    this.insertionOffset = insertTranscriptText(target, text, separator, this.insertionOffset);
+    if (el !== this.newFileField) {
+      this.insertionOffset = insertTranscriptText(target, text, separator, this.insertionOffset);
+      return true;
+    }
+    this.finishTyping();
+    let sliceSeparator = separator; // goes before the first slice only
+    this.typing = typeOut(text, (slice) => {
+      this.insertionOffset = insertTranscriptText(target, slice, sliceSeparator, this.insertionOffset);
+      sliceSeparator = "";
+    });
     return true;
   }
 }

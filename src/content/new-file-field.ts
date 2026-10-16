@@ -13,13 +13,16 @@ import { t } from "../domain/i18n";
 export const NEW_FILE_FIELD_ID = "typetarget-new-file-field";
 
 const MARGIN = "12px";
-const FONT_SIZE_PX = 15;
 const LINE_HEIGHT = 1.5;
 const PADDING_Y_PX = 12;
+/** The text is 15px in a 640x400 viewport and grows with the viewport from there, so it takes
+ * the same share of the box as in the landing page's step 3 animation. The smaller of the two
+ * ratios keeps it from outgrowing the box in a very wide or very short window. */
+const FONT_SIZE = "max(15px, 15 * min(100vw / 640, 100vh / 400))";
 
 const OPEN_HEIGHT = "calc(100% / 3)";
 /** One line of text plus the padding: what stays of the box while minimized. */
-const MINIMIZED_HEIGHT = `${FONT_SIZE_PX * LINE_HEIGHT + 2 * PADDING_Y_PX}px`;
+const MINIMIZED_HEIGHT = `calc(${LINE_HEIGHT}em + ${2 * PADDING_Y_PX}px)`;
 
 /** `all: initial` first, so page styles for `textarea` can't reshape it. System colors follow
  * the user's light/dark preference rather than the page's. */
@@ -40,7 +43,7 @@ const STYLE = [
   "color-scheme: light dark",
   "background: Canvas",
   "color: CanvasText",
-  `font: ${FONT_SIZE_PX}px/${LINE_HEIGHT} system-ui, sans-serif`,
+  `font: ${FONT_SIZE}/${LINE_HEIGHT} system-ui, sans-serif`,
   "box-shadow: 0 0 16px rgba(0, 0, 0, 0.25)",
 ].join("; ");
 

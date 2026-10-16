@@ -39,6 +39,9 @@ All notable changes to this project are documented here. The format follows
   typing there again.
 - "Type to new file": a text box over the bottom third of the page. It can be minimized,
   opened in a new tab and moved back, and stays on the page after Stop typing.
+  Its text grows with the window (15px in a 640x400 window, 30px at 1280x800) instead of staying
+  at 15px. Each piece of text is typed out over at most 0.4 seconds instead of appearing all at
+  once (all at once in a background tab, or with reduced motion on).
 - The popup has one Start/Stop button for listening and one for typing, replacing Pause and
   Select field. Start typing is "Type to new file" on the tab the popup was opened on; to type
   into an existing field, use right-click → Type to this field.

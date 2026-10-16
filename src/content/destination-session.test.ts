@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { within } from "@testing-library/react";
 import { destinationSession } from "./destination-session";
 import { NEW_FILE_FIELD_ID } from "./new-file-field";
+import { TYPING_DURATION_MS } from "./type-out";
 import { isUserEvent } from "./user-event";
 
 // jsdom never makes a trusted event, so these tests' clicks stand in for the user's own.
@@ -158,7 +159,7 @@ describe("destinationSession", () => {
   describe("Type to new file", () => {
     const newFileField = () => document.getElementById(NEW_FILE_FIELD_ID);
 
-    it("opens a focused text box fixed over the bottom third of the page and picks it", () => {
+    it("opens a focused text box fixed over the bottom third of the page and picks it", async () => {
       const onPicked = vi.fn();
       destinationSession.onPicked = onPicked;
 
@@ -174,7 +175,59 @@ describe("destinationSession", () => {
       expect(field?.classList.contains("typetarget-destination")).toBe(true);
       expect(onPicked).toHaveBeenCalledWith(expect.objectContaining({ label: "TypeTarget new file" }));
       expect(destinationSession.insert("hello", " ")).toBe(true);
-      expect(field).toHaveValue("hello");
+      await vi.waitFor(() => expect(field).toHaveValue("hello")); // typed out over a few frames
+    });
+
+    describe("typing out", () => {
+      beforeEach(() => {
+        vi.useFakeTimers({ toFake: ["requestAnimationFrame", "cancelAnimationFrame", "performance"] });
+      });
+
+      afterEach(() => {
+        vi.useRealTimers();
+      });
+
+      it("types the text into the box over a few frames, separator first", () => {
+        destinationSession.openNewFileField("said so far");
+
+        destinationSession.insert("and then", " ");
+        expect(newFileField()).toHaveValue("said so far");
+        vi.advanceTimersByTime(TYPING_DURATION_MS / 2);
+        const halfway = (newFileField() as HTMLTextAreaElement).value;
+        expect(halfway.length).toBeGreaterThan("said so far".length);
+        expect(halfway).not.toBe("said so far and then");
+        expect("said so far and then".startsWith(halfway)).toBe(true);
+
+        vi.advanceTimersByTime(TYPING_DURATION_MS / 2);
+        expect(newFileField()).toHaveValue("said so far and then");
+      });
+
+      it("finishes typing one text before the next goes in", () => {
+        destinationSession.openNewFileField();
+        destinationSession.insert("first final", " ");
+        vi.advanceTimersByTime(TYPING_DURATION_MS / 4);
+
+        destinationSession.insert("second final", " ");
+        vi.advanceTimersByTime(TYPING_DURATION_MS);
+
+        expect(newFileField()).toHaveValue("first final second final");
+      });
+
+      it("hands over all of a text still being typed", () => {
+        destinationSession.openNewFileField();
+        destinationSession.insert("said so far", " ");
+
+        expect(destinationSession.clearDestination()).toBe("said so far");
+      });
+
+      it("types into a page's own text box at once", () => {
+        destinationSession.startSelecting();
+        textarea.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+
+        destinationSession.insert("hello", " ");
+
+        expect(textarea).toHaveValue("hello");
+      });
     });
 
     it("reuses the open box instead of opening a second one", () => {
@@ -187,19 +240,19 @@ describe("destinationSession", () => {
       expect(newFileField()).toHaveValue("hello");
     });
 
-    it("opens with the text moved back from the editor tab, and types after it", () => {
+    it("opens with the text moved back from the editor tab, and types after it", async () => {
       destinationSession.openNewFileField("from the editor");
 
       destinationSession.insert("then more", " ");
 
-      expect(newFileField()).toHaveValue("from the editor then more");
+      await vi.waitFor(() => expect(newFileField()).toHaveValue("from the editor then more"));
     });
 
     it("opens minimized when asked, with the text it was given", () => {
       destinationSession.openNewFileField("typed on the page", true);
 
       expect(newFileField()).toHaveValue("typed on the page");
-      expect(newFileField()?.style.height).toBe("46.5px");
+      expect(newFileField()?.style.height).toBe("calc(1.5em + 24px)");
     });
 
     it("closes the box when typing stops", () => {

@@ -359,7 +359,7 @@ describe("session badge over the destination", () => {
     const field = document.getElementById(NEW_FILE_FIELD_ID);
 
     page().getByRole("button", { name: "Minimize" }).click();
-    expect(field?.style.height).toBe("46.5px"); // one 15px line at 1.5 line-height, plus 12px padding above and below
+    expect(field?.style.height).toBe("calc(1.5em + 24px)"); // one line at 1.5 line-height, plus 12px padding above and below
     expect(page().queryByRole("button", { name: "Minimize" })).toBeNull();
 
     page().getByRole("button", { name: "Restore" }).click();
@@ -475,7 +475,7 @@ describe("a new-file box kept after Stop typing", () => {
     expect(onStopTypingRequested).not.toHaveBeenCalled();
   });
 
-  it("becomes the output again, text and all, when Type to new file is chosen", () => {
+  it("becomes the output again, text and all, when Type to new file is chosen", async () => {
     openNewFile();
     destinationSession.insert("said so far", " ");
     destinationSession.clearDestination(true);
@@ -484,7 +484,7 @@ describe("a new-file box kept after Stop typing", () => {
     destinationSession.setIndicator({ state: "stopped" }); // what the background sends once it hears of the pick
     destinationSession.insert("and then", " ");
 
-    expect(document.getElementById(NEW_FILE_FIELD_ID)).toHaveValue("said so far and then");
+    await vi.waitFor(() => expect(document.getElementById(NEW_FILE_FIELD_ID)).toHaveValue("said so far and then"));
     expect(page().getByRole("button", { name: "Stop typing here" })).toBeVisible();
   });
 });

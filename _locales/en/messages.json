@@ -201,5 +201,5 @@
 
   "newFileLabel": { "message": "TypeTarget new file" },
   "editorTitle": { "message": "TypeTarget file" },
-  "transcriptPlaceholder": { "message": "Transcribed text appears here. You can type here too." }
+  "transcriptPlaceholder": { "message": "Transcribed text here." }
 }
