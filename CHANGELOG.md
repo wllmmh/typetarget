@@ -20,8 +20,9 @@ All notable changes to this project are documented here. The format follows
   has a "Spoken language" menu, under the model, to name it instead
   (Auto by default; it can be changed while listening). It shows Auto and is greyed out while a
   Gemini model is selected, since Gemini always detects the language itself.
-- API Keys dialog with Get API Key. A saved key shows as dots in the field; clear the field
-  and click Done to remove it. Keys stay on this device.
+- API Keys dialog with Get API Key. A key is saved when you click Done, not when you leave the
+  field, and closing the dialog any other way discards what you typed. A saved key shows as dots
+  in the field; clear the field and click Done to remove it. Keys stay on this device.
 - In the model menu, each hosted provider's heading has an "API key" action that opens that
   provider's key dialog. The separate key button is gone.
 - Continuous speech is sent to the model every 3 seconds, without waiting for a pause. Local
@@ -49,8 +50,13 @@ All notable changes to this project are documented here. The format follows
 - A notice in the API Keys dialog when a hosted model will receive audio, and a popup warning
   when a local model is slower than real time on this computer.
 - Popup diagnostics: audio level, finals, inference timings and model download progress. The
-  Diagnostics menu shows the status and opens over the popup with the numbers, so the popup
-  fits without scrolling; the download bar and warnings stay visible.
+  Diagnostics link at the popup's foot opens a dialog with the status and the numbers, so the
+  popup fits without scrolling; the download bar and warnings stay visible.
+- Help and Contact links at the popup's foot, to the website's FAQ and the contact form.
+- A hosted model with no saved key says "Gemini API key required" (or Groq) beside the Model
+  heading, and the "no audible audio" warning sits beside "Listening to", instead of each taking
+  a line of its own. The dot on the model menu is the error color. Clicking "API key
+  required" opens that provider's key dialog.
 - Gemini reconnects by itself, without losing audio, when a connection drops or reaches the
   free tier's time limit.
 - Capture continues across a service-worker restart, and stops with an error when the

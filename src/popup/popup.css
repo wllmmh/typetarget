@@ -16,7 +16,6 @@
   --tt-primary: #0b57d0;
   --tt-on-primary: #fff;
   --tt-error: #b3261e;
-  --tt-warning: #f9ab00;
   --tt-hover: color-mix(in srgb, var(--tt-text) 8%, transparent);
   --tt-primary-tint: color-mix(in srgb, var(--tt-primary) 10%, transparent);
   --tt-disabled: color-mix(in srgb, var(--tt-text) 38%, transparent);
@@ -34,7 +33,6 @@
     --tt-primary: #a8c7fa;
     --tt-on-primary: #062e6f;
     --tt-error: #f2b8b5;
-    --tt-warning: #fdd663;
   }
 }
 
@@ -65,7 +63,20 @@ body {
   font-weight: 500;
   /* A monospace advance is wide for a wordmark; this takes a tenth of it back. */
   letter-spacing: -0.06em;
-  margin: 0 0 8px;
+  margin: 0;
+}
+
+.popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.popup-version {
+  font-size: 11px;
+  color: var(--tt-text-secondary);
 }
 
 .popup-title {
@@ -88,6 +99,27 @@ body {
   font-size: 12px;
   font-weight: 500;
   margin: 0 0 6px;
+}
+
+/* A problem with what the heading names, beside it so it needs no line of its own. */
+.heading-error {
+  margin-inline-start: 8px;
+  font-weight: 400;
+  color: var(--tt-error);
+}
+
+/* The missing-key notice opens that provider's key dialog; the underline on hover says it is a link. */
+button.heading-error {
+  padding: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+button.heading-error:hover {
+  text-decoration: underline;
 }
 
 /* Chrome caps a popup at 600px tall and scrolls beyond that, so text blocks stay tight. */
@@ -154,49 +186,8 @@ body {
     0 4px 8px 3px rgb(0 0 0 / 0.15);
 }
 
-/* A row that opens details (Diagnostics): no box or caret, since it offers no choice. The
-   negative margin keeps its text in line with the section's while the hover wash bleeds out. */
-.info-trigger {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  width: calc(100% + 16px);
-  margin-inline: -8px;
-  padding: 4px 8px;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--tt-text);
-  font: inherit;
-  text-align: start;
-  cursor: pointer;
-}
-
-.info-trigger:hover,
-.info-trigger[aria-expanded="true"] {
-  background: var(--tt-hover);
-}
-
-.info-icon {
-  flex: none;
-  color: var(--tt-text-secondary);
-}
-
-.info-trigger[aria-expanded="true"] .info-icon {
-  color: var(--tt-primary);
-}
-
-/* The lowest menu (Diagnostics) opens upward, where the popup has room for it. */
-.select-panel.opens-up {
-  top: auto;
-  bottom: 100%;
-  margin-top: 0;
-  margin-bottom: 4px;
-}
-
-.diagnostics-lines {
-  padding: 2px 12px;
+.diagnostics-lines p {
+  margin: 2px 0;
 }
 
 .select-option {
@@ -234,7 +225,8 @@ body {
   color: var(--tt-text-secondary);
 }
 
-.model-picker-key-action {
+.model-picker-key-action,
+.link-button {
   padding: 0;
   border: none;
   background: transparent;
@@ -242,8 +234,27 @@ body {
   font: inherit;
   font-size: 11px;
   font-weight: 400;
-  text-decoration: underline;
   cursor: pointer;
+}
+
+/* Help, Contact and Diagnostics: muted links at the popup's foot, underlined on hover. */
+.footer-links {
+  display: flex;
+  gap: 16px;
+  margin-top: 4px;
+  font-size: 12px;
+}
+
+.footer-links a,
+.footer-links .link-button {
+  color: var(--tt-text-secondary);
+  font-size: inherit;
+  text-decoration: none;
+}
+
+.footer-links a:hover,
+.footer-links .link-button:hover {
+  text-decoration: underline;
 }
 
 /* Shown while the selected model's key is missing, so it is visible with the menu closed. */
@@ -259,7 +270,7 @@ body {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--tt-warning);
+  background: var(--tt-error);
 }
 
 .model-picker-size {
@@ -332,6 +343,7 @@ body {
 }
 
 .popup button:focus-visible,
+.popup a:focus-visible,
 .popup input:focus-visible {
   outline: 2px solid var(--tt-primary);
   outline-offset: 2px;

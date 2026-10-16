@@ -80,6 +80,11 @@
     "message": "Paste your $PROVIDER$ API key",
     "placeholders": { "provider": { "content": "$1", "example": "Groq" } }
   },
+  "apiKeyRequired": {
+    "message": "$PROVIDER$ API key required",
+    "description": "Shown beside the Model heading while the selected hosted model has no saved key.",
+    "placeholders": { "provider": { "content": "$1", "example": "Groq" } }
+  },
   "getApiKey": { "message": "Get API Key" },
   "done": { "message": "Done" },
 
@@ -93,6 +98,8 @@
   "stopTyping": { "message": "Stop typing" },
   "showOutline": { "message": "Show outline", "description": "Setting: draw an outline, timer and buttons on the text box being typed into." },
 
+  "helpLink": { "message": "Help", "description": "Link at the popup's foot to the FAQ on the website." },
+  "contactLink": { "message": "Contact", "description": "Link at the popup's foot to the contact form." },
   "diagnosticsHeading": { "message": "Diagnostics" },
   "diagnosticsModel": {
     "message": "Model: $STATE$",

@@ -124,6 +124,14 @@
       }
     }
   },
+  "apiKeyRequired": {
+    "message": "$PROVIDER$ API কী প্রয়োজন",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
   "getApiKey": {
     "message": "API কী নিন"
   },
@@ -156,6 +164,12 @@
   },
   "showOutline": {
     "message": "আউটলাইন দেখান"
+  },
+  "helpLink": {
+    "message": "সাহায্য"
+  },
+  "contactLink": {
+    "message": "যোগাযোগ"
   },
   "diagnosticsHeading": {
     "message": "ডায়াগনস্টিকস"

@@ -124,6 +124,14 @@
       }
     }
   },
+  "apiKeyRequired": {
+    "message": "Se requiere la clave de API de $PROVIDER$",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
   "getApiKey": {
     "message": "Obtener clave de API"
   },
@@ -156,6 +164,12 @@
   },
   "showOutline": {
     "message": "Mostrar contorno"
+  },
+  "helpLink": {
+    "message": "Ayuda"
+  },
+  "contactLink": {
+    "message": "Contacto"
   },
   "diagnosticsHeading": {
     "message": "Diagnóstico"

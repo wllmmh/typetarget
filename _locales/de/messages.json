@@ -124,6 +124,14 @@
       }
     }
   },
+  "apiKeyRequired": {
+    "message": "$PROVIDER$-API-Schlüssel erforderlich",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
   "getApiKey": {
     "message": "API-Schlüssel erhalten"
   },
@@ -156,6 +164,12 @@
   },
   "showOutline": {
     "message": "Umrandung anzeigen"
+  },
+  "helpLink": {
+    "message": "Hilfe"
+  },
+  "contactLink": {
+    "message": "Kontakt"
   },
   "diagnosticsHeading": {
     "message": "Diagnose"

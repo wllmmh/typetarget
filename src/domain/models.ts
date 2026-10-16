@@ -1,3 +1,5 @@
+import type { ApiKeyProvider } from "./api-key";
+
 /**
  * Which transcription backend a model belongs to; engine-router.ts dispatches on it.
  * "whisper-cpp" (local) and "groq" (one POST per utterance) are discrete: one
@@ -149,3 +151,7 @@ export interface TranscriptionEngine {
   reset(): Promise<void>;
   getStatus(): EngineStatus;
 }
+
+/** The provider whose key this model needs; null for local models. */
+export const keyProviderOf = ({ provider, requiresApiKey }: ModelInfo): ApiKeyProvider | null =>
+  requiresApiKey && provider !== "whisper-cpp" ? provider : null;

@@ -124,6 +124,14 @@
       }
     }
   },
+  "apiKeyRequired": {
+    "message": "$PROVIDER$ API anahtarı gerekli",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
   "getApiKey": {
     "message": "API Anahtarı Al"
   },
@@ -156,6 +164,12 @@
   },
   "showOutline": {
     "message": "Çerçeveyi göster"
+  },
+  "helpLink": {
+    "message": "Yardım"
+  },
+  "contactLink": {
+    "message": "İletişim"
   },
   "diagnosticsHeading": {
     "message": "Tanılama"

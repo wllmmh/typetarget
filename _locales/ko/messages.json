@@ -124,6 +124,14 @@
       }
     }
   },
+  "apiKeyRequired": {
+    "message": "$PROVIDER$ API 키 필요",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
   "getApiKey": {
     "message": "API 키 받기"
   },
@@ -156,6 +164,12 @@
   },
   "showOutline": {
     "message": "윤곽선 표시"
+  },
+  "helpLink": {
+    "message": "도움말"
+  },
+  "contactLink": {
+    "message": "문의"
   },
   "diagnosticsHeading": {
     "message": "진단"

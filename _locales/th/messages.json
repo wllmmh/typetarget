@@ -124,6 +124,14 @@
       }
     }
   },
+  "apiKeyRequired": {
+    "message": "ต้องใช้คีย์ API ของ $PROVIDER$",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
   "getApiKey": {
     "message": "รับคีย์ API"
   },
@@ -156,6 +164,12 @@
   },
   "showOutline": {
     "message": "แสดงเส้นขอบ"
+  },
+  "helpLink": {
+    "message": "ความช่วยเหลือ"
+  },
+  "contactLink": {
+    "message": "ติดต่อ"
   },
   "diagnosticsHeading": {
     "message": "การวินิจฉัย"

@@ -124,6 +124,14 @@
       }
     }
   },
+  "apiKeyRequired": {
+    "message": "需要 $PROVIDER$ API 金鑰",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
   "getApiKey": {
     "message": "取得 API 金鑰"
   },
@@ -156,6 +164,12 @@
   },
   "showOutline": {
     "message": "顯示外框"
+  },
+  "helpLink": {
+    "message": "說明"
+  },
+  "contactLink": {
+    "message": "聯絡我們"
   },
   "diagnosticsHeading": {
     "message": "診斷"

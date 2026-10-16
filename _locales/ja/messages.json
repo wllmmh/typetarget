@@ -124,6 +124,14 @@
       }
     }
   },
+  "apiKeyRequired": {
+    "message": "$PROVIDER$ の API キーが必要です",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
   "getApiKey": {
     "message": "API キーを取得"
   },
@@ -156,6 +164,12 @@
   },
   "showOutline": {
     "message": "枠線を表示"
+  },
+  "helpLink": {
+    "message": "ヘルプ"
+  },
+  "contactLink": {
+    "message": "お問い合わせ"
   },
   "diagnosticsHeading": {
     "message": "診断"

@@ -124,6 +124,14 @@
       }
     }
   },
+  "apiKeyRequired": {
+    "message": "Chiave API di $PROVIDER$ richiesta",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
   "getApiKey": {
     "message": "Ottieni chiave API"
   },
@@ -156,6 +164,12 @@
   },
   "showOutline": {
     "message": "Mostra contorno"
+  },
+  "helpLink": {
+    "message": "Guida"
+  },
+  "contactLink": {
+    "message": "Contatti"
   },
   "diagnosticsHeading": {
     "message": "Diagnostica"

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { sendToBackground } from "./background-client";
 import { useBackgroundState } from "./use-background-state";
 import type { PublicAppState } from "../domain/messages";
-import { MODEL_CATALOG, type ModelId } from "../domain/models";
+import { MODEL_CATALOG, keyProviderOf, type ModelId } from "../domain/models";
 import { ModelPicker } from "./model-picker";
 import { Dropdown, DropdownOption } from "./select-box";
 import { API_KEY_PAGES, API_KEY_PROVIDER_NAMES, type ApiKeyProvider } from "../domain/api-key";
@@ -22,6 +22,9 @@ const STATUS_LABEL: Record<string, MessageKey> = {
 };
 
 const MB = 1024 * 1024;
+
+const HELP_URL = "https://www.typetarget.com/#faq";
+const CONTACT_URL = "https://forms.gle/6YqZsnt4LDnqVw1cA";
 
 /**
  * Stands in for a saved API key in the dialog's field. The key itself never reaches the popup
@@ -118,6 +121,7 @@ export const App = () => {
   const [busy, setBusy] = useState(false);
   const apiKeyDialogRef = useRef<HTMLDialogElement>(null);
   const apiKeyInputRef = useRef<HTMLInputElement>(null);
+  const diagnosticsDialogRef = useRef<HTMLDialogElement>(null);
   /** Which provider's key the dialog edits: the one whose group header opened it, not the selected model's. */
   const [keyDialogProvider, setKeyDialogProvider] = useState<ApiKeyProvider | null>(null);
   const [apiKeyError, setApiKeyError] = useState<string | null>(null);
@@ -181,44 +185,37 @@ export const App = () => {
   };
 
   /**
-   * Commits on blur, not per keystroke: a key is a discrete secret, and saving it mid-paste
-   * makes no sense. The mask means untouched, and an empty
-   * field is left for Done to treat as a removal. After a save the field shows the mask again
-   * rather than leaving the raw key in the DOM.
-   */
-  const handleApiKeyBlur = async (provider: ApiKeyProvider, input: HTMLInputElement) => {
-    const apiKey = input.value;
-    if (apiKey === "" || apiKey === SAVED_KEY_MASK) return;
-    if (apiKey.includes("•")) {
-      // Typed onto the mask instead of replacing it; no key looks like that.
-      input.value = SAVED_KEY_MASK;
-      return;
-    }
-    const res = await sendToBackground({ kind: "set-api-key", provider, apiKey });
-    if (res.kind === "error") {
-      setApiKeyError(res.message);
-      return;
-    }
-    setApiKeyError(null);
-    input.value = SAVED_KEY_MASK;
-  };
-
-  /**
-   * Done is what removes a key: a saved key whose field has been emptied is cleared (the
-   * background treats an empty key as "clear"). Leaving the dialog any other way keeps it.
+   * Done is what saves: a typed key is stored, and a saved key whose field has been emptied is
+   * cleared (the background treats an empty key as "clear"). The field showing the mask means
+   * untouched. Leaving the dialog any other way keeps what was stored, and a failed save keeps
+   * the dialog open with the error.
    */
   const handleApiKeyDone = async () => {
-    if (keyDialogProvider && keySaved && apiKeyInputRef.current?.value === "") {
-      const res = await sendToBackground({ kind: "set-api-key", provider: keyDialogProvider, apiKey: "" });
-      if (res.kind === "error") {
-        setApiKeyError(res.message);
+    const input = apiKeyInputRef.current;
+    if (keyDialogProvider && input) {
+      const apiKey = input.value;
+      if (apiKey.includes("•") && apiKey !== SAVED_KEY_MASK) {
+        // Typed onto the mask instead of replacing it; no key looks like that.
+        input.value = SAVED_KEY_MASK;
         return;
+      }
+      const changed = apiKey === "" ? keySaved : apiKey !== SAVED_KEY_MASK;
+      if (changed) {
+        const res = await sendToBackground({ kind: "set-api-key", provider: keyDialogProvider, apiKey });
+        if (res.kind === "error") {
+          setApiKeyError(res.message);
+          return;
+        }
       }
     }
     apiKeyDialogRef.current?.close();
   };
 
   const { provider: modelProvider } = MODEL_CATALOG[state.selectedModel];
+  const selectedKeyProvider = keyProviderOf(MODEL_CATALOG[state.selectedModel]);
+  const keyMissingProvider =
+    selectedKeyProvider !== null && !state.apiKeyProviders.includes(selectedKeyProvider) ? selectedKeyProvider : null;
+  const noAudio = state.pipeline !== null && state.pipeline.peakLevel < QUIET_LEVEL;
   /** Gemini detects the spoken language itself and takes no setting for it. */
   const spokenLanguageSettable = modelProvider !== "gemini-live";
   /**
@@ -255,14 +252,24 @@ export const App = () => {
 
   return (
     <main className="popup">
-      <h1 className="popup-title">
-        <img src="/public/icons/icon48.png" alt="" width="20" height="20" />
-        TypeTarget
-      </h1>
+      <header className="popup-header">
+        <h1 className="popup-title">
+          <img src="/public/icons/icon48.png" alt="" width="20" height="20" />
+          TypeTarget
+        </h1>
+        <span className="popup-version">{`v${chrome.runtime.getManifest().version}`}</span>
+      </header>
     
 
       <section>
-        <h2 id="model-heading">{t("modelHeading")}</h2>
+        <h2 id="model-heading">
+          {t("modelHeading")}
+          {keyMissingProvider && (
+            <button type="button" className="heading-error" onClick={() => handleEditKey(keyMissingProvider)}>
+              {t("apiKeyRequired", API_KEY_PROVIDER_NAMES[keyMissingProvider])}
+            </button>
+          )}
+        </h2>
         <ModelPicker
           value={state.selectedModel}
           disabled={isCapturing}
@@ -323,7 +330,6 @@ export const App = () => {
               defaultValue={keySaved ? SAVED_KEY_MASK : ""}
               // Selected so that typing or pasting replaces the mask instead of landing after it.
               onFocus={(e) => e.currentTarget.select()}
-              onBlur={(e) => handleApiKeyBlur(keyDialogProvider, e.currentTarget)}
             />
           </>
         )}
@@ -340,7 +346,10 @@ export const App = () => {
       </dialog>
 
       <section>
-        <h2>{t("listeningToHeading")}</h2>
+        <h2>
+          {t("listeningToHeading")}
+          {noAudio && <span className="heading-error">{t("diagnosticsNoAudio")}</span>}
+        </h2>
         {loadError && <p className="error">{loadError}</p>}
         <p className="target-line">
           <span className="target-name" dir="auto">
@@ -393,48 +402,58 @@ export const App = () => {
         </label>
       </section>
 
-      <section>
-        <h2 id="diagnostics-heading">{t("diagnosticsHeading")}</h2>
-        {/* Floats over the popup like the menus' panels instead of lengthening it;
-            what needs the user's attention (no audio, the download, errors) stays outside it. */}
-        <Dropdown
-          value={t("diagnosticsStatus", statusText(state))}
-          disabled={false}
-          labelledBy="diagnostics-heading"
-          kind="info"
-          opensUp
-        >
-          {() => (
-            <div className="diagnostics-lines">
-              <p>{t("diagnosticsModel", engineLabel ? t(engineLabel) : state.engineState)}</p>
-              {state.pipeline ? (
-                <>
-                  <p>{t("diagnosticsAudio", state.pipeline.batches, state.pipeline.peakLevel.toFixed(3))}</p>
-                  {state.pipeline.droppedBatches > 0 && <p>{t("diagnosticsDropped", state.pipeline.droppedBatches)}</p>}
-                </>
-              ) : (
-                <p>{t("diagnosticsAudioIdle")}</p>
-              )}
-              <p>{t("diagnosticsTranscribed", state.transcript.finals, state.transcript.inserted)}</p>
-              {state.inference && (
-                <p>
-                  {t("diagnosticsInference", state.inference.finished, state.inference.started)}
-                  {state.inference.failed > 0 && t("diagnosticsInferenceFailed", state.inference.failed)}
-                  {state.inference.lastMs !== null &&
-                    t("diagnosticsInferenceLast", (state.inference.lastMs / 1000).toFixed(1))}
-                </p>
-              )}
-              {state.session && <p>{t("diagnosticsSession", sessionCaption(state))}</p>}
-            </div>
+      <dialog ref={diagnosticsDialogRef}>
+        <h2>{t("diagnosticsHeading")}</h2>
+        <div className="diagnostics-lines">
+          <p>{t("diagnosticsStatus", statusText(state))}</p>
+          <p>{t("diagnosticsModel", engineLabel ? t(engineLabel) : state.engineState)}</p>
+          {state.pipeline ? (
+            <>
+              <p>{t("diagnosticsAudio", state.pipeline.batches, state.pipeline.peakLevel.toFixed(3))}</p>
+              {state.pipeline.droppedBatches > 0 && <p>{t("diagnosticsDropped", state.pipeline.droppedBatches)}</p>}
+            </>
+          ) : (
+            <p>{t("diagnosticsAudioIdle")}</p>
           )}
-        </Dropdown>
-        {state.pipeline && state.pipeline.peakLevel < QUIET_LEVEL && (
-          <p className="error">{t("diagnosticsNoAudio")}</p>
-        )}
+          <p>{t("diagnosticsTranscribed", state.transcript.finals, state.transcript.inserted)}</p>
+          {state.inference && (
+            <p>
+              {t("diagnosticsInference", state.inference.finished, state.inference.started)}
+              {state.inference.failed > 0 && t("diagnosticsInferenceFailed", state.inference.failed)}
+              {state.inference.lastMs !== null &&
+                t("diagnosticsInferenceLast", (state.inference.lastMs / 1000).toFixed(1))}
+            </p>
+          )}
+          {state.session && <p>{t("diagnosticsSession", sessionCaption(state))}</p>}
+        </div>
+        <div className="dialog-actions">
+          <button type="button" className="dialog-done" onClick={() => diagnosticsDialogRef.current?.close()}>
+            {t("done")}
+          </button>
+        </div>
+      </dialog>
+
+      <section>
+        {/* What needs the user's attention (no audio, the download, errors) stays on the popup itself;
+            the rest of the diagnostics is behind the link. */}
         {state.modelDownload && state.modelDownload.totalBytes > 0 && (
           <progress value={state.modelDownload.receivedBytes} max={state.modelDownload.totalBytes} />
         )}
-        {state.lastError && <p className="error">{state.lastError.message}</p>}
+        {/* A model that fails to load for want of its key is already named beside the Model heading. */}
+        {state.lastError && !(keyMissingProvider && state.lastError.code === "model-load-failed") && (
+          <p className="error">{state.lastError.message}</p>
+        )}
+        <nav className="footer-links">
+          <button type="button" className="link-button" onClick={() => diagnosticsDialogRef.current?.showModal()}>
+            {t("diagnosticsHeading")}
+          </button>
+          <a href={HELP_URL} target="_blank" rel="noreferrer">
+            {t("helpLink")}
+          </a>
+          <a href={CONTACT_URL} target="_blank" rel="noreferrer">
+            {t("contactLink")}
+          </a>
+        </nav>
       </section>
     </main>
   );

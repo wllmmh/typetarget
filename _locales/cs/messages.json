@@ -124,6 +124,14 @@
       }
     }
   },
+  "apiKeyRequired": {
+    "message": "Vyžadován klíč API pro $PROVIDER$",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
   "getApiKey": {
     "message": "Získat klíč API"
   },
@@ -156,6 +164,12 @@
   },
   "showOutline": {
     "message": "Zobrazit obrys"
+  },
+  "helpLink": {
+    "message": "Nápověda"
+  },
+  "contactLink": {
+    "message": "Kontakt"
   },
   "diagnosticsHeading": {
     "message": "Diagnostika"

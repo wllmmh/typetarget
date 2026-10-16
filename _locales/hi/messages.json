@@ -124,6 +124,14 @@
       }
     }
   },
+  "apiKeyRequired": {
+    "message": "$PROVIDER$ API कुंजी आवश्यक है",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
   "getApiKey": {
     "message": "API कुंजी पाएं"
   },
@@ -156,6 +164,12 @@
   },
   "showOutline": {
     "message": "आउटलाइन दिखाएं"
+  },
+  "helpLink": {
+    "message": "सहायता"
+  },
+  "contactLink": {
+    "message": "संपर्क करें"
   },
   "diagnosticsHeading": {
     "message": "डायग्नोस्टिक्स"

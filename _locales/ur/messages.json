@@ -124,6 +124,14 @@
       }
     }
   },
+  "apiKeyRequired": {
+    "message": "$PROVIDER$ API کلید درکار ہے",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
   "getApiKey": {
     "message": "API کلید حاصل کریں"
   },
@@ -156,6 +164,12 @@
   },
   "showOutline": {
     "message": "خاکہ دکھائیں"
+  },
+  "helpLink": {
+    "message": "مدد"
+  },
+  "contactLink": {
+    "message": "رابطہ کریں"
   },
   "diagnosticsHeading": {
     "message": "تشخیص"

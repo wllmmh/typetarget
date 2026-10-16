@@ -1,4 +1,4 @@
-import { MODEL_CATALOG, type ModelId, type ModelInfo } from "../domain/models";
+import { MODEL_CATALOG, keyProviderOf, type ModelId, type ModelInfo } from "../domain/models";
 import type { ApiKeyProvider } from "../domain/api-key";
 import { t } from "../domain/i18n";
 import { Dropdown, DropdownOption } from "./select-box";
@@ -21,10 +21,6 @@ const sizeText = (model: ModelInfo): string | null =>
 /** Hosted groups are named after their provider, which stays as is; "Local" is a word, so it is translated. */
 const groupLabel = ([model]: ModelInfo[]): string | undefined =>
   model?.provider === "whisper-cpp" ? t("modelGroupLocal") : model?.name;
-
-/** The provider whose key this model needs; null for local models. */
-const keyProviderOf = ({ provider, requiresApiKey }: ModelInfo): ApiKeyProvider | null =>
-  requiresApiKey && provider !== "whisper-cpp" ? provider : null;
 
 type ModelPickerProps = {
   value: ModelId;

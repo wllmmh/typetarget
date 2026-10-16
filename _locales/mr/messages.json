@@ -124,6 +124,14 @@
       }
     }
   },
+  "apiKeyRequired": {
+    "message": "$PROVIDER$ API की आवश्यक आहे",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
   "getApiKey": {
     "message": "API की मिळवा"
   },
@@ -156,6 +164,12 @@
   },
   "showOutline": {
     "message": "बाह्यरेषा दाखवा"
+  },
+  "helpLink": {
+    "message": "मदत"
+  },
+  "contactLink": {
+    "message": "संपर्क"
   },
   "diagnosticsHeading": {
     "message": "निदान"

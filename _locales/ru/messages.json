@@ -124,6 +124,14 @@
       }
     }
   },
+  "apiKeyRequired": {
+    "message": "Требуется API-ключ $PROVIDER$",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
   "getApiKey": {
     "message": "Получить API-ключ"
   },
@@ -156,6 +164,12 @@
   },
   "showOutline": {
     "message": "Показывать рамку"
+  },
+  "helpLink": {
+    "message": "Справка"
+  },
+  "contactLink": {
+    "message": "Связаться"
   },
   "diagnosticsHeading": {
     "message": "Диагностика"

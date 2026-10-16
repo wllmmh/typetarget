@@ -78,7 +78,7 @@ slow to keep up at 3, and shortens it again when it can.
 
 **API keys**: open the model menu and click **API key** on the provider's heading. A key is
 stored only in this browser's extension storage, sent only to its own provider, never shown
-again once saved, and takes effect immediately. A saved key shows as dots; clear the field and click Done to delete it.
+again once saved, and takes effect immediately. A key is saved when you click Done. A saved key shows as dots; clear the field and click Done to delete it.
 
 ## Permissions
 

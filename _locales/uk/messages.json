@@ -124,6 +124,14 @@
       }
     }
   },
+  "apiKeyRequired": {
+    "message": "Потрібен ключ API $PROVIDER$",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
   "getApiKey": {
     "message": "Отримати ключ API"
   },
@@ -156,6 +164,12 @@
   },
   "showOutline": {
     "message": "Показувати рамку"
+  },
+  "helpLink": {
+    "message": "Довідка"
+  },
+  "contactLink": {
+    "message": "Контакти"
   },
   "diagnosticsHeading": {
     "message": "Діагностика"

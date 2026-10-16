@@ -124,6 +124,14 @@
       }
     }
   },
+  "apiKeyRequired": {
+    "message": "需要 $PROVIDER$ API 密钥",
+    "placeholders": {
+      "provider": {
+        "content": "$1"
+      }
+    }
+  },
   "getApiKey": {
     "message": "获取 API 密钥"
   },
@@ -156,6 +164,12 @@
   },
   "showOutline": {
     "message": "显示轮廓"
+  },
+  "helpLink": {
+    "message": "帮助"
+  },
+  "contactLink": {
+    "message": "联系我们"
   },
   "diagnosticsHeading": {
     "message": "诊断"
