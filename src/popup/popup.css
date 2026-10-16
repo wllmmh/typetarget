@@ -74,7 +74,9 @@ body {
   margin-bottom: 8px;
 }
 
+/* The last item in .footer-links, pushed to the popup's bottom right corner. */
 .popup-version {
+  margin-left: auto;
   font-size: 11px;
   color: var(--tt-text-secondary);
 }
@@ -240,6 +242,7 @@ button.heading-error:hover {
 /* Help, Contact and Diagnostics: muted links at the popup's foot, underlined on hover. */
 .footer-links {
   display: flex;
+  align-items: baseline;
   gap: 16px;
   margin-top: 4px;
   font-size: 12px;

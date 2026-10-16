@@ -277,7 +277,6 @@ export const App = () => {
           <img src="/public/icons/icon48.png" alt="" width="20" height="20" />
           TypeTarget
         </h1>
-        <span className="popup-version">{`v${chrome.runtime.getManifest().version}`}</span>
       </header>
     
 
@@ -505,6 +504,7 @@ export const App = () => {
           <a href={CONTACT_URL} target="_blank" rel="noreferrer">
             {t("contactLink")}
           </a>
+          <span className="popup-version">{`v${chrome.runtime.getManifest().version}`}</span>
         </nav>
       </section>
     </main>
