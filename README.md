@@ -73,8 +73,10 @@ instead of leaving it on Auto. It shows Auto, greyed out, while Gemini is select
 languages (`_locales/`), with English for the rest.
 
 **Live text**: a pause in speech sends what was said to the model. In continuous speech, it
-is sent every 3 seconds anyway. Local Whisper lengthens that, up to 25 seconds, on a machine too
-slow to keep up at 3, and shortens it again when it can.
+is sent anyway once it reaches the **Chunk length** set under Start listening (3 to 25 seconds,
+3 by default). A longer chunk helps the model detect the spoken language, at the cost of text
+arriving later. Local Whisper lengthens it, up to 25 seconds, on a machine too slow to keep up,
+and shortens it again when it can.
 
 **API keys**: open the model menu and click **API key** on the provider's heading. A key is
 stored only in this browser's extension storage, sent only to its own provider, never shown

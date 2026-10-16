@@ -150,6 +150,17 @@
   "stopListening": {
     "message": "듣기 중지"
   },
+  "chunkLength": {
+    "message": "구간 길이"
+  },
+  "chunkLengthValue": {
+    "message": "$SECONDS$초",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
   "typingToHeading": {
     "message": "입력 위치"
   },
@@ -164,6 +175,35 @@
   },
   "showOutline": {
     "message": "윤곽선 표시"
+  },
+  "outputErrorNoTab": {
+    "message": "입력할 탭이 없습니다."
+  },
+  "outputErrorPageBlocked": {
+    "message": "이 페이지에는 입력할 수 없습니다."
+  },
+  "outputErrorNoTextBox": {
+    "message": "텍스트 상자 안을 클릭한 다음 다시 마우스 오른쪽 버튼으로 클릭하세요."
+  },
+  "outputErrorUnavailable": {
+    "message": "텍스트 상자를 더 이상 사용할 수 없습니다."
+  },
+  "outputErrorFailed": {
+    "message": "입력을 시작하지 못했습니다."
+  },
+  "outputErrorNewTab": {
+    "message": "새 탭을 열지 못했습니다."
+  },
+  "outputErrorMoveBackOutline": {
+    "message": "텍스트를 페이지로 되돌리려면 '$SETTING$'을(를) 켜세요.",
+    "placeholders": {
+      "setting": {
+        "content": "$1"
+      }
+    }
+  },
+  "outputErrorMoveBackGone": {
+    "message": "텍스트를 가져온 페이지가 닫혔거나 변경되었습니다."
   },
   "helpLink": {
     "message": "도움말"
@@ -197,7 +237,7 @@
     "message": "오디오: 캡처 안 함"
   },
   "diagnosticsNoAudio": {
-    "message": "이 탭에서 들리는 오디오가 없습니다. 실제로 재생 중이고 음소거되지 않았는지 확인하세요."
+    "message": "오디오가 감지되지 않습니다. 탭 볼륨을 확인하세요."
   },
   "diagnosticsDropped": {
     "message": "모델 준비 전 버림: $COUNT$",

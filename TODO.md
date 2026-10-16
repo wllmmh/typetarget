@@ -36,6 +36,10 @@
       the client-side boundary change. The engine has been verified against the API, and the
       user has used Gemini, but no deliberate pass has been made.
 
+- [ ] Chunk length slider (2026-10-16): check the popup still fits without scrolling with it
+      under Start listening, in English and a long language (German), and that dragging it while
+      listening changes where continuous speech is cut.
+
 - [ ] Have a native speaker review each translation in `_locales/` (2026-10-14). They were
       machine-written, and the badge buttons, right-click menu and API key dialog were only
       checked in English; the popup and editor tab were seen in Japanese and German.
@@ -69,9 +73,11 @@
 
 ## Ideas, not planned
 
-- Translate error messages. Most are built in the background or the ASR worker (which has no
-  `chrome.i18n`) and some wrap a provider's own text, so the popup would need an error code
-  to translate from ([ADR 0015](docs/adr/0015-ui-text-in-the-browsers-language.md)).
+- Translate the remaining error messages (capture, model loading, providers). The output's are
+  done ([ADR 0019](docs/adr/0019-output-errors-translated-beside-typing-to.md)). The rest are
+  built in the background or the ASR worker (which has no `chrome.i18n`) and some wrap a
+  provider's own text, so the popup would need an error code to translate from
+  ([ADR 0015](docs/adr/0015-ui-text-in-the-browsers-language.md)).
 - Localize the Chrome Web Store listing's description and screenshots per language.
 
 - A `chrome.sidePanel` UI, so controls and diagnostics stay visible while typing elsewhere.

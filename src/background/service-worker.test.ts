@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { envelope, type BackgroundResponse, type Envelope, type PopupRequest, type PublicAppState } from "../domain/messages";
+import { envelope, OUTPUT_ERROR_CODES, type BackgroundResponse, type Envelope, type PopupRequest, type PublicAppState } from "../domain/messages";
 import { installFakeChrome, type FakeChrome } from "../test/fake-chrome";
+import { UTTERANCE_CAP_MAX_MS } from "../domain/tuning";
 import { MENU_NEW_FILE_ID, MENU_NEW_TAB_ID, MENU_OUTPUT_ID } from "./context-menu";
 
 /**
@@ -127,11 +128,20 @@ describe("popup requests", () => {
     expect(fake.storage.local.data.spokenLanguage).toBe("fr");
   });
 
-  it("see the settings saved before a restart", async () => {
-    Object.assign(fake.storage.local.data, { selectedModel: "base", spokenLanguage: "fr", showPageIndicators: false });
+  it("save the chunk length, clamped to the range the slider offers", async () => {
     await startServiceWorker();
 
-    expect(await getState()).toMatchObject({ selectedModel: "base", spokenLanguage: "fr", showPageIndicators: false });
+    expect(await popup({ kind: "set-chunk-ms", chunkMs: 120_000 })).toEqual({ kind: "ok" });
+
+    expect((await getState()).chunkMs).toBe(UTTERANCE_CAP_MAX_MS);
+    expect(fake.storage.local.data.chunkMs).toBe(UTTERANCE_CAP_MAX_MS);
+  });
+
+  it("see the settings saved before a restart", async () => {
+    Object.assign(fake.storage.local.data, { selectedModel: "base", spokenLanguage: "fr", chunkMs: 9_000, showPageIndicators: false });
+    await startServiceWorker();
+
+    expect(await getState()).toMatchObject({ selectedModel: "base", spokenLanguage: "fr", chunkMs: 9_000, showPageIndicators: false });
   });
 });
 
@@ -146,6 +156,19 @@ describe("capture", () => {
     const startAt = sent.findIndex((m) => m.kind === "start-capture");
     expect(sent[startAt]).toEqual({ kind: "start-capture", streamId: "stream-1" });
     expect(sent.findIndex((m) => m.kind === "load-model")).toBeGreaterThan(startAt);
+  });
+
+  it("tells the pipeline the chunk length on start, and when it changes while listening", async () => {
+    await startServiceWorker();
+    await popup({ kind: "set-chunk-ms", chunkMs: 10_000 });
+    await startListening();
+    await popup({ kind: "set-chunk-ms", chunkMs: 5_000 });
+
+    const sent = fake.runtime.sendMessage.mock.calls.map(([message]) => (message as Envelope<{ kind: string }>).payload);
+    expect(sent.filter((m) => m.kind === "set-chunk-ms")).toEqual([
+      { kind: "set-chunk-ms", chunkMs: 10_000 },
+      { kind: "set-chunk-ms", chunkMs: 5_000 },
+    ]);
   });
 
   it("tells the pipeline the spoken language on start, and when it changes while listening", async () => {
@@ -292,6 +315,18 @@ describe("the popup's Start typing", () => {
     const response = await popup({ kind: "start-typing" });
 
     expect(response).toMatchObject({ kind: "error", code: "no-active-tab" });
+  });
+
+  it("reports a page Chrome keeps it out of as an output error, with Chrome's reason as the detail", async () => {
+    await startServiceWorker();
+    fake.tabs.query.mockResolvedValue([PAGE_TAB]);
+    fake.scripting.executeScript.mockRejectedValue(new Error("Cannot access a chrome:// URL"));
+
+    await popup({ kind: "start-typing" });
+
+    const { lastError } = await getState();
+    expect(lastError).toEqual({ code: "injection-failed", message: "Can't type on this page.", detail: "Cannot access a chrome:// URL" });
+    expect(OUTPUT_ERROR_CODES.has(lastError?.code ?? "")).toBe(true);
   });
 });
 

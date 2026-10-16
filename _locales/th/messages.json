@@ -150,6 +150,17 @@
   "stopListening": {
     "message": "หยุดฟัง"
   },
+  "chunkLength": {
+    "message": "ความยาวช่วง"
+  },
+  "chunkLengthValue": {
+    "message": "$SECONDS$ วินาที",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
   "typingToHeading": {
     "message": "พิมพ์ลงใน"
   },
@@ -164,6 +175,35 @@
   },
   "showOutline": {
     "message": "แสดงเส้นขอบ"
+  },
+  "outputErrorNoTab": {
+    "message": "ไม่มีแท็บให้พิมพ์"
+  },
+  "outputErrorPageBlocked": {
+    "message": "พิมพ์ในหน้านี้ไม่ได้"
+  },
+  "outputErrorNoTextBox": {
+    "message": "คลิกในกล่องข้อความ แล้วคลิกขวาที่กล่องนั้นอีกครั้ง"
+  },
+  "outputErrorUnavailable": {
+    "message": "กล่องข้อความใช้ไม่ได้แล้ว"
+  },
+  "outputErrorFailed": {
+    "message": "เริ่มพิมพ์ไม่ได้"
+  },
+  "outputErrorNewTab": {
+    "message": "เปิดแท็บใหม่ไม่ได้"
+  },
+  "outputErrorMoveBackOutline": {
+    "message": "เปิด \"$SETTING$\" เพื่อย้ายข้อความกลับไปที่หน้าเว็บ",
+    "placeholders": {
+      "setting": {
+        "content": "$1"
+      }
+    }
+  },
+  "outputErrorMoveBackGone": {
+    "message": "หน้าที่ข้อความมาจากถูกปิดหรือเปลี่ยนไปแล้ว"
   },
   "helpLink": {
     "message": "ความช่วยเหลือ"
@@ -197,7 +237,7 @@
     "message": "เสียง: ไม่ได้จับเสียง"
   },
   "diagnosticsNoAudio": {
-    "message": "ไม่มีเสียงที่ได้ยินจากแท็บนั้น ตรวจสอบว่ากำลังเล่นอยู่จริงและไม่ได้ปิดเสียง"
+    "message": "ไม่พบเสียง ตรวจสอบระดับเสียงของแท็บ"
   },
   "diagnosticsDropped": {
     "message": "ทิ้งก่อนโมเดลพร้อม: $COUNT$",

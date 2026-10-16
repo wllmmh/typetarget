@@ -150,6 +150,17 @@
   "stopListening": {
     "message": "Zastavit poslech"
   },
+  "chunkLength": {
+    "message": "Délka úseku"
+  },
+  "chunkLengthValue": {
+    "message": "$SECONDS$ s",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
   "typingToHeading": {
     "message": "Psaní do"
   },
@@ -164,6 +175,35 @@
   },
   "showOutline": {
     "message": "Zobrazit obrys"
+  },
+  "outputErrorNoTab": {
+    "message": "Není žádná karta, do které psát."
+  },
+  "outputErrorPageBlocked": {
+    "message": "Na této stránce nelze psát."
+  },
+  "outputErrorNoTextBox": {
+    "message": "Klikněte do textového pole a pak na něj znovu klikněte pravým tlačítkem."
+  },
+  "outputErrorUnavailable": {
+    "message": "Textové pole už není k dispozici."
+  },
+  "outputErrorFailed": {
+    "message": "Psaní se nepodařilo spustit."
+  },
+  "outputErrorNewTab": {
+    "message": "Novou kartu se nepodařilo otevřít."
+  },
+  "outputErrorMoveBackOutline": {
+    "message": "Chcete-li text vrátit na stránku, zapněte „$SETTING$“.",
+    "placeholders": {
+      "setting": {
+        "content": "$1"
+      }
+    }
+  },
+  "outputErrorMoveBackGone": {
+    "message": "Stránka, ze které text pochází, je zavřená nebo se změnila."
   },
   "helpLink": {
     "message": "Nápověda"
@@ -197,7 +237,7 @@
     "message": "Zvuk: nezachytává se"
   },
   "diagnosticsNoAudio": {
-    "message": "Z této karty není slyšet žádný zvuk. Zkontrolujte, že se opravdu přehrává a není ztlumená."
+    "message": "Nebyl zjištěn žádný zvuk. Zkontrolujte hlasitost karty."
   },
   "diagnosticsDropped": {
     "message": "Zahozeno před připravením modelu: $COUNT$",

@@ -127,6 +127,14 @@ export class CaptureController {
     }
   }
 
+  /** Retunes the running pipeline. Safe to call when nothing is capturing. */
+  async setChunkMs(chunkMs: number): Promise<void> {
+    const reply = await sendToOffscreen({ kind: "set-chunk-ms", chunkMs });
+    if (reply.kind === "error") {
+      throw new CaptureError(reply.message, reply.code);
+    }
+  }
+
   /** Forwards a key entered mid-session to the running worker, so it takes effect
    * without restarting capture. Safe to call when nothing is capturing. */
   async setApiKey(provider: ApiKeyProvider, apiKey: string): Promise<void> {

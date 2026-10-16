@@ -150,6 +150,17 @@
   "stopListening": {
     "message": "停止聆聽"
   },
+  "chunkLength": {
+    "message": "分段長度"
+  },
+  "chunkLengthValue": {
+    "message": "$SECONDS$ 秒",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
   "typingToHeading": {
     "message": "輸入至"
   },
@@ -164,6 +175,35 @@
   },
   "showOutline": {
     "message": "顯示外框"
+  },
+  "outputErrorNoTab": {
+    "message": "沒有可輸入的分頁。"
+  },
+  "outputErrorPageBlocked": {
+    "message": "無法在此頁面上輸入。"
+  },
+  "outputErrorNoTextBox": {
+    "message": "請點選文字方塊內部，然後再次在其上按右鍵。"
+  },
+  "outputErrorUnavailable": {
+    "message": "文字方塊已無法使用。"
+  },
+  "outputErrorFailed": {
+    "message": "無法開始輸入。"
+  },
+  "outputErrorNewTab": {
+    "message": "無法開啟新分頁。"
+  },
+  "outputErrorMoveBackOutline": {
+    "message": "開啟「$SETTING$」即可將文字移回頁面。",
+    "placeholders": {
+      "setting": {
+        "content": "$1"
+      }
+    }
+  },
+  "outputErrorMoveBackGone": {
+    "message": "文字來源頁面已關閉或已變更。"
   },
   "helpLink": {
     "message": "說明"
@@ -197,7 +237,7 @@
     "message": "音訊：未擷取"
   },
   "diagnosticsNoAudio": {
-    "message": "該分頁沒有可聽見的音訊。請確認它確實正在播放且未靜音。"
+    "message": "未偵測到音訊。請檢查分頁音量。"
   },
   "diagnosticsDropped": {
     "message": "模型就緒前捨棄：$COUNT$",

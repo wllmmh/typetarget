@@ -44,8 +44,9 @@ and types the text into a text box the user picked, which may be in another tab.
 - **ASR worker** (`src/worker`). `EngineRouter` picks a provider per model
   ([ADR 0004](docs/adr/0004-pluggable-transcription-engines.md)):
   - `whisper-cpp` and `groq` are discrete. Each `StreamingTranscriber` runs an `EnergyVad`
-    and sends one utterance per inference call, cut at 3 s of continuous speech. Local
-    Whisper stretches that cap to keep up ([ADR 0017](docs/adr/0017-utterance-cap-set-by-typetarget.md)).
+    and sends one utterance per inference call, cut at the popup's chunk length (3 s by
+    default) in continuous speech. Local Whisper stretches that cap to keep up, never below the
+    chunk length ([ADR 0018](docs/adr/0018-chunk-length-slider-returns.md)).
   - `gemini-live` streams continuously over one connection and marks boundaries itself
     ([ADR 0006](docs/adr/0006-client-side-utterance-boundaries-for-gemini-live.md)).
 
@@ -87,7 +88,7 @@ and types the text into a text box the user picked, which may be in another tab.
 
 | Area | Contents |
 | --- | --- |
-| `storage.local` (restricted to extension pages) | selected model, spoken language, "Show outline", API keys |
+| `storage.local` (restricted to extension pages) | selected model, spoken language, chunk length, "Show outline", API keys |
 | `storage.session` | known tabs, pending source tab, destination and its label, running capture |
 | IndexedDB (worker) | downloaded model files |
 

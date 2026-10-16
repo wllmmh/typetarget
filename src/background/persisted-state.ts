@@ -13,12 +13,14 @@ import type { DestinationRef } from "../domain/messages";
 import { MODEL_CATALOG, type ModelId } from "../domain/models";
 import { API_KEY_PROVIDER_NAMES, type ApiKeyProvider } from "../domain/api-key";
 import { isSpokenLanguage } from "../domain/languages";
+import { clampUtteranceCapMs } from "../domain/tuning";
 import { parseKnownTabs } from "./known-tabs";
 import type { CapturableTab, ListeningSession } from "../domain/messages";
 import type { AppState } from "./state";
 
 const MODEL_KEY = "selectedModel";
 const LANGUAGE_KEY = "spokenLanguage";
+const CHUNK_KEY = "chunkMs";
 const PAGE_INDICATORS_KEY = "showPageIndicators";
 const API_KEYS_KEY = "apiKeys";
 const SESSION_KEY = "binding";
@@ -107,9 +109,10 @@ export const restrictLocalStorageToExtension = async (): Promise<void> => {
  */
 export const restorePersistedState = async (state: AppState): Promise<PersistedCapture | null> => {
   try {
-    const [local, language, pageIndicators, apiKeys, session] = await Promise.all([
+    const [local, language, chunk, pageIndicators, apiKeys, session] = await Promise.all([
       chrome.storage.local.get(MODEL_KEY),
       chrome.storage.local.get(LANGUAGE_KEY),
+      chrome.storage.local.get(CHUNK_KEY),
       chrome.storage.local.get(PAGE_INDICATORS_KEY),
       chrome.storage.local.get(API_KEYS_KEY),
       chrome.storage.session.get(SESSION_KEY),
@@ -120,6 +123,9 @@ export const restorePersistedState = async (state: AppState): Promise<PersistedC
 
     const storedLanguage = language[LANGUAGE_KEY];
     if (isSpokenLanguage(storedLanguage)) state.spokenLanguage = storedLanguage;
+
+    const storedChunk = chunk[CHUNK_KEY];
+    if (typeof storedChunk === "number") state.chunkMs = clampUtteranceCapMs(storedChunk);
 
     const storedPageIndicators = pageIndicators[PAGE_INDICATORS_KEY];
     if (typeof storedPageIndicators === "boolean") state.showPageIndicators = storedPageIndicators;
@@ -156,6 +162,7 @@ export const persistState = async (state: AppState): Promise<void> => {
       chrome.storage.local.set({
         [MODEL_KEY]: state.selectedModel,
         [LANGUAGE_KEY]: state.spokenLanguage,
+        [CHUNK_KEY]: state.chunkMs,
         [PAGE_INDICATORS_KEY]: state.showPageIndicators,
         [API_KEYS_KEY]: state.apiKeys,
       }),

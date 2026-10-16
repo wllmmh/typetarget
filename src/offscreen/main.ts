@@ -45,6 +45,8 @@ let asrWorker: AsrWorkerClient | null = null;
  * background sends one; null means detect. */
 let spokenLanguage: SpokenLanguage | null | undefined;
 /** Same reason as spokenLanguage. */
+let chunkMs: number | undefined;
+/** Same reason as spokenLanguage. */
 let apiKeys: Partial<Record<ApiKeyProvider, string>> = {};
 const asrEventListeners = new Set<(event: AsrWorkerEvent) => void>();
 
@@ -58,6 +60,7 @@ const getAsrWorker = (): AsrWorkerClient => {
   if (asrWorker) return asrWorker;
   asrWorker = createWorker();
   if (spokenLanguage !== undefined) asrWorker.send({ kind: "set-spoken-language", language: spokenLanguage });
+  if (chunkMs !== undefined) asrWorker.send({ kind: "set-chunk-ms", chunkMs });
   for (const [provider, apiKey] of Object.entries(apiKeys) as [ApiKeyProvider, string][]) {
     asrWorker.send({ kind: "set-api-key", provider, apiKey });
   }
@@ -164,6 +167,11 @@ const handleMessage = async (msg: BackgroundToOffscreen): Promise<OffscreenReply
     case "set-spoken-language": {
       spokenLanguage = msg.language;
       asrWorker?.send({ kind: "set-spoken-language", language: spokenLanguage });
+      return { kind: "ok" };
+    }
+    case "set-chunk-ms": {
+      chunkMs = msg.chunkMs;
+      asrWorker?.send({ kind: "set-chunk-ms", chunkMs });
       return { kind: "ok" };
     }
     case "set-api-key": {

@@ -3,6 +3,7 @@ import { installFakeChrome, type FakeChrome } from "../test/fake-chrome";
 import { createInitialState } from "./state";
 import { persistState, restorePersistedState, restrictLocalStorageToExtension } from "./persisted-state";
 import { DEFAULT_MODEL } from "../domain/models";
+import { UTTERANCE_CAP_MAX_MS } from "../domain/tuning";
 
 let fake: FakeChrome;
 
@@ -44,7 +45,7 @@ describe("persistState / restorePersistedState", () => {
     state.pendingSourceTabId = 3;
     await persistState(state);
 
-    expect(Object.keys(fake.storage.local.data).sort()).toEqual(["apiKeys", "selectedModel", "showPageIndicators", "spokenLanguage"]);
+    expect(Object.keys(fake.storage.local.data).sort()).toEqual(["apiKeys", "chunkMs", "selectedModel", "showPageIndicators", "spokenLanguage"]);
     expect(Object.keys(fake.storage.session.data)).toEqual(["binding"]);
   });
 
@@ -80,6 +81,20 @@ describe("persistState / restorePersistedState", () => {
     await restorePersistedState(state);
 
     expect(state.apiKeys).toEqual({});
+  });
+
+  it("round-trips the chunk length, clamping a value out of range", async () => {
+    const saved = createInitialState();
+    saved.chunkMs = 9_000;
+    await persistState(saved);
+    const restored = createInitialState();
+    await restorePersistedState(restored);
+    expect(restored.chunkMs).toBe(9_000);
+
+    fake.storage.local.data.chunkMs = 999_000;
+    const outOfRange = createInitialState();
+    await restorePersistedState(outOfRange);
+    expect(outOfRange.chunkMs).toBe(UTTERANCE_CAP_MAX_MS);
   });
 
   it("round-trips the spoken language, and detects it for a code TypeTarget doesn't offer", async () => {

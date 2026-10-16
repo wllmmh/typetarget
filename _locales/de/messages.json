@@ -150,6 +150,17 @@
   "stopListening": {
     "message": "Zuhören beenden"
   },
+  "chunkLength": {
+    "message": "Abschnittslänge"
+  },
+  "chunkLengthValue": {
+    "message": "$SECONDS$ Sekunden",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
   "typingToHeading": {
     "message": "Schreibt in"
   },
@@ -164,6 +175,35 @@
   },
   "showOutline": {
     "message": "Umrandung anzeigen"
+  },
+  "outputErrorNoTab": {
+    "message": "Kein Tab zum Schreiben vorhanden."
+  },
+  "outputErrorPageBlocked": {
+    "message": "Auf dieser Seite kann nicht geschrieben werden."
+  },
+  "outputErrorNoTextBox": {
+    "message": "Klicken Sie in das Textfeld und dann erneut mit der rechten Maustaste darauf."
+  },
+  "outputErrorUnavailable": {
+    "message": "Das Textfeld ist nicht mehr verfügbar."
+  },
+  "outputErrorFailed": {
+    "message": "Schreiben konnte nicht gestartet werden."
+  },
+  "outputErrorNewTab": {
+    "message": "Neuer Tab konnte nicht geöffnet werden."
+  },
+  "outputErrorMoveBackOutline": {
+    "message": "Aktivieren Sie „$SETTING$“, um den Text auf die Seite zurückzuverschieben.",
+    "placeholders": {
+      "setting": {
+        "content": "$1"
+      }
+    }
+  },
+  "outputErrorMoveBackGone": {
+    "message": "Die Seite, von der der Text stammt, ist geschlossen oder hat sich geändert."
   },
   "helpLink": {
     "message": "Hilfe"
@@ -197,7 +237,7 @@
     "message": "Audio: keine Aufnahme"
   },
   "diagnosticsNoAudio": {
-    "message": "Kein hörbarer Ton aus diesem Tab. Prüfen Sie, ob er wirklich abgespielt wird und nicht stummgeschaltet ist."
+    "message": "Kein Ton erkannt. Prüfen Sie die Lautstärke des Tabs."
   },
   "diagnosticsDropped": {
     "message": "Verworfen, bevor das Modell bereit war: $COUNT$",

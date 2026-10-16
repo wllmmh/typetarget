@@ -150,6 +150,17 @@
   "stopListening": {
     "message": "Dejar de escuchar"
   },
+  "chunkLength": {
+    "message": "Duración del fragmento"
+  },
+  "chunkLengthValue": {
+    "message": "$SECONDS$ segundos",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
   "typingToHeading": {
     "message": "Escribiendo en"
   },
@@ -164,6 +175,35 @@
   },
   "showOutline": {
     "message": "Mostrar contorno"
+  },
+  "outputErrorNoTab": {
+    "message": "No hay ninguna pestaña en la que escribir."
+  },
+  "outputErrorPageBlocked": {
+    "message": "No se puede escribir en esta página."
+  },
+  "outputErrorNoTextBox": {
+    "message": "Haz clic en el cuadro de texto y vuelve a hacer clic derecho en él."
+  },
+  "outputErrorUnavailable": {
+    "message": "El cuadro de texto ya no está disponible."
+  },
+  "outputErrorFailed": {
+    "message": "No se pudo empezar a escribir."
+  },
+  "outputErrorNewTab": {
+    "message": "No se pudo abrir una pestaña nueva."
+  },
+  "outputErrorMoveBackOutline": {
+    "message": "Activa «$SETTING$» para devolver el texto a la página.",
+    "placeholders": {
+      "setting": {
+        "content": "$1"
+      }
+    }
+  },
+  "outputErrorMoveBackGone": {
+    "message": "La página de la que procede el texto está cerrada o ha cambiado."
   },
   "helpLink": {
     "message": "Ayuda"
@@ -197,7 +237,7 @@
     "message": "Audio: sin captura"
   },
   "diagnosticsNoAudio": {
-    "message": "No llega audio audible de esa pestaña. Comprueba que se esté reproduciendo y que no esté silenciada."
+    "message": "No se detecta audio. Comprueba el volumen de la pestaña."
   },
   "diagnosticsDropped": {
     "message": "Descartados antes de que el modelo estuviera listo: $COUNT$",

@@ -150,6 +150,17 @@
   "stopListening": {
     "message": "Остановить прослушивание"
   },
+  "chunkLength": {
+    "message": "Длина фрагмента"
+  },
+  "chunkLengthValue": {
+    "message": "$SECONDS$ сек.",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
   "typingToHeading": {
     "message": "Ввод в"
   },
@@ -164,6 +175,35 @@
   },
   "showOutline": {
     "message": "Показывать рамку"
+  },
+  "outputErrorNoTab": {
+    "message": "Нет вкладки для ввода текста."
+  },
+  "outputErrorPageBlocked": {
+    "message": "На этой странице нельзя печатать."
+  },
+  "outputErrorNoTextBox": {
+    "message": "Щёлкните в текстовом поле, а затем снова щёлкните по нему правой кнопкой."
+  },
+  "outputErrorUnavailable": {
+    "message": "Текстовое поле больше недоступно."
+  },
+  "outputErrorFailed": {
+    "message": "Не удалось начать ввод."
+  },
+  "outputErrorNewTab": {
+    "message": "Не удалось открыть новую вкладку."
+  },
+  "outputErrorMoveBackOutline": {
+    "message": "Включите «$SETTING$», чтобы вернуть текст на страницу.",
+    "placeholders": {
+      "setting": {
+        "content": "$1"
+      }
+    }
+  },
+  "outputErrorMoveBackGone": {
+    "message": "Страница, с которой взят текст, закрыта или изменилась."
   },
   "helpLink": {
     "message": "Справка"
@@ -197,7 +237,7 @@
     "message": "Звук: не захватывается"
   },
   "diagnosticsNoAudio": {
-    "message": "Из этой вкладки не слышно звука. Проверьте, что он воспроизводится и не отключён."
+    "message": "Звук не обнаружен. Проверьте громкость вкладки."
   },
   "diagnosticsDropped": {
     "message": "Отброшено до готовности модели: $COUNT$",

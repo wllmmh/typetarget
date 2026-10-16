@@ -150,6 +150,17 @@
   "stopListening": {
     "message": "Parar de ouvir"
   },
+  "chunkLength": {
+    "message": "Duração do segmento"
+  },
+  "chunkLengthValue": {
+    "message": "$SECONDS$ segundos",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
   "typingToHeading": {
     "message": "A escrever em"
   },
@@ -164,6 +175,35 @@
   },
   "showOutline": {
     "message": "Mostrar contorno"
+  },
+  "outputErrorNoTab": {
+    "message": "Não há separador onde escrever."
+  },
+  "outputErrorPageBlocked": {
+    "message": "Não é possível escrever nesta página."
+  },
+  "outputErrorNoTextBox": {
+    "message": "Clique na caixa de texto e depois clique novamente nela com o botão direito."
+  },
+  "outputErrorUnavailable": {
+    "message": "A caixa de texto já não está disponível."
+  },
+  "outputErrorFailed": {
+    "message": "Não foi possível começar a escrever."
+  },
+  "outputErrorNewTab": {
+    "message": "Não foi possível abrir um novo separador."
+  },
+  "outputErrorMoveBackOutline": {
+    "message": "Ative \"$SETTING$\" para devolver o texto à página.",
+    "placeholders": {
+      "setting": {
+        "content": "$1"
+      }
+    }
+  },
+  "outputErrorMoveBackGone": {
+    "message": "A página de onde o texto veio foi fechada ou mudou."
   },
   "helpLink": {
     "message": "Ajuda"
@@ -197,7 +237,7 @@
     "message": "Áudio: sem captura"
   },
   "diagnosticsNoAudio": {
-    "message": "Não há áudio audível desse separador. Verifique se está mesmo a reproduzir e se não está sem som."
+    "message": "Nenhum áudio detetado. Verifique o volume do separador."
   },
   "diagnosticsDropped": {
     "message": "Descartados antes de o modelo estar pronto: $COUNT$",

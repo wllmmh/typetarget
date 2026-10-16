@@ -19,6 +19,8 @@ import {
 import { isFromExtensionPage } from "../domain/sender";
 import type { ModelId } from "../domain/models";
 import { isSpokenLanguage } from "../domain/languages";
+import { clampUtteranceCapMs } from "../domain/tuning";
+import { t } from "../domain/i18n";
 import { isPlausibleApiKey, API_KEY_PROVIDER_NAMES, type ApiKeyProvider } from "../domain/api-key";
 import { createInitialState, toPublicState } from "./state";
 import { pruneKnownTabs, recordKnownTab, removeKnownTab, sameKnownTabs, updateKnownTab } from "./known-tabs";
@@ -290,6 +292,7 @@ const startCapture = async (sourceTabId: number): Promise<BackgroundResponse> =>
   try {
     await captureController.start(sourceTabId, state.selectedModel, state.apiKeys);
     void captureController.setSpokenLanguage(state.spokenLanguage).catch(() => {});
+    void captureController.setChunkMs(state.chunkMs).catch(() => {});
     state.status = "capturing";
     // A network engine restarts `since` once its connection opens (see transcript-router.ts).
     state.session = { since: Date.now(), reconnects: 0, reconnecting: null };
@@ -363,6 +366,20 @@ const setSpokenLanguage = async (language: string | null): Promise<BackgroundRes
   return { kind: "ok" };
 };
 
+/**
+ * Tunable while capturing, like the spoken language, so its effect can be judged live instead of
+ * only after a restart. A lowered value also cuts the utterance in progress if it is already
+ * past it (see StreamingTranscriber.setOptions).
+ */
+const setChunkMs = async (chunkMs: number): Promise<BackgroundResponse> => {
+  state.chunkMs = clampUtteranceCapMs(chunkMs);
+  commitState();
+  if (isCapturing(state.status)) {
+    await captureController.setChunkMs(state.chunkMs).catch(() => {});
+  }
+  return { kind: "ok" };
+};
+
 /** "Show outline": takes effect at once on the current output and any tab
  * still picking, not just on the next pick. */
 const setShowPageIndicators = (show: boolean): BackgroundResponse => {
@@ -403,8 +420,8 @@ const beginDestinationSelection = async (): Promise<BackgroundResponse> => {
     broadcastState();
     return { kind: "ok" };
   } catch (err) {
-    const destErr = err instanceof DestinationError ? err : new DestinationError("Unknown selection error.", "unknown");
-    state.lastError = { code: destErr.code, message: destErr.message };
+    const destErr = err instanceof DestinationError ? err : new DestinationError(t("outputErrorFailed"), "output-failed");
+    state.lastError = { code: destErr.code, message: destErr.message, detail: destErr.detail };
     broadcastState();
     return { kind: "error", code: destErr.code, message: destErr.message };
   }
@@ -433,9 +450,9 @@ const pickFromContextMenu = async (pick: () => Promise<void>): Promise<void> => 
     state.lastError = null;
     broadcastState();
   } catch (err) {
-    const destErr = err instanceof DestinationError ? err : new DestinationError("Could not use that text box.", "unknown");
+    const destErr = err instanceof DestinationError ? err : new DestinationError(t("outputErrorFailed"), "output-failed");
     state.isSelectingDestination = false;
-    state.lastError = { code: destErr.code, message: destErr.message };
+    state.lastError = { code: destErr.code, message: destErr.message, detail: destErr.detail };
     broadcastState();
   }
 };
@@ -470,7 +487,7 @@ const typeToNewFile = async (tabId: number, forceEditorTab: boolean): Promise<vo
 const startTypingInActiveTab = async (): Promise<BackgroundResponse> => {
   const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (activeTab?.id === undefined) {
-    return { kind: "error", code: "no-active-tab", message: "There is no tab to type into." };
+    return { kind: "error", code: "no-active-tab", message: t("outputErrorNoTab") };
   }
   await typeToNewFile(activeTab.id, false);
   return { kind: "ok" };
@@ -606,6 +623,8 @@ const handlePopupRequest = async (req: PopupRequest): Promise<BackgroundResponse
       return setModel(req.modelId);
     case "set-spoken-language":
       return setSpokenLanguage(req.language);
+    case "set-chunk-ms":
+      return setChunkMs(req.chunkMs);
     case "set-show-page-indicators":
       return setShowPageIndicators(req.show);
     case "set-api-key":
@@ -645,7 +664,7 @@ const openInNewTab = (text: string, openerTabId: number): void => {
     if (tab.id !== undefined) editorTexts.set(tab.id, { text, originTabId: openerTabId });
   })();
   editorOpening.catch((err: unknown) => {
-    state.lastError = { code: "open-in-tab-failed", message: err instanceof Error ? err.message : "Could not open a new tab." };
+    state.lastError = { code: "open-in-tab-failed", message: t("outputErrorNewTab"), detail: err instanceof Error ? err.message : undefined };
     broadcastState();
   });
 };
@@ -668,14 +687,14 @@ const adoptEditorTab = async (tabId: number): Promise<EditorReply> => {
  * editor stays the output and the popup says why. */
 const moveBackToPage = async (editorTabId: number, originTabId: number, text: string): Promise<void> => {
   if (!state.showPageIndicators) {
-    state.lastError = { code: "move-back-failed", message: "Turn on \"Show outline\" to move the text back to the page." };
+    state.lastError = { code: "move-back-failed", message: t("outputErrorMoveBackOutline", t("showOutline")) };
     broadcastState();
     return;
   }
   try {
     await destinationController.openNewFileField(originTabId, text);
   } catch {
-    state.lastError = { code: "move-back-failed", message: "Couldn't move the text back: the page it came from is closed or has changed." };
+    state.lastError = { code: "move-back-failed", message: t("outputErrorMoveBackGone") };
     broadcastState();
     return;
   }

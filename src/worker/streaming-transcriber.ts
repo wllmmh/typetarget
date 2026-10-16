@@ -34,12 +34,12 @@ export type StreamingOptions = {
   enablePartials: boolean;
   /** How much new speech audio must arrive between partial inferences, when enabled. */
   partialIntervalMs: number;
-  /** An utterance is force-finalized at this length (Whisper's window is 30 s). */
+  /** An utterance is force-finalized at this length (Whisper's window is 30 s). The user's chunk length. */
   maxUtteranceMs: number;
   /**
-   * Local Whisper: after each final, set `maxUtteranceMs` from how long its inference took, so a
-   * machine too slow for the base cap keeps up with a longer one (see domain/tuning.ts). Hosted
-   * engines keep the base cap: they are fast, and staying live matters more.
+   * Local Whisper: after each final, stretch past `maxUtteranceMs` from how long its inference
+   * took, so a machine too slow for the user's cap keeps up with a longer one (see
+   * domain/tuning.ts). Hosted engines keep the user's cap: they are fast enough for it.
    */
   stretchToKeepUp: boolean;
   /** Passed to every inference call; null lets the engine detect the language. */
@@ -69,8 +69,9 @@ const samplesToMs = (samples: number) => (samples / SAMPLE_RATE) * 1000;
 export class StreamingTranscriber {
   private readonly buffer = new RollingAudioBuffer();
   private options: StreamingOptions;
-  /** What a stretched cap goes back to on reset, so a new session doesn't inherit the last one's. */
-  private readonly baseMaxUtteranceMs: number;
+  /** The last final's inference time, when stretching; cleared on reset so a new session doesn't
+   * inherit the last one's cap. */
+  private lastInferenceMs: number | null = null;
   private totalSamples = 0;
   private inSpeech = false;
   private samplesAtLastPartial = 0;
@@ -91,7 +92,6 @@ export class StreamingTranscriber {
     options: Partial<StreamingOptions> = {},
   ) {
     this.options = { ...DEFAULT_STREAMING_OPTIONS, ...options };
-    this.baseMaxUtteranceMs = this.options.maxUtteranceMs;
   }
 
   /**
@@ -123,7 +123,7 @@ export class StreamingTranscriber {
       return;
     }
 
-    if (samplesToMs(this.buffer.length) >= this.options.maxUtteranceMs) {
+    if (samplesToMs(this.buffer.length) >= this.utteranceCapMs()) {
       this.finalizeUtterance(nowMs);
       this.inSpeech = true; // still talking; the next utterance starts empty
       this.samplesAtLastPartial = this.totalSamples;
@@ -162,7 +162,13 @@ export class StreamingTranscriber {
     this.utteranceId++;
     this.generation++;
     this.samplesAtLastPartial = this.totalSamples;
-    this.options.maxUtteranceMs = this.baseMaxUtteranceMs;
+    this.lastInferenceMs = null;
+  }
+
+  /** Read on every push, so a chunk length changed mid-session applies at once. */
+  private utteranceCapMs(): number {
+    const { maxUtteranceMs } = this.options;
+    return this.lastInferenceMs === null ? maxUtteranceMs : stretchedUtteranceCapMs(maxUtteranceMs, this.lastInferenceMs);
   }
 
   /** Read when each inference starts, so a language changed mid-session applies to the next one. */
@@ -206,7 +212,7 @@ export class StreamingTranscriber {
         const startedAt = Date.now();
         const { text } = await this.deps.engine.transcribe(audio, this.transcriptionOptions());
         if (generation !== this.generation) return; // reset while this was in flight
-        if (this.options.stretchToKeepUp) this.options.maxUtteranceMs = stretchedUtteranceCapMs(Date.now() - startedAt);
+        if (this.options.stretchToKeepUp) this.lastInferenceMs = Date.now() - startedAt;
         const event = this.deps.stabilizer.onFinal(text, timestamp);
         if (event) this.deps.onEvent(event);
       } catch (err) {

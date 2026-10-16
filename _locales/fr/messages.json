@@ -150,6 +150,17 @@
   "stopListening": {
     "message": "Arrêter l'écoute"
   },
+  "chunkLength": {
+    "message": "Durée des segments"
+  },
+  "chunkLengthValue": {
+    "message": "$SECONDS$ secondes",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
   "typingToHeading": {
     "message": "Saisie dans"
   },
@@ -164,6 +175,35 @@
   },
   "showOutline": {
     "message": "Afficher le contour"
+  },
+  "outputErrorNoTab": {
+    "message": "Aucun onglet où écrire."
+  },
+  "outputErrorPageBlocked": {
+    "message": "Impossible d'écrire sur cette page."
+  },
+  "outputErrorNoTextBox": {
+    "message": "Cliquez dans la zone de texte, puis faites de nouveau un clic droit dessus."
+  },
+  "outputErrorUnavailable": {
+    "message": "La zone de texte n'est plus disponible."
+  },
+  "outputErrorFailed": {
+    "message": "Impossible de commencer à écrire."
+  },
+  "outputErrorNewTab": {
+    "message": "Impossible d'ouvrir un nouvel onglet."
+  },
+  "outputErrorMoveBackOutline": {
+    "message": "Activez « $SETTING$ » pour remettre le texte sur la page.",
+    "placeholders": {
+      "setting": {
+        "content": "$1"
+      }
+    }
+  },
+  "outputErrorMoveBackGone": {
+    "message": "La page d'origine du texte est fermée ou a changé."
   },
   "helpLink": {
     "message": "Aide"
@@ -197,7 +237,7 @@
     "message": "Audio : pas de capture"
   },
   "diagnosticsNoAudio": {
-    "message": "Aucun son audible depuis cet onglet. Vérifiez qu'il est bien en lecture et que le son n'est pas coupé."
+    "message": "Aucun son détecté. Vérifiez le volume de l'onglet."
   },
   "diagnosticsDropped": {
     "message": "Ignorés avant que le modèle soit prêt : $COUNT$",

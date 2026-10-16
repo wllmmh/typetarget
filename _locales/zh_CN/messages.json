@@ -150,6 +150,17 @@
   "stopListening": {
     "message": "停止收听"
   },
+  "chunkLength": {
+    "message": "分段长度"
+  },
+  "chunkLengthValue": {
+    "message": "$SECONDS$ 秒",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
   "typingToHeading": {
     "message": "输入到"
   },
@@ -164,6 +175,35 @@
   },
   "showOutline": {
     "message": "显示轮廓"
+  },
+  "outputErrorNoTab": {
+    "message": "没有可输入的标签页。"
+  },
+  "outputErrorPageBlocked": {
+    "message": "无法在此页面上输入。"
+  },
+  "outputErrorNoTextBox": {
+    "message": "请点击文本框内部，然后再次右键点击它。"
+  },
+  "outputErrorUnavailable": {
+    "message": "文本框已不可用。"
+  },
+  "outputErrorFailed": {
+    "message": "无法开始输入。"
+  },
+  "outputErrorNewTab": {
+    "message": "无法打开新标签页。"
+  },
+  "outputErrorMoveBackOutline": {
+    "message": "开启“$SETTING$”即可将文本移回页面。",
+    "placeholders": {
+      "setting": {
+        "content": "$1"
+      }
+    }
+  },
+  "outputErrorMoveBackGone": {
+    "message": "文本来源页面已关闭或已更改。"
   },
   "helpLink": {
     "message": "帮助"
@@ -197,7 +237,7 @@
     "message": "音频：未在捕获"
   },
   "diagnosticsNoAudio": {
-    "message": "该标签页没有可听见的音频。请确认它确实在播放且未静音。"
+    "message": "未检测到音频。请检查标签页音量。"
   },
   "diagnosticsDropped": {
     "message": "模型就绪前丢弃：$COUNT$",

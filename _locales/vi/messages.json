@@ -150,6 +150,17 @@
   "stopListening": {
     "message": "Dừng nghe"
   },
+  "chunkLength": {
+    "message": "Độ dài đoạn"
+  },
+  "chunkLengthValue": {
+    "message": "$SECONDS$ giây",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
   "typingToHeading": {
     "message": "Đang nhập vào"
   },
@@ -164,6 +175,35 @@
   },
   "showOutline": {
     "message": "Hiện viền"
+  },
+  "outputErrorNoTab": {
+    "message": "Không có thẻ nào để nhập."
+  },
+  "outputErrorPageBlocked": {
+    "message": "Không thể nhập trên trang này."
+  },
+  "outputErrorNoTextBox": {
+    "message": "Hãy nhấp vào hộp văn bản, rồi nhấp chuột phải vào hộp đó lần nữa."
+  },
+  "outputErrorUnavailable": {
+    "message": "Hộp văn bản không còn khả dụng."
+  },
+  "outputErrorFailed": {
+    "message": "Không thể bắt đầu nhập."
+  },
+  "outputErrorNewTab": {
+    "message": "Không thể mở thẻ mới."
+  },
+  "outputErrorMoveBackOutline": {
+    "message": "Hãy bật \"$SETTING$\" để đưa văn bản trở lại trang.",
+    "placeholders": {
+      "setting": {
+        "content": "$1"
+      }
+    }
+  },
+  "outputErrorMoveBackGone": {
+    "message": "Trang chứa văn bản gốc đã đóng hoặc đã thay đổi."
   },
   "helpLink": {
     "message": "Trợ giúp"
@@ -197,7 +237,7 @@
     "message": "Âm thanh: không thu"
   },
   "diagnosticsNoAudio": {
-    "message": "Không nghe thấy âm thanh từ thẻ đó. Hãy kiểm tra xem thẻ có thực sự đang phát và không bị tắt tiếng."
+    "message": "Không phát hiện âm thanh. Hãy kiểm tra âm lượng của thẻ."
   },
   "diagnosticsDropped": {
     "message": "Bị bỏ trước khi mô hình sẵn sàng: $COUNT$",

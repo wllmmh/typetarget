@@ -375,8 +375,33 @@ button.heading-error:hover {
 }
 
 .popup input[type="checkbox"],
+.popup input[type="range"],
 .popup progress {
   accent-color: var(--tt-primary);
+}
+
+/* "Chunk length" under the listening button: name and value on one line, the slider full width below. */
+.chunk-length {
+  margin-top: 8px;
+}
+
+.chunk-length-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.chunk-length-value {
+  margin: 0;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.chunk-length input[type="range"] {
+  display: block;
+  width: 100%;
+  margin: 2px 0 0;
 }
 
 .popup progress {

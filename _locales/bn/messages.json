@@ -150,6 +150,17 @@
   "stopListening": {
     "message": "শোনা বন্ধ করুন"
   },
+  "chunkLength": {
+    "message": "খণ্ডের দৈর্ঘ্য"
+  },
+  "chunkLengthValue": {
+    "message": "$SECONDS$ সেকেন্ড",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
   "typingToHeading": {
     "message": "যেখানে লেখা হচ্ছে"
   },
@@ -164,6 +175,35 @@
   },
   "showOutline": {
     "message": "আউটলাইন দেখান"
+  },
+  "outputErrorNoTab": {
+    "message": "লেখার জন্য কোনো ট্যাব নেই।"
+  },
+  "outputErrorPageBlocked": {
+    "message": "এই পৃষ্ঠায় লেখা যাবে না।"
+  },
+  "outputErrorNoTextBox": {
+    "message": "টেক্সট বক্সের ভিতরে ক্লিক করুন, তারপর আবার সেটিতে ডান-ক্লিক করুন।"
+  },
+  "outputErrorUnavailable": {
+    "message": "টেক্সট বক্সটি আর উপলব্ধ নেই।"
+  },
+  "outputErrorFailed": {
+    "message": "লেখা শুরু করা যায়নি।"
+  },
+  "outputErrorNewTab": {
+    "message": "নতুন ট্যাব খোলা যায়নি।"
+  },
+  "outputErrorMoveBackOutline": {
+    "message": "লেখা পৃষ্ঠায় ফেরাতে \"$SETTING$\" চালু করুন।",
+    "placeholders": {
+      "setting": {
+        "content": "$1"
+      }
+    }
+  },
+  "outputErrorMoveBackGone": {
+    "message": "লেখাটি যে পৃষ্ঠা থেকে এসেছে সেটি বন্ধ বা বদলে গেছে।"
   },
   "helpLink": {
     "message": "সাহায্য"
@@ -197,7 +237,7 @@
     "message": "অডিও: ক্যাপচার হচ্ছে না"
   },
   "diagnosticsNoAudio": {
-    "message": "ওই ট্যাব থেকে শোনার মতো কোনো অডিও আসছে না। দেখুন সেটি সত্যিই চলছে এবং মিউট করা নেই।"
+    "message": "কোনো অডিও শনাক্ত হয়নি। ট্যাবের ভলিউম দেখুন।"
   },
   "diagnosticsDropped": {
     "message": "মডেল প্রস্তুত হওয়ার আগে বাদ পড়েছে: $COUNT$",

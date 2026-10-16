@@ -150,6 +150,17 @@
   "stopListening": {
     "message": "Interrompi ascolto"
   },
+  "chunkLength": {
+    "message": "Durata dei segmenti"
+  },
+  "chunkLengthValue": {
+    "message": "$SECONDS$ secondi",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
   "typingToHeading": {
     "message": "Scrittura in"
   },
@@ -164,6 +175,35 @@
   },
   "showOutline": {
     "message": "Mostra contorno"
+  },
+  "outputErrorNoTab": {
+    "message": "Nessuna scheda in cui scrivere."
+  },
+  "outputErrorPageBlocked": {
+    "message": "Impossibile scrivere in questa pagina."
+  },
+  "outputErrorNoTextBox": {
+    "message": "Fai clic nella casella di testo, poi fai di nuovo clic destro su di essa."
+  },
+  "outputErrorUnavailable": {
+    "message": "La casella di testo non è più disponibile."
+  },
+  "outputErrorFailed": {
+    "message": "Impossibile iniziare a scrivere."
+  },
+  "outputErrorNewTab": {
+    "message": "Impossibile aprire una nuova scheda."
+  },
+  "outputErrorMoveBackOutline": {
+    "message": "Attiva «$SETTING$» per riportare il testo nella pagina.",
+    "placeholders": {
+      "setting": {
+        "content": "$1"
+      }
+    }
+  },
+  "outputErrorMoveBackGone": {
+    "message": "La pagina da cui proviene il testo è chiusa o è cambiata."
   },
   "helpLink": {
     "message": "Guida"
@@ -197,7 +237,7 @@
     "message": "Audio: nessuna acquisizione"
   },
   "diagnosticsNoAudio": {
-    "message": "Nessun audio udibile da quella scheda. Verifica che sia in riproduzione e non disattivata."
+    "message": "Nessun audio rilevato. Controlla il volume della scheda."
   },
   "diagnosticsDropped": {
     "message": "Scartati prima che il modello fosse pronto: $COUNT$",

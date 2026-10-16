@@ -40,6 +40,23 @@ export type SessionIndicator =
   | { state: "stopped" };
 
 /**
+ * The latest error, in the browser's display language where it is about the output. `detail` is
+ * Chrome's own (English) reason, if any, shown as a tooltip rather than in the popup's text.
+ */
+export type LastError = { code: string; message: string; detail?: string };
+
+/** `lastError` codes about the output (the text box typed into): the popup shows them beside "Typing to". */
+export const OUTPUT_ERROR_CODES: ReadonlySet<string> = new Set([
+  "no-active-tab",
+  "injection-failed",
+  "no-focused-text-box",
+  "destination-unavailable",
+  "output-failed",
+  "open-in-tab-failed",
+  "move-back-failed",
+]);
+
+/**
  * Serializable view of background/state.ts's AppState, sent to the popup. Holds only what
  * the popup renders: no destination refs and never the API keys themselves.
  */
@@ -61,10 +78,12 @@ export type PublicAppState = {
   selectedModel: ModelId;
   /** The language the Whisper models are told to expect; null to detect it (see domain/languages.ts). */
   spokenLanguage: SpokenLanguage | null;
+  /** The popup's "Chunk length": the cap on one utterance in continuous speech (see domain/tuning.ts). */
+  chunkMs: number;
   /** "Show outline" (see background/state.ts). */
   showPageIndicators: boolean;
   isSelectingDestination: boolean;
-  lastError: { code: string; message: string } | null;
+  lastError: LastError | null;
   /** Non-null while capturing. */
   session: ListeningSession | null;
   /** Which network providers currently have a stored API key — never the keys
@@ -91,6 +110,8 @@ export type PopupRequest =
   | { kind: "set-model"; modelId: ModelId }
   /** null: detect the language. Validated by the background, like the stored value. */
   | { kind: "set-spoken-language"; language: string | null }
+  /** Clamped by the background, like the stored value. */
+  | { kind: "set-chunk-ms"; chunkMs: number }
   | { kind: "set-show-page-indicators"; show: boolean }
   /** Sets or clears (empty apiKey) the stored key for a network provider. */
   | { kind: "set-api-key"; provider: ApiKeyProvider; apiKey: string };
@@ -184,6 +205,7 @@ export type BackgroundToOffscreen =
   | { kind: "load-model"; modelId: ModelId }
   | { kind: "unload-model" }
   | { kind: "set-spoken-language"; language: SpokenLanguage | null }
+  | { kind: "set-chunk-ms"; chunkMs: number }
   | { kind: "set-api-key"; provider: ApiKeyProvider; apiKey: string }
   /** Asked by a restarted service worker, to learn whether the capture it lost track of still runs. */
   | { kind: "get-capture-status" };

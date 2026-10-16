@@ -84,6 +84,15 @@ describe("createAsrWorkerController", () => {
     expect(transcriber.reset).toHaveBeenCalled();
   });
 
+  it("retunes the chunk length without restarting anything", async () => {
+    const { controller, transcriber } = setup();
+
+    await controller.handle({ kind: "set-chunk-ms", chunkMs: 6_000 });
+
+    expect(transcriber.setOptions).toHaveBeenCalledWith({ maxUtteranceMs: 6_000 });
+    expect(transcriber.reset).not.toHaveBeenCalled();
+  });
+
   it("sets the spoken language for the next utterances without restarting anything", async () => {
     const { controller, transcriber } = setup();
 

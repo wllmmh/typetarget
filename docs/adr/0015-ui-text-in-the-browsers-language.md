@@ -1,5 +1,5 @@
 # 0015. UI text in the browser's display language, through chrome.i18n
-- Status: Accepted
+- Status: Accepted; errors about the output are translated since [ADR 0019](0019-output-errors-translated-beside-typing-to.md)
 - Date: 2026-10-14
 
 ## Context

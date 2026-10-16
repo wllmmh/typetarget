@@ -92,11 +92,32 @@
   "noTabSelected": { "message": "No tab selected" },
   "startListening": { "message": "Start listening" },
   "stopListening": { "message": "Stop listening" },
+  "chunkLength": {
+    "message": "Chunk length",
+    "description": "Setting under the listening button: the longest stretch of continuous speech sent to the model at once. Longer helps the model tell which language is spoken; shorter gets text sooner."
+  },
+  "chunkLengthValue": {
+    "message": "$SECONDS$ seconds",
+    "description": "The chunk length setting's current value, beside its name. Always 3 to 25; where the word for seconds changes with the number, use the abbreviation.",
+    "placeholders": { "seconds": { "content": "$1", "example": "3" } }
+  },
   "typingToHeading": { "message": "Typing to", "description": "Heading above the name of the text box the transcript goes into." },
   "noFieldSelected": { "message": "No field selected" },
   "startTyping": { "message": "Start typing" },
   "stopTyping": { "message": "Stop typing" },
   "showOutline": { "message": "Show outline", "description": "Setting: draw an outline, timer and buttons on the text box being typed into." },
+  "outputErrorNoTab": { "message": "No tab to type into.", "description": "Errors beside the Typing to heading, so kept short." },
+  "outputErrorPageBlocked": { "message": "Can't type on this page.", "description": "Chrome doesn't let extensions into this page, such as a chrome:// page or the Web Store." },
+  "outputErrorNoTextBox": { "message": "Click into the text box, then right-click it again.", "description": "After Type to this field, when no text box had the focus." },
+  "outputErrorUnavailable": { "message": "The text box is no longer available.", "description": "The text box being typed into, or its tab, has gone." },
+  "outputErrorFailed": { "message": "Couldn't start typing." },
+  "outputErrorNewTab": { "message": "Couldn't open a new tab." },
+  "outputErrorMoveBackOutline": {
+    "message": "Turn on \"$SETTING$\" to move the text back.",
+    "description": "The editor tab's Move back to page needs the Show outline setting.",
+    "placeholders": { "setting": { "content": "$1", "example": "Show outline" } }
+  },
+  "outputErrorMoveBackGone": { "message": "The page the text came from is closed or has changed." },
 
   "helpLink": { "message": "Help", "description": "Link at the popup's foot to the FAQ on the website." },
   "contactLink": { "message": "Contact", "description": "Link at the popup's foot to the contact form." },
@@ -113,7 +134,7 @@
     }
   },
   "diagnosticsAudioIdle": { "message": "Audio: not capturing" },
-  "diagnosticsNoAudio": { "message": "No audible audio from that tab. Check it is actually playing and not muted." },
+  "diagnosticsNoAudio": { "message": "No audio detected. Check tab volume." },
   "diagnosticsDropped": {
     "message": "Dropped before model ready: $COUNT$",
     "placeholders": { "count": { "content": "$1", "example": "5" } }

@@ -19,6 +19,7 @@ import {
   type ReleaseReply,
 } from "../domain/messages";
 import { destinationSession } from "./destination-session";
+import { t } from "../domain/i18n";
 
 /** Exported so the test can clear it; nothing else should read it. */
 export const CONTENT_BRIDGE_FLAG = "__typeTargetContentBridgeInstalled" as const;
@@ -86,7 +87,7 @@ export const installContentBridge = (
       case "insert-text": {
         const ok = destinationSession.insert(msg.text, msg.separator);
         if (!ok) {
-          sendToBackground({ kind: "destination-unavailable", reason: "Destination element is no longer available." });
+          sendToBackground({ kind: "destination-unavailable", reason: t("outputErrorUnavailable") });
         }
         sendResponse(envelope({ kind: "ok" } as const));
         return undefined;
@@ -101,7 +102,7 @@ export const installContentBridge = (
               : ({
                   kind: "error",
                   code: "no-focused-text-box",
-                  message: "TypeTarget couldn't find that text box. Click into it, then right-click it again.",
+                  message: t("outputErrorNoTextBox"),
                 } as const),
           ),
         );
@@ -127,7 +128,7 @@ export const installContentBridge = (
         return undefined;
       case "check-destination-alive": {
         if (!destinationSession.isDestinationAlive()) {
-          sendToBackground({ kind: "destination-unavailable", reason: "Destination element is no longer available." });
+          sendToBackground({ kind: "destination-unavailable", reason: t("outputErrorUnavailable") });
         }
         sendResponse(envelope({ kind: "ok" } as const));
         return undefined;

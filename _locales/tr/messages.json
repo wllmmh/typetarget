@@ -150,6 +150,17 @@
   "stopListening": {
     "message": "Dinlemeyi durdur"
   },
+  "chunkLength": {
+    "message": "Parça uzunluğu"
+  },
+  "chunkLengthValue": {
+    "message": "$SECONDS$ saniye",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
   "typingToHeading": {
     "message": "Yazılan yer"
   },
@@ -164,6 +175,35 @@
   },
   "showOutline": {
     "message": "Çerçeveyi göster"
+  },
+  "outputErrorNoTab": {
+    "message": "Yazılacak sekme yok."
+  },
+  "outputErrorPageBlocked": {
+    "message": "Bu sayfaya yazılamıyor."
+  },
+  "outputErrorNoTextBox": {
+    "message": "Metin kutusunun içine tıklayın, ardından üzerine yeniden sağ tıklayın."
+  },
+  "outputErrorUnavailable": {
+    "message": "Metin kutusu artık kullanılamıyor."
+  },
+  "outputErrorFailed": {
+    "message": "Yazmaya başlanamadı."
+  },
+  "outputErrorNewTab": {
+    "message": "Yeni sekme açılamadı."
+  },
+  "outputErrorMoveBackOutline": {
+    "message": "Metni sayfaya geri taşımak için \"$SETTING$\" seçeneğini açın.",
+    "placeholders": {
+      "setting": {
+        "content": "$1"
+      }
+    }
+  },
+  "outputErrorMoveBackGone": {
+    "message": "Metnin geldiği sayfa kapatılmış veya değişmiş."
   },
   "helpLink": {
     "message": "Yardım"
@@ -197,7 +237,7 @@
     "message": "Ses: yakalanmıyor"
   },
   "diagnosticsNoAudio": {
-    "message": "O sekmeden duyulabilir ses gelmiyor. Gerçekten çaldığını ve sesinin kapalı olmadığını kontrol edin."
+    "message": "Ses algılanmadı. Sekmenin ses düzeyini kontrol edin."
   },
   "diagnosticsDropped": {
     "message": "Model hazır olmadan atılan: $COUNT$",

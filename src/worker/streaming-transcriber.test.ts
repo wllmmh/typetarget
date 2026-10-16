@@ -266,6 +266,32 @@ describe("StreamingTranscriber", () => {
       expect(slow.calls).toHaveLength(1);
     });
 
+    it("never cuts sooner than the chunk length the user chose, however fast inference is", async () => {
+      const fast = setup({ stretchToKeepUp: true, maxUtteranceMs: 10_000 });
+      const now = vi.spyOn(Date, "now").mockReturnValue(0);
+      fast.push("loud", 101); // just past 10 s
+      await tick();
+      fast.calls.at(-1)?.resolve("text"); // took no time at all
+      await tick();
+      now.mockRestore();
+
+      fast.push("loud", 60); // 6 s more: under the user's 10 s
+      await tick();
+
+      expect(fast.calls).toHaveLength(1);
+    });
+
+    it("keeps stretching after the user changes the chunk length mid-session", async () => {
+      const slow = setup({ stretchToKeepUp: true });
+      await cutAndTranscribe(slow, 8_000); // stretches the cap to 10 s
+      slow.transcriber.setOptions({ maxUtteranceMs: 5_000 });
+
+      slow.push("loud", 80); // 8 s more: past the new 5 s, under the stretched 10 s
+      await tick();
+
+      expect(slow.calls).toHaveLength(1);
+    });
+
     it("goes back to the base cap on reset, so a new session starts live", async () => {
       const slow = setup({ stretchToKeepUp: true });
       await cutAndTranscribe(slow, 8_000);

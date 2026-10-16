@@ -150,6 +150,17 @@
   "stopListening": {
     "message": "聞き取りを停止"
   },
+  "chunkLength": {
+    "message": "区切りの長さ"
+  },
+  "chunkLengthValue": {
+    "message": "$SECONDS$ 秒",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
   "typingToHeading": {
     "message": "入力先"
   },
@@ -164,6 +175,35 @@
   },
   "showOutline": {
     "message": "枠線を表示"
+  },
+  "outputErrorNoTab": {
+    "message": "入力先のタブがありません。"
+  },
+  "outputErrorPageBlocked": {
+    "message": "このページには入力できません。"
+  },
+  "outputErrorNoTextBox": {
+    "message": "テキストボックス内をクリックしてから、もう一度右クリックしてください。"
+  },
+  "outputErrorUnavailable": {
+    "message": "テキストボックスは使用できなくなりました。"
+  },
+  "outputErrorFailed": {
+    "message": "入力を開始できませんでした。"
+  },
+  "outputErrorNewTab": {
+    "message": "新しいタブを開けませんでした。"
+  },
+  "outputErrorMoveBackOutline": {
+    "message": "テキストをページに戻すには「$SETTING$」をオンにしてください。",
+    "placeholders": {
+      "setting": {
+        "content": "$1"
+      }
+    }
+  },
+  "outputErrorMoveBackGone": {
+    "message": "テキストの元のページが閉じられたか、変更されています。"
   },
   "helpLink": {
     "message": "ヘルプ"
@@ -197,7 +237,7 @@
     "message": "音声: キャプチャしていません"
   },
   "diagnosticsNoAudio": {
-    "message": "このタブから聞こえる音声がありません。再生中で、ミュートされていないか確認してください。"
+    "message": "音声が検出されません。タブの音量を確認してください。"
   },
   "diagnosticsDropped": {
     "message": "モデル準備前に破棄: $COUNT$",

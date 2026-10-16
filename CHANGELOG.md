@@ -25,9 +25,12 @@ All notable changes to this project are documented here. The format follows
   in the field; clear the field and click Done to remove it. Keys stay on this device.
 - In the model menu, each hosted provider's heading has an "API key" action that opens that
   provider's key dialog. The separate key button is gone.
-- Continuous speech is sent to the model every 3 seconds, without waiting for a pause. Local
-  Whisper stretches that, up to 25 seconds, on a machine too slow to keep up, and shortens it
-  again when it can. There is no chunk length setting.
+- Continuous speech is sent to the model in chunks, without waiting for a pause. A "Chunk
+  length" slider under Start listening sets how long they are, from 3 seconds (the default) to
+  25; it can be changed while listening. Longer chunks give the model more speech to detect the
+  language from, and shorter ones get text sooner. Local Whisper stretches past the slider, up
+  to 25 seconds, on a machine too slow to keep up, and shortens it again (never below the slider)
+  when it can.
 - Right-click "TypeTarget" menu: Listen to this tab, Stop listening, Type to this field, Type
   to new file, Type to new tab and Stop typing. "Type to new tab" opens the full-page text box
   straight away, without going through the new-file box's Open in new tab button. After Stop
@@ -56,7 +59,9 @@ All notable changes to this project are documented here. The format follows
 - A hosted model with no saved key says "Gemini API key required" (or Groq) beside the Model
   heading, and the "no audible audio" warning sits beside "Listening to", instead of each taking
   a line of its own. The dot on the model menu is the error color. Clicking "API key
-  required" opens that provider's key dialog.
+  required" opens that provider's key dialog. Errors about the text box being typed into
+  (a page TypeTarget can't type on, a text box that has gone) sit beside "Typing to", short
+  and in the browser's language; hover one for Chrome's own reason.
 - Gemini reconnects by itself, without losing audio, when a connection drops or reaches the
   free tier's time limit.
 - Capture continues across a service-worker restart, and stops with an error when the
@@ -69,7 +74,7 @@ All notable changes to this project are documented here. The format follows
   Hindi, Indonesian, Italian, Marathi, Polish, Brazilian and European Portuguese, Russian, Telugu,
   Thai, Turkish, Ukrainian, Urdu, Vietnamese, Japanese, Korean, and Simplified and Traditional
   Chinese. In Arabic and Urdu the popup and editor tab are laid out right to left. Other
-  languages get English. Error messages are still in English.
+  languages get English. Error messages are still in English, except those beside "Typing to".
 
 ### Security
 - Websites can't detect that TypeTarget is installed: no file is web-accessible.

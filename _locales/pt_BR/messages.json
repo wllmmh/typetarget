@@ -150,6 +150,17 @@
   "stopListening": {
     "message": "Parar de ouvir"
   },
+  "chunkLength": {
+    "message": "Duração do trecho"
+  },
+  "chunkLengthValue": {
+    "message": "$SECONDS$ segundos",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
   "typingToHeading": {
     "message": "Digitando em"
   },
@@ -164,6 +175,35 @@
   },
   "showOutline": {
     "message": "Mostrar contorno"
+  },
+  "outputErrorNoTab": {
+    "message": "Não há guia para digitar."
+  },
+  "outputErrorPageBlocked": {
+    "message": "Não é possível digitar nesta página."
+  },
+  "outputErrorNoTextBox": {
+    "message": "Clique na caixa de texto e depois clique nela com o botão direito de novo."
+  },
+  "outputErrorUnavailable": {
+    "message": "A caixa de texto não está mais disponível."
+  },
+  "outputErrorFailed": {
+    "message": "Não foi possível começar a digitar."
+  },
+  "outputErrorNewTab": {
+    "message": "Não foi possível abrir uma nova guia."
+  },
+  "outputErrorMoveBackOutline": {
+    "message": "Ative \"$SETTING$\" para devolver o texto à página.",
+    "placeholders": {
+      "setting": {
+        "content": "$1"
+      }
+    }
+  },
+  "outputErrorMoveBackGone": {
+    "message": "A página de onde o texto veio foi fechada ou mudou."
   },
   "helpLink": {
     "message": "Ajuda"
@@ -197,7 +237,7 @@
     "message": "Áudio: sem captura"
   },
   "diagnosticsNoAudio": {
-    "message": "Nenhum áudio audível dessa guia. Verifique se ela está mesmo tocando e não está sem som."
+    "message": "Nenhum áudio detectado. Verifique o volume da guia."
   },
   "diagnosticsDropped": {
     "message": "Descartados antes de o modelo ficar pronto: $COUNT$",

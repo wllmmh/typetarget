@@ -150,6 +150,17 @@
   "stopListening": {
     "message": "వినడం ఆపండి"
   },
+  "chunkLength": {
+    "message": "భాగం పొడవు"
+  },
+  "chunkLengthValue": {
+    "message": "$SECONDS$ సెకన్లు",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
   "typingToHeading": {
     "message": "టైప్ అవుతున్న చోటు"
   },
@@ -164,6 +175,35 @@
   },
   "showOutline": {
     "message": "అవుట్‌లైన్ చూపండి"
+  },
+  "outputErrorNoTab": {
+    "message": "టైప్ చేయడానికి ట్యాబ్ ఏదీ లేదు."
+  },
+  "outputErrorPageBlocked": {
+    "message": "ఈ పేజీలో టైప్ చేయలేరు."
+  },
+  "outputErrorNoTextBox": {
+    "message": "టెక్స్ట్ బాక్స్ లోపల క్లిక్ చేసి, ఆపై దానిపై మళ్లీ రైట్-క్లిక్ చేయండి."
+  },
+  "outputErrorUnavailable": {
+    "message": "టెక్స్ట్ బాక్స్ ఇకపై అందుబాటులో లేదు."
+  },
+  "outputErrorFailed": {
+    "message": "టైపింగ్ ప్రారంభించలేకపోయింది."
+  },
+  "outputErrorNewTab": {
+    "message": "కొత్త ట్యాబ్ తెరవలేకపోయింది."
+  },
+  "outputErrorMoveBackOutline": {
+    "message": "టెక్స్ట్‌ను పేజీకి తిరిగి తరలించడానికి \"$SETTING$\" ఆన్ చేయండి.",
+    "placeholders": {
+      "setting": {
+        "content": "$1"
+      }
+    }
+  },
+  "outputErrorMoveBackGone": {
+    "message": "టెక్స్ట్ వచ్చిన పేజీ మూసివేయబడింది లేదా మారింది."
   },
   "helpLink": {
     "message": "సహాయం"
@@ -197,7 +237,7 @@
     "message": "ఆడియో: క్యాప్చర్ కావడం లేదు"
   },
   "diagnosticsNoAudio": {
-    "message": "ఆ ట్యాబ్ నుండి వినిపించే ఆడియో లేదు. అది నిజంగా ప్లే అవుతోందని, మ్యూట్ కాలేదని చెక్ చేయండి."
+    "message": "ఆడియో గుర్తించబడలేదు. ట్యాబ్ వాల్యూమ్‌ను చెక్ చేయండి."
   },
   "diagnosticsDropped": {
     "message": "మోడల్ సిద్ధం కాకముందే వదిలేసినవి: $COUNT$",

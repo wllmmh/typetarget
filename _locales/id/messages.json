@@ -150,6 +150,17 @@
   "stopListening": {
     "message": "Berhenti mendengarkan"
   },
+  "chunkLength": {
+    "message": "Panjang potongan"
+  },
+  "chunkLengthValue": {
+    "message": "$SECONDS$ detik",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
   "typingToHeading": {
     "message": "Mengetik ke"
   },
@@ -164,6 +175,35 @@
   },
   "showOutline": {
     "message": "Tampilkan garis tepi"
+  },
+  "outputErrorNoTab": {
+    "message": "Tidak ada tab untuk ditulisi."
+  },
+  "outputErrorPageBlocked": {
+    "message": "Tidak dapat menulis di halaman ini."
+  },
+  "outputErrorNoTextBox": {
+    "message": "Klik di dalam kotak teks, lalu klik kanan lagi pada kotak itu."
+  },
+  "outputErrorUnavailable": {
+    "message": "Kotak teks tidak lagi tersedia."
+  },
+  "outputErrorFailed": {
+    "message": "Tidak dapat mulai menulis."
+  },
+  "outputErrorNewTab": {
+    "message": "Tidak dapat membuka tab baru."
+  },
+  "outputErrorMoveBackOutline": {
+    "message": "Aktifkan \"$SETTING$\" untuk mengembalikan teks ke halaman.",
+    "placeholders": {
+      "setting": {
+        "content": "$1"
+      }
+    }
+  },
+  "outputErrorMoveBackGone": {
+    "message": "Halaman asal teks sudah ditutup atau berubah."
   },
   "helpLink": {
     "message": "Bantuan"
@@ -197,7 +237,7 @@
     "message": "Audio: tidak merekam"
   },
   "diagnosticsNoAudio": {
-    "message": "Tidak ada audio yang terdengar dari tab itu. Pastikan tab benar-benar sedang memutar dan tidak dibisukan."
+    "message": "Tidak ada audio terdeteksi. Periksa volume tab."
   },
   "diagnosticsDropped": {
     "message": "Dibuang sebelum model siap: $COUNT$",

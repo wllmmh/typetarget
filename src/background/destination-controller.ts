@@ -15,6 +15,7 @@ import {
   type ReleaseReply,
   type SessionIndicator,
 } from "../domain/messages";
+import { t } from "../domain/i18n";
 // `?script&iife` is @crxjs/vite-plugin's mechanism for content scripts that are only
 // ever injected dynamically (via chrome.scripting.executeScript) rather than declared
 // in manifest.content_scripts, which is the only place crxjs's own build-file
@@ -24,14 +25,21 @@ import {
 // a loader. See @crxjs/vite-plugin's dynamic-content-scripts plugin.
 import contentScriptFile from "../content/main.ts?script&iife";
 
+/** `message` is shown beside the popup's "Typing to", so it is short and translated; `detail` is
+ * Chrome's own reason, for the tooltip. */
 export class DestinationError extends Error {
   constructor(
     message: string,
     readonly code: string,
+    readonly detail?: string,
   ) {
     super(message);
   }
 }
+
+/** Chrome's reason an injection failed, such as a chrome:// page or the Web Store. */
+const injectionFailed = (err: unknown) =>
+  new DestinationError(t("outputErrorPageBlocked"), "injection-failed", err instanceof Error ? err.message : undefined);
 
 const injectContentScript = async (tabId: number): Promise<void> => {
   await chrome.scripting.executeScript({
@@ -88,7 +96,7 @@ export class DestinationController {
   async beginSelection(): Promise<void> {
     const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (!activeTab?.id) {
-      throw new DestinationError("No active tab to select a destination in.", "no-active-tab");
+      throw new DestinationError(t("outputErrorNoTab"), "no-active-tab");
     }
     await this.enterSelection(activeTab.id);
   }
@@ -111,8 +119,7 @@ export class DestinationController {
 
   private async enterSelection(tabId: number): Promise<void> {
     await injectContentScript(tabId).catch((err: unknown) => {
-      const message = err instanceof Error ? err.message : "Unknown injection error.";
-      throw new DestinationError(`Could not prepare this page for destination selection. (${message})`, "injection-failed");
+      throw injectionFailed(err);
     });
     this.selectingTabIds.add(tabId);
     await sendToContentScript(tabId, { kind: "enter-selection-mode", showIndicators: this.showIndicators });
@@ -150,8 +157,7 @@ export class DestinationController {
     await this.cancelSelection();
     if (inject) {
       await chrome.scripting.executeScript({ target: { tabId, frameIds: [frameId] }, files: [contentScriptFile] }).catch((err: unknown) => {
-        const message = err instanceof Error ? err.message : "Unknown injection error.";
-        throw new DestinationError(`Could not prepare this page to receive text. (${message})`, "injection-failed");
+        throw injectionFailed(err);
       });
     }
     this.selectingTabIds.add(tabId);
@@ -189,7 +195,7 @@ export class DestinationController {
 
   async checkAlive(destination: DestinationRef): Promise<void> {
     await sendToDestinationFrame(destination, { kind: "check-destination-alive" }).catch(() => {
-      this.callbacks.onUnavailable("Destination tab is no longer available.");
+      this.callbacks.onUnavailable(t("outputErrorUnavailable"));
     });
   }
 
@@ -230,7 +236,7 @@ export class DestinationController {
 
   async insertText(destination: DestinationRef, text: string, separator: string): Promise<void> {
     await sendToDestinationFrame(destination, { kind: "insert-text", text, separator }).catch(() => {
-      this.callbacks.onUnavailable("Destination tab is no longer available.");
+      this.callbacks.onUnavailable(t("outputErrorUnavailable"));
     });
   }
 }

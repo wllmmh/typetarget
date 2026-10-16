@@ -150,6 +150,17 @@
   "stopListening": {
     "message": "Ihinto ang pakikinig"
   },
+  "chunkLength": {
+    "message": "Haba ng chunk"
+  },
+  "chunkLengthValue": {
+    "message": "$SECONDS$ segundo",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
   "typingToHeading": {
     "message": "Tina-type sa"
   },
@@ -164,6 +175,35 @@
   },
   "showOutline": {
     "message": "Ipakita ang outline"
+  },
+  "outputErrorNoTab": {
+    "message": "Walang tab na masusulatan."
+  },
+  "outputErrorPageBlocked": {
+    "message": "Hindi makapag-type sa page na ito."
+  },
+  "outputErrorNoTextBox": {
+    "message": "Mag-click sa loob ng text box, saka i-right-click ulit ito."
+  },
+  "outputErrorUnavailable": {
+    "message": "Hindi na available ang text box."
+  },
+  "outputErrorFailed": {
+    "message": "Hindi masimulan ang pag-type."
+  },
+  "outputErrorNewTab": {
+    "message": "Hindi makapagbukas ng bagong tab."
+  },
+  "outputErrorMoveBackOutline": {
+    "message": "I-on ang \"$SETTING$\" para ibalik ang text sa page.",
+    "placeholders": {
+      "setting": {
+        "content": "$1"
+      }
+    }
+  },
+  "outputErrorMoveBackGone": {
+    "message": "Sarado na o nagbago ang page na pinanggalingan ng text."
   },
   "helpLink": {
     "message": "Tulong"
@@ -197,7 +237,7 @@
     "message": "Audio: hindi kumukuha"
   },
   "diagnosticsNoAudio": {
-    "message": "Walang naririnig na audio mula sa tab na iyon. Tingnan kung talagang nagpe-play ito at hindi naka-mute."
+    "message": "Walang natukoy na audio. Tingnan ang volume ng tab."
   },
   "diagnosticsDropped": {
     "message": "Itinapon bago handa ang model: $COUNT$",

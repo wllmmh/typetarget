@@ -58,6 +58,9 @@ export const createAsrWorkerController = ({ engine, transcriber, post, onSetApiK
       case "set-spoken-language":
         transcriber.setOptions({ language: request.language });
         return;
+      case "set-chunk-ms":
+        transcriber.setOptions({ maxUtteranceMs: request.chunkMs });
+        return;
       case "set-api-key":
         onSetApiKey?.(request.provider, request.apiKey);
         return;

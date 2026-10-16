@@ -35,12 +35,16 @@ describe("DestinationController.beginSelection", () => {
     await expect(controller.beginSelection()).rejects.toBeInstanceOf(DestinationError);
   });
 
-  it("throws when injection fails", async () => {
+  it("throws a short translated message when injection fails, keeping Chrome's reason as the detail", async () => {
     fake.tabs.query.mockResolvedValue([{ id: 5 }]);
     fake.scripting.executeScript.mockRejectedValue(new Error("Cannot access a chrome:// URL"));
     const controller = new DestinationController({ onPicked: vi.fn(), onUnavailable: vi.fn() });
 
-    await expect(controller.beginSelection()).rejects.toMatchObject({ code: "injection-failed" });
+    await expect(controller.beginSelection()).rejects.toMatchObject({
+      code: "injection-failed",
+      message: "Can't type on this page.",
+      detail: "Cannot access a chrome:// URL",
+    });
   });
 });
 
@@ -193,7 +197,7 @@ describe("DestinationController.insertText / checkAlive", () => {
 
     await controller.insertText({ tabId: 5, frameId: 0, elementId: "el-1" }, "hello", " ");
 
-    expect(onUnavailable).toHaveBeenCalledWith("Destination tab is no longer available.");
+    expect(onUnavailable).toHaveBeenCalledWith("The text box is no longer available.");
   });
 
   // Injection is allFrames (the destination may be inside an iframe), so a tab-wide send

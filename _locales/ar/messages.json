@@ -150,6 +150,17 @@
   "stopListening": {
     "message": "إيقاف الاستماع"
   },
+  "chunkLength": {
+    "message": "طول المقطع"
+  },
+  "chunkLengthValue": {
+    "message": "$SECONDS$ ث",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
   "typingToHeading": {
     "message": "الكتابة في"
   },
@@ -164,6 +175,35 @@
   },
   "showOutline": {
     "message": "إظهار الإطار"
+  },
+  "outputErrorNoTab": {
+    "message": "لا توجد علامة تبويب للكتابة فيها."
+  },
+  "outputErrorPageBlocked": {
+    "message": "لا يمكن الكتابة في هذه الصفحة."
+  },
+  "outputErrorNoTextBox": {
+    "message": "انقر داخل مربع النص، ثم انقر عليه بزر الماوس الأيمن مرة أخرى."
+  },
+  "outputErrorUnavailable": {
+    "message": "مربع النص لم يعد متاحًا."
+  },
+  "outputErrorFailed": {
+    "message": "تعذّر بدء الكتابة."
+  },
+  "outputErrorNewTab": {
+    "message": "تعذّر فتح علامة تبويب جديدة."
+  },
+  "outputErrorMoveBackOutline": {
+    "message": "فعّل «$SETTING$» لإعادة النص إلى الصفحة.",
+    "placeholders": {
+      "setting": {
+        "content": "$1"
+      }
+    }
+  },
+  "outputErrorMoveBackGone": {
+    "message": "الصفحة التي جاء منها النص مغلقة أو تغيّرت."
   },
   "helpLink": {
     "message": "مساعدة"
@@ -197,7 +237,7 @@
     "message": "الصوت: لا يوجد التقاط"
   },
   "diagnosticsNoAudio": {
-    "message": "لا يصدر صوت مسموع من علامة التبويب هذه. تحقّق من أنها تعمل فعلًا وأنها غير مكتومة."
+    "message": "لم يُكتشف أي صوت. تحقّق من مستوى صوت علامة التبويب."
   },
   "diagnosticsDropped": {
     "message": "أُسقط قبل جاهزية النموذج: $COUNT$",

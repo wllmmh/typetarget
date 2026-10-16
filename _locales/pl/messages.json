@@ -150,6 +150,17 @@
   "stopListening": {
     "message": "Przestań słuchać"
   },
+  "chunkLength": {
+    "message": "Długość fragmentu"
+  },
+  "chunkLengthValue": {
+    "message": "$SECONDS$ sek.",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
   "typingToHeading": {
     "message": "Wpisywanie do"
   },
@@ -164,6 +175,35 @@
   },
   "showOutline": {
     "message": "Pokaż obramowanie"
+  },
+  "outputErrorNoTab": {
+    "message": "Brak karty, w której można pisać."
+  },
+  "outputErrorPageBlocked": {
+    "message": "Na tej stronie nie można pisać."
+  },
+  "outputErrorNoTextBox": {
+    "message": "Kliknij w pole tekstowe, a potem ponownie kliknij je prawym przyciskiem."
+  },
+  "outputErrorUnavailable": {
+    "message": "Pole tekstowe nie jest już dostępne."
+  },
+  "outputErrorFailed": {
+    "message": "Nie udało się rozpocząć pisania."
+  },
+  "outputErrorNewTab": {
+    "message": "Nie udało się otworzyć nowej karty."
+  },
+  "outputErrorMoveBackOutline": {
+    "message": "Włącz „$SETTING$”, aby przenieść tekst z powrotem na stronę.",
+    "placeholders": {
+      "setting": {
+        "content": "$1"
+      }
+    }
+  },
+  "outputErrorMoveBackGone": {
+    "message": "Strona, z której pochodzi tekst, jest zamknięta lub się zmieniła."
   },
   "helpLink": {
     "message": "Pomoc"
@@ -197,7 +237,7 @@
     "message": "Dźwięk: brak przechwytywania"
   },
   "diagnosticsNoAudio": {
-    "message": "Z tej karty nie słychać dźwięku. Sprawdź, czy naprawdę jest odtwarzany i nie jest wyciszony."
+    "message": "Nie wykryto dźwięku. Sprawdź głośność karty."
   },
   "diagnosticsDropped": {
     "message": "Odrzucone przed gotowością modelu: $COUNT$",

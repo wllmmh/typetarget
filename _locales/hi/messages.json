@@ -150,6 +150,17 @@
   "stopListening": {
     "message": "सुनना बंद करें"
   },
+  "chunkLength": {
+    "message": "खंड की लंबाई"
+  },
+  "chunkLengthValue": {
+    "message": "$SECONDS$ सेकंड",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
   "typingToHeading": {
     "message": "यहां टाइप हो रहा है"
   },
@@ -164,6 +175,35 @@
   },
   "showOutline": {
     "message": "आउटलाइन दिखाएं"
+  },
+  "outputErrorNoTab": {
+    "message": "लिखने के लिए कोई टैब नहीं है।"
+  },
+  "outputErrorPageBlocked": {
+    "message": "इस पेज पर नहीं लिखा जा सकता।"
+  },
+  "outputErrorNoTextBox": {
+    "message": "टेक्स्ट बॉक्स के अंदर क्लिक करें, फिर उस पर दोबारा राइट-क्लिक करें।"
+  },
+  "outputErrorUnavailable": {
+    "message": "टेक्स्ट बॉक्स अब उपलब्ध नहीं है।"
+  },
+  "outputErrorFailed": {
+    "message": "लिखना शुरू नहीं हो सका।"
+  },
+  "outputErrorNewTab": {
+    "message": "नया टैब नहीं खुल सका।"
+  },
+  "outputErrorMoveBackOutline": {
+    "message": "टेक्स्ट को पेज पर वापस ले जाने के लिए \"$SETTING$\" चालू करें।",
+    "placeholders": {
+      "setting": {
+        "content": "$1"
+      }
+    }
+  },
+  "outputErrorMoveBackGone": {
+    "message": "जिस पेज से टेक्स्ट आया था, वह बंद है या बदल गया है।"
   },
   "helpLink": {
     "message": "सहायता"
@@ -197,7 +237,7 @@
     "message": "ऑडियो: कैप्चर नहीं हो रहा"
   },
   "diagnosticsNoAudio": {
-    "message": "उस टैब से कोई सुनाई देने लायक ऑडियो नहीं आ रहा। जांचें कि वह सच में चल रहा है और म्यूट नहीं है।"
+    "message": "कोई ऑडियो नहीं मिला। टैब का वॉल्यूम जांचें।"
   },
   "diagnosticsDropped": {
     "message": "मॉडल तैयार होने से पहले छोड़े गए: $COUNT$",

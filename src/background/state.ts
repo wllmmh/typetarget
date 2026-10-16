@@ -1,8 +1,9 @@
 import type { ModelId } from "../domain/models";
-import type { CapturableTab, DestinationRef, ListeningSession, PublicAppState } from "../domain/messages";
+import type { CapturableTab, DestinationRef, LastError, ListeningSession, PublicAppState } from "../domain/messages";
 import { DEFAULT_MODEL, type EngineStatus } from "../domain/models";
 import type { ApiKeyProvider } from "../domain/api-key";
 import type { SpokenLanguage } from "../domain/languages";
+import { UTTERANCE_CAP_MS } from "../domain/tuning";
 import type { InferenceStats } from "../worker/instrumented-engine";
 import type { TranscriptionStatus } from "../domain/transcript";
 
@@ -28,11 +29,13 @@ export type AppState = {
   selectedModel: ModelId;
   /** null: the Whisper models detect the spoken language (docs/adr/0016-transcription-detects-the-spoken-language.md). */
   spokenLanguage: SpokenLanguage | null;
+  /** "Chunk length": local Whisper may stretch past it to keep up (docs/adr/0018-chunk-length-slider-returns.md). */
+  chunkMs: number;
   /** The popup's "Show outline": off, nothing is drawn on the page's own text
    * boxes and the toolbar icon shows the state instead (docs/adr/0013-option-to-hide-indicators-on-the-page.md). */
   showPageIndicators: boolean;
   isSelectingDestination: boolean;
-  lastError: { code: string; message: string } | null;
+  lastError: LastError | null;
   /** Non-null while capturing; drives the listening timer (see domain/messages.ts). */
   session: ListeningSession | null;
   /** Never sent to the popup as-is (see toPublicState) — only which providers have one. */
@@ -53,6 +56,7 @@ export const createInitialState = (): AppState => ({
   destinationLabel: null,
   selectedModel: DEFAULT_MODEL,
   spokenLanguage: null,
+  chunkMs: UTTERANCE_CAP_MS,
   showPageIndicators: true,
   isSelectingDestination: false,
   lastError: null,
@@ -74,6 +78,7 @@ export const toPublicState = (state: AppState): PublicAppState => ({
   destinationLabel: state.destinationLabel,
   selectedModel: state.selectedModel,
   spokenLanguage: state.spokenLanguage,
+  chunkMs: state.chunkMs,
   showPageIndicators: state.showPageIndicators,
   isSelectingDestination: state.isSelectingDestination,
   lastError: state.lastError,

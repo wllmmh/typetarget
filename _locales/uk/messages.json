@@ -150,6 +150,17 @@
   "stopListening": {
     "message": "Зупинити прослуховування"
   },
+  "chunkLength": {
+    "message": "Довжина фрагмента"
+  },
+  "chunkLengthValue": {
+    "message": "$SECONDS$ сек.",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
   "typingToHeading": {
     "message": "Введення в"
   },
@@ -164,6 +175,35 @@
   },
   "showOutline": {
     "message": "Показувати рамку"
+  },
+  "outputErrorNoTab": {
+    "message": "Немає вкладки для введення тексту."
+  },
+  "outputErrorPageBlocked": {
+    "message": "На цій сторінці не можна друкувати."
+  },
+  "outputErrorNoTextBox": {
+    "message": "Клацніть у текстовому полі, а потім знову клацніть по ньому правою кнопкою."
+  },
+  "outputErrorUnavailable": {
+    "message": "Текстове поле більше недоступне."
+  },
+  "outputErrorFailed": {
+    "message": "Не вдалося почати введення."
+  },
+  "outputErrorNewTab": {
+    "message": "Не вдалося відкрити нову вкладку."
+  },
+  "outputErrorMoveBackOutline": {
+    "message": "Увімкніть «$SETTING$», щоб повернути текст на сторінку.",
+    "placeholders": {
+      "setting": {
+        "content": "$1"
+      }
+    }
+  },
+  "outputErrorMoveBackGone": {
+    "message": "Сторінка, з якої взято текст, закрита або змінилася."
   },
   "helpLink": {
     "message": "Довідка"
@@ -197,7 +237,7 @@
     "message": "Звук: не захоплюється"
   },
   "diagnosticsNoAudio": {
-    "message": "З цієї вкладки не чути звуку. Перевірте, що він справді відтворюється і не вимкнений."
+    "message": "Звук не виявлено. Перевірте гучність вкладки."
   },
   "diagnosticsDropped": {
     "message": "Відкинуто до готовності моделі: $COUNT$",

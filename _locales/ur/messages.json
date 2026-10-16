@@ -150,6 +150,17 @@
   "stopListening": {
     "message": "سننا بند کریں"
   },
+  "chunkLength": {
+    "message": "حصے کی لمبائی"
+  },
+  "chunkLengthValue": {
+    "message": "$SECONDS$ سیکنڈ",
+    "placeholders": {
+      "seconds": {
+        "content": "$1"
+      }
+    }
+  },
   "typingToHeading": {
     "message": "یہاں ٹائپ ہو رہا ہے"
   },
@@ -164,6 +175,35 @@
   },
   "showOutline": {
     "message": "خاکہ دکھائیں"
+  },
+  "outputErrorNoTab": {
+    "message": "لکھنے کے لیے کوئی ٹیب نہیں ہے۔"
+  },
+  "outputErrorPageBlocked": {
+    "message": "اس صفحے پر نہیں لکھا جا سکتا۔"
+  },
+  "outputErrorNoTextBox": {
+    "message": "ٹیکسٹ باکس کے اندر کلک کریں، پھر اس پر دوبارہ رائٹ کلک کریں۔"
+  },
+  "outputErrorUnavailable": {
+    "message": "ٹیکسٹ باکس اب دستیاب نہیں ہے۔"
+  },
+  "outputErrorFailed": {
+    "message": "لکھنا شروع نہیں ہو سکا۔"
+  },
+  "outputErrorNewTab": {
+    "message": "نیا ٹیب نہیں کھل سکا۔"
+  },
+  "outputErrorMoveBackOutline": {
+    "message": "متن کو صفحے پر واپس لے جانے کے لیے \"$SETTING$\" آن کریں۔",
+    "placeholders": {
+      "setting": {
+        "content": "$1"
+      }
+    }
+  },
+  "outputErrorMoveBackGone": {
+    "message": "جس صفحے سے متن آیا تھا وہ بند ہے یا بدل گیا ہے۔"
   },
   "helpLink": {
     "message": "مدد"
@@ -197,7 +237,7 @@
     "message": "آڈیو: کیپچر نہیں ہو رہی"
   },
   "diagnosticsNoAudio": {
-    "message": "اس ٹیب سے کوئی قابلِ سماعت آڈیو نہیں آ رہی۔ چیک کریں کہ وہ واقعی چل رہی ہے اور خاموش نہیں ہے۔"
+    "message": "کوئی آڈیو نہیں ملی۔ ٹیب کا والیوم چیک کریں۔"
   },
   "diagnosticsDropped": {
     "message": "ماڈل تیار ہونے سے پہلے چھوڑے گئے: $COUNT$",

@@ -1,5 +1,5 @@
 # 0017. TypeTarget sets the utterance cap; the chunk length slider is gone
-- Status: Accepted
+- Status: Superseded by [ADR 0018](0018-chunk-length-slider-returns.md), which brings the slider back
 - Date: 2026-10-14
 
 ## Context

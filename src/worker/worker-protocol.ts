@@ -15,6 +15,8 @@ export type AsrWorkerRequest =
   | { kind: "reset" }
   /** The language the next utterances are transcribed as; null to detect it. */
   | { kind: "set-spoken-language"; language: SpokenLanguage | null }
+  /** The cap on one utterance in continuous speech (see domain/tuning.ts). */
+  | { kind: "set-chunk-ms"; chunkMs: number }
   /** Sets or clears (empty apiKey) the stored key for a network provider (see domain/api-key.ts). */
   | { kind: "set-api-key"; provider: ApiKeyProvider; apiKey: string };
 

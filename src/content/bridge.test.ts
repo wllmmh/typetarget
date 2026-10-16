@@ -183,7 +183,7 @@ describe("installContentBridge", () => {
     deliver({ kind: "insert-text", text: "hello", separator: " " });
 
     expect(fake.runtime.sendMessage).toHaveBeenCalledWith(
-      envelope({ kind: "destination-unavailable", reason: "Destination element is no longer available." }),
+      envelope({ kind: "destination-unavailable", reason: "The text box is no longer available." }),
     );
   });
 });

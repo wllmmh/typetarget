@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { sendToBackground } from "./background-client";
 import { useBackgroundState } from "./use-background-state";
-import type { PublicAppState } from "../domain/messages";
+import { OUTPUT_ERROR_CODES, type LastError, type PublicAppState } from "../domain/messages";
 import { MODEL_CATALOG, keyProviderOf, type ModelId } from "../domain/models";
 import { ModelPicker } from "./model-picker";
 import { Dropdown, DropdownOption } from "./select-box";
 import { API_KEY_PAGES, API_KEY_PROVIDER_NAMES, type ApiKeyProvider } from "../domain/api-key";
-import { UTTERANCE_CAP_MS } from "../domain/tuning";
+import { UTTERANCE_CAP_MAX_MS, UTTERANCE_CAP_MS, UTTERANCE_CAP_STEP_MS } from "../domain/tuning";
 import { formatElapsed } from "../domain/elapsed";
 import { t, type MessageKey } from "../domain/i18n";
 import { SPOKEN_LANGUAGES, SPOKEN_LANGUAGE_NAMES } from "../domain/languages";
@@ -118,6 +118,8 @@ const StopIcon = () => (
 export const App = () => {
   const state = useBackgroundState();
   const [loadError, setLoadError] = useState<string | null>(null);
+  /** Start typing's own refusal; errors from picking arrive in `state.lastError` instead. */
+  const [typingError, setTypingError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const apiKeyDialogRef = useRef<HTMLDialogElement>(null);
   const apiKeyInputRef = useRef<HTMLInputElement>(null);
@@ -125,6 +127,9 @@ export const App = () => {
   /** Which provider's key the dialog edits: the one whose group header opened it, not the selected model's. */
   const [keyDialogProvider, setKeyDialogProvider] = useState<ApiKeyProvider | null>(null);
   const [apiKeyError, setApiKeyError] = useState<string | null>(null);
+  /** Local while dragging so the readout tracks the thumb; null means "follow the background". */
+  const [draggedChunkMs, setDraggedChunkMs] = useState<number | null>(null);
+  const chunkCommitTimer = useRef<number | null>(null);
   const now = useNow(state.session !== null);
 
   useEffect(() => {
@@ -152,6 +157,8 @@ export const App = () => {
     state.status === "transcribing" ||
     state.status === "paused";
 
+  const chunkMs = draggedChunkMs ?? state.chunkMs;
+
   // Named only while capturing: before Start, the pending tab is just whichever tab the popup opened over.
   const sourceTab = isCapturing ? state.knownTabs.find((tab) => tab.tabId === state.sourceTabId) : undefined;
 
@@ -171,6 +178,18 @@ export const App = () => {
     // disabled until the popup is reopened. It is still open over the tab it was invoked on.
     await sendToBackground({ kind: "register-active-tab" });
     setBusy(false);
+  };
+
+  /**
+   * Debounced: a drag fires a change per step, and each one persists to storage and retunes the
+   * running pipeline, which is not worth doing twenty times on the way to a value.
+   */
+  const handleChunkChange = (nextChunkMs: number) => {
+    setDraggedChunkMs(nextChunkMs);
+    if (chunkCommitTimer.current !== null) clearTimeout(chunkCommitTimer.current);
+    chunkCommitTimer.current = window.setTimeout(() => {
+      void sendToBackground({ kind: "set-chunk-ms", chunkMs: nextChunkMs });
+    }, 200);
   };
 
   /** Applies while listening, from the next utterance. "" is Auto. */
@@ -220,12 +239,12 @@ export const App = () => {
   const spokenLanguageSettable = modelProvider !== "gemini-live";
   /**
    * Whether a local model keeps up depends on the machine, and on most it won't. A call slower
-   * than the base cap means the worker is stretching the cap to keep up (domain/tuning.ts), so
+   * than the chunk length means the worker is stretching the cap to keep up (domain/tuning.ts), so
    * text arrives further behind the speaker than on a faster machine. Only judged while
    * capturing: the counters outlive Stop, and the model may have changed since.
    */
   const fallingBehind =
-    isCapturing && modelProvider === "whisper-cpp" && (state.inference?.lastMs ?? 0) > UTTERANCE_CAP_MS;
+    isCapturing && modelProvider === "whisper-cpp" && (state.inference?.lastMs ?? 0) > state.chunkMs;
   const keyDialogModel = Object.values(MODEL_CATALOG).find((model) => model.provider === keyDialogProvider);
   const keySaved = keyDialogProvider !== null && state.apiKeyProviders.includes(keyDialogProvider);
 
@@ -239,14 +258,21 @@ export const App = () => {
   };
 
   const hasOutput = state.destinationLabel !== null;
+  /** Shown beside Typing to, like the Model and Listening to headings' errors. */
+  const outputError: Pick<LastError, "message" | "detail"> | null =
+    typingError !== null && !hasOutput
+      ? { message: typingError }
+      : state.lastError && OUTPUT_ERROR_CODES.has(state.lastError.code)
+        ? state.lastError
+        : null;
   const engineLabel = ENGINE_LABEL[state.engineState];
 
   /** Start typing is the right-click menu's "Type to new file", on the tab the popup opened over. */
   const handleOutputToggle = async () => {
     setBusy(true);
-    setLoadError(null);
+    setTypingError(null);
     const res = await sendToBackground({ kind: hasOutput ? "clear-destination" : "start-typing" });
-    if (res.kind === "error") setLoadError(res.message);
+    if (res.kind === "error") setTypingError(res.message);
     setBusy(false);
   };
 
@@ -372,10 +398,33 @@ export const App = () => {
             </button>
           )}
         </div>
+        {/* Adjustable while listening; a lowered value cuts the utterance in progress if it is already past it. */}
+        <div className="chunk-length">
+          <label htmlFor="chunk-length" className="chunk-length-label">
+            {t("chunkLength")}
+            <span className="hint chunk-length-value">{t("chunkLengthValue", chunkMs / 1000)}</span>
+          </label>
+          <input
+            id="chunk-length"
+            type="range"
+            min={UTTERANCE_CAP_MS}
+            max={UTTERANCE_CAP_MAX_MS}
+            step={UTTERANCE_CAP_STEP_MS}
+            value={chunkMs}
+            onChange={(e) => handleChunkChange(Number(e.target.value))}
+          />
+        </div>
       </section>
 
       <section>
-        <h2>{t("typingToHeading")}</h2>
+        <h2>
+          {t("typingToHeading")}
+          {outputError && (
+            <span className="heading-error" title={outputError.detail}>
+              {outputError.message}
+            </span>
+          )}
+        </h2>
         <p className="target-name" dir="auto" title={state.destinationLabel ?? undefined}>
           {state.destinationLabel ?? t("noFieldSelected")}
         </p>
@@ -439,8 +488,11 @@ export const App = () => {
         {state.modelDownload && state.modelDownload.totalBytes > 0 && (
           <progress value={state.modelDownload.receivedBytes} max={state.modelDownload.totalBytes} />
         )}
-        {/* A model that fails to load for want of its key is already named beside the Model heading. */}
-        {state.lastError && !(keyMissingProvider && state.lastError.code === "model-load-failed") && (
+        {/* A model that fails to load for want of its key is already named beside the Model heading,
+            and an output error beside Typing to. */}
+        {state.lastError &&
+          !(keyMissingProvider && state.lastError.code === "model-load-failed") &&
+          !OUTPUT_ERROR_CODES.has(state.lastError.code) && (
           <p className="error">{state.lastError.message}</p>
         )}
         <nav className="footer-links">
