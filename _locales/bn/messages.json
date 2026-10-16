@@ -8,6 +8,9 @@
   "textDirection": {
     "message": "ltr"
   },
+  "locale": {
+    "message": "bn"
+  },
   "statusIdle": {
     "message": "নিষ্ক্রিয়"
   },

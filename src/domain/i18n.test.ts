@@ -50,6 +50,13 @@ describe.each(locales)("_locales/%s", (locale) => {
     expect(["ltr", "rtl"]).toContain(catalog.textDirection?.message);
   });
 
+  // Names the spoken languages (domain/languages.ts), so it must be this file's own locale.
+  it("gives its locale as a BCP 47 tag", () => {
+    const tag = locale.replace("_", "-");
+    expect(catalog.locale?.message).toBe(tag);
+    expect(Intl.DisplayNames.supportedLocalesOf(tag)).toEqual([tag]);
+  });
+
   // Chrome's limits for the manifest's name and description.
   it("keeps the name and description within Chrome's limits", () => {
     expect(catalog.extName?.message.length).toBeLessThanOrEqual(75);

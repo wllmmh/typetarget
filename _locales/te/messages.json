@@ -8,6 +8,9 @@
   "textDirection": {
     "message": "ltr"
   },
+  "locale": {
+    "message": "te"
+  },
   "statusIdle": {
     "message": "నిష్క్రియం"
   },

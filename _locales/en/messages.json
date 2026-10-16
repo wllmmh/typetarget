@@ -11,6 +11,10 @@
     "message": "ltr",
     "description": "The direction this language is written in: ltr (left to right) or rtl (right to left). Lays out the popup and editor tab."
   },
+  "locale": {
+    "message": "en",
+    "description": "This file's locale as a BCP 47 tag, e.g. pt-BR. Do not translate. Names the languages in the Spoken language menu."
+  },
 
   "statusIdle": { "message": "Idle" },
   "statusLoadingModel": { "message": "Loading model" },

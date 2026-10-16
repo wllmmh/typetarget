@@ -75,14 +75,13 @@ export const Dropdown = ({ value, disabled, labelledBy, triggerClassName, childr
 type DropdownOptionProps = {
   selected: boolean;
   onSelect: () => void;
-  lang?: string;
   children: ReactNode;
 };
 
 /** A row in a dropdown's panel: a plain button (not role="option"), because a listbox option
  * must not contain interactive content and the model picker's headers do. */
-export const DropdownOption = ({ selected, onSelect, lang, children }: DropdownOptionProps) => (
-  <button type="button" className="select-option" aria-pressed={selected} lang={lang} onClick={onSelect}>
+export const DropdownOption = ({ selected, onSelect, children }: DropdownOptionProps) => (
+  <button type="button" className="select-option" aria-pressed={selected} onClick={onSelect}>
     {children}
   </button>
 );

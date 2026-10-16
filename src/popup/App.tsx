@@ -9,7 +9,7 @@ import { API_KEY_PAGES, API_KEY_PROVIDER_NAMES, type ApiKeyProvider } from "../d
 import { UTTERANCE_CAP_MAX_MS, UTTERANCE_CAP_MS, UTTERANCE_CAP_STEP_MS } from "../domain/tuning";
 import { formatElapsed } from "../domain/elapsed";
 import { t, type MessageKey } from "../domain/i18n";
-import { SPOKEN_LANGUAGES, SPOKEN_LANGUAGE_NAMES } from "../domain/languages";
+import { spokenLanguageOptions } from "../domain/languages";
 import "./popup.css";
 
 const STATUS_LABEL: Record<string, MessageKey> = {
@@ -41,17 +41,11 @@ const ENGINE_LABEL: Record<string, MessageKey> = {
 };
 
 /**
- * Every language the Whisper models can be told to expect, each by its own name, in the same
- * order whatever the UI's language: English collation, which is Unicode's default order across
- * scripts (Latin-script names first, the rest grouped by script). Not "und", which Chrome resolves
- * to the browser's language, and Japanese, for one, moves the Han-script names.
+ * Every language the Whisper models can be told to expect, named in the UI's language and in its
+ * own. `locale` is the catalogue Chrome picked, not `getUILanguage()`, so a browser in a language
+ * TypeTarget has no translation for lists the names in English, like the rest of the popup.
  */
-const SPOKEN_LANGUAGE_OPTIONS = (() => {
-  const { compare } = new Intl.Collator("en");
-  return SPOKEN_LANGUAGES.map((code) => ({ code, name: SPOKEN_LANGUAGE_NAMES[code] })).sort((a, b) =>
-    compare(a.name, b.name),
-  );
-})();
+const SPOKEN_LANGUAGE_OPTIONS = spokenLanguageOptions(t("locale"));
 
 /** Below the energy VAD's threshold (see worker/energy-vad.ts) nothing will ever be transcribed. */
 const QUIET_LEVEL = 0.02;
@@ -313,28 +307,34 @@ export const App = () => {
         <Dropdown
           // Shows Auto for Gemini without touching the saved choice, which returns with a Whisper model.
           value={
-            spokenLanguageSettable && state.spokenLanguage
-              ? SPOKEN_LANGUAGE_NAMES[state.spokenLanguage]
-              : t("spokenLanguageAuto")
+            (spokenLanguageSettable
+              ? SPOKEN_LANGUAGE_OPTIONS.find(({ code }) => code === state.spokenLanguage)?.name
+              : undefined) ?? t("spokenLanguageAuto")
           }
           disabled={!spokenLanguageSettable}
           labelledBy="spoken-language-heading"
         >
           {(close) =>
-            [{ code: "", name: t("spokenLanguageAuto") }, ...SPOKEN_LANGUAGE_OPTIONS].map(({ code, name }) => (
-              <DropdownOption
-                key={code}
-                selected={code === (state.spokenLanguage ?? "")}
-                // lang: each name is in its own language, for screen readers and the right font.
-                lang={code || undefined}
-                onSelect={() => {
-                  close();
-                  void handleSpokenLanguageChange(code);
-                }}
-              >
-                {name}
-              </DropdownOption>
-            ))
+            [{ code: "", name: t("spokenLanguageAuto"), endonym: null }, ...SPOKEN_LANGUAGE_OPTIONS].map(
+              ({ code, name, endonym }) => (
+                <DropdownOption
+                  key={code}
+                  selected={code === (state.spokenLanguage ?? "")}
+                  onSelect={() => {
+                    close();
+                    void handleSpokenLanguageChange(code);
+                  }}
+                >
+                  <span>{name}</span>
+                  {endonym && (
+                    // lang: the name is in its own language, for screen readers and the right font.
+                    <span className="spoken-language-endonym" lang={code}>
+                      {endonym}
+                    </span>
+                  )}
+                </DropdownOption>
+              ),
+            )
           }
         </Dropdown>
       </section>

@@ -1,5 +1,5 @@
 # 0016. Whisper detects the spoken language instead of assuming English
-- Status: Accepted
+- Status: Accepted; the menu names languages in the UI's language too, and sorts by that name, since [ADR 0020](0020-spoken-languages-named-in-the-ui-language-too.md)
 - Date: 2026-10-14
 
 ## Context

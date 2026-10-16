@@ -8,6 +8,9 @@
   "textDirection": {
     "message": "ltr"
   },
+  "locale": {
+    "message": "fr"
+  },
   "statusIdle": {
     "message": "Inactif"
   },

@@ -8,6 +8,9 @@
   "textDirection": {
     "message": "ltr"
   },
+  "locale": {
+    "message": "ko"
+  },
   "statusIdle": {
     "message": "대기 중"
   },

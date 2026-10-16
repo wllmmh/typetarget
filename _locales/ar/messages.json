@@ -8,6 +8,9 @@
   "textDirection": {
     "message": "rtl"
   },
+  "locale": {
+    "message": "ar"
+  },
   "statusIdle": {
     "message": "خامل"
   },

@@ -8,6 +8,9 @@
   "textDirection": {
     "message": "rtl"
   },
+  "locale": {
+    "message": "ur"
+  },
   "statusIdle": {
     "message": "غیر فعال"
   },

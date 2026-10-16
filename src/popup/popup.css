@@ -280,6 +280,13 @@ button.heading-error:hover {
   color: var(--tt-text-secondary);
 }
 
+/* A language's own name, at the row's end like a model's size, but full size: many scripts are
+   hard to read at 11px. */
+.spoken-language-endonym {
+  text-align: end;
+  color: var(--tt-text-secondary);
+}
+
 .controls {
   display: flex;
   gap: 8px;

@@ -18,7 +18,8 @@ All notable changes to this project are documented here. The format follows
   on Groq, detect it for each utterance, out of the 99 languages Whisper knows, instead of
   assuming English. A very short utterance can be detected as the wrong language, so the popup
   has a "Spoken language" menu, under the model, to name it instead
-  (Auto by default; it can be changed while listening). It shows Auto and is greyed out while a
+  (Auto by default; it can be changed while listening). Each language is listed by its name in
+  the browser's language, with its own name beside it ("Spanish   Español"). It shows Auto and is greyed out while a
   Gemini model is selected, since Gemini always detects the language itself.
 - API Keys dialog with Get API Key. A key is saved when you click Done, not when you leave the
   field, and closing the dialog any other way discards what you typed. A saved key shows as dots

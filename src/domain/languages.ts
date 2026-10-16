@@ -18,8 +18,8 @@ export const SPOKEN_LANGUAGES = [
 export type SpokenLanguage = (typeof SPOKEN_LANGUAGES)[number];
 
 /**
- * Each language by its own name (its endonym), as the menu lists it: a speaker looks for the name
- * they write, whatever language the browser is in. From CLDR 47 (Node’s ICU), with the first
+ * Each language by its own name (its endonym), which the menu shows beside the name in the UI's
+ * language: a speaker looks for the name they write, whatever language the browser is in. From CLDR 47 (Node’s ICU), with the first
  * letter capitalized for a menu (not Georgian, which has no capitals in running text, nor chiShona,
  * whose prefix stays lowercase). CLDR has none for Bashkir, Haitian Creole or Latin, and calls
  * Tagalog Filipino; those four are filled in, and Indonesian and Malay use their usual full names.
@@ -122,6 +122,33 @@ export const SPOKEN_LANGUAGE_NAMES: Record<SpokenLanguage, string> = {
   yi: "ייִדיש",
   yo: "Èdè Yorùbá",
   zh: "中文",
+};
+
+/** A row of the Spoken language menu. `endonym` is null where it would repeat `name`. */
+export type SpokenLanguageOption = { code: SpokenLanguage; name: string; endonym: string | null };
+
+/** CLDR names languages in lowercase in many locales (español, français), as in running text. */
+const capitalize = (text: string, locale: string): string => {
+  const [first = "", ...rest] = text;
+  return `${first.toLocaleUpperCase(locale)}${rest.join("")}`;
+};
+
+/**
+ * The menu's rows for a UI in `locale` (a BCP 47 tag): each language by its name in that locale,
+ * with its endonym beside it, in that locale's order of the first name, so a reader finds a
+ * language under the word they know it by. The first name is the browser's CLDR data
+ * (`Intl.DisplayNames`), capitalized for a menu; a language it has no name for is listed by its
+ * endonym alone. See docs/adr/0020-spoken-languages-named-in-the-ui-language-too.md.
+ */
+export const spokenLanguageOptions = (locale: string): SpokenLanguageOption[] => {
+  const displayNames = new Intl.DisplayNames(locale, { type: "language", fallback: "none" });
+  const { compare } = new Intl.Collator(locale);
+  return SPOKEN_LANGUAGES.map((code) => {
+    const endonym = SPOKEN_LANGUAGE_NAMES[code];
+    const localName = displayNames.of(code);
+    const name = localName ? capitalize(localName, locale) : endonym;
+    return { code, name, endonym: name === endonym ? null : endonym };
+  }).sort((a, b) => compare(a.name, b.name));
 };
 
 /** Storage and popup requests are untrusted input: only a listed code passes. */
