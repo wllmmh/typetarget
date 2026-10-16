@@ -367,6 +367,6 @@
     "message": "ملف TypeTarget"
   },
   "transcriptPlaceholder": {
-    "message": "يظهر النص المفرَّغ هنا. يمكنك الكتابة هنا أيضًا."
+    "message": "النص المفرَّغ هنا."
   }
 }

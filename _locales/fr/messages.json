@@ -367,6 +367,6 @@
     "message": "Fichier TypeTarget"
   },
   "transcriptPlaceholder": {
-    "message": "Le texte transcrit s'affiche ici. Vous pouvez aussi écrire ici."
+    "message": "Texte transcrit ici."
   }
 }

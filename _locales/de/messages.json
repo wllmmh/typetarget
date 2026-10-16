@@ -367,6 +367,6 @@
     "message": "TypeTarget-Datei"
   },
   "transcriptPlaceholder": {
-    "message": "Hier erscheint der transkribierte Text. Sie können hier auch selbst tippen."
+    "message": "Transkribierter Text hier."
   }
 }

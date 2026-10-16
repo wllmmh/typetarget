@@ -13,6 +13,7 @@ import { isFromServiceWorker } from "../domain/sender";
 import { t } from "../domain/i18n";
 
 installContentBridge(isFromServiceWorker, { alwaysShowIndicators: true });
+destinationSession.typesOutEverywhere = true;
 
 const start = async (field: HTMLTextAreaElement): Promise<void> => {
   const raw: unknown = await chrome.runtime.sendMessage(envelope<EditorToBackground>({ kind: "editor-ready" }));

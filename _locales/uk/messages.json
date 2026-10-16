@@ -367,6 +367,6 @@
     "message": "Файл TypeTarget"
   },
   "transcriptPlaceholder": {
-    "message": "Тут з’явиться розпізнаний текст. Можна друкувати й самостійно."
+    "message": "Тут розпізнаний текст."
   }
 }

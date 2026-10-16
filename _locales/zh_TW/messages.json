@@ -367,6 +367,6 @@
     "message": "TypeTarget 檔案"
   },
   "transcriptPlaceholder": {
-    "message": "轉錄的文字會顯示在這裡。你也可以在這裡輸入。"
+    "message": "轉錄的文字顯示在這裡。"
   }
 }

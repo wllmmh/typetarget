@@ -43,6 +43,7 @@ afterEach(() => {
   destinationSession.onOpenInTabRequested = null;
   destinationSession.onMoveBackRequested = null;
   destinationSession.onMinimizeRequested = null;
+  destinationSession.typesOutEverywhere = false;
   document.body.innerHTML = "";
   vi.useRealTimers();
   vi.unstubAllGlobals();
@@ -399,6 +400,19 @@ describe("session badge over the destination", () => {
 
     const names = within(controls() ?? document.body).getAllByRole("button").map((button) => button.getAttribute("aria-label"));
     expect(names).toEqual(["Save as .txt", "Move back to page", "Stop typing here"]); // already a tab: no Minimize or Open in new tab
+    page().getByRole("button", { name: "Move back to page" }).click();
+
+    expect(onMoveBackRequested).toHaveBeenCalledWith("Hello from the meeting");
+  });
+
+  it("moves back all of a text still being typed out in the editor tab", () => {
+    const onMoveBackRequested = vi.fn();
+    destinationSession.onMoveBackRequested = onMoveBackRequested;
+    destinationSession.typesOutEverywhere = true;
+    pickTextarea();
+    destinationSession.insert("Hello from the meeting", " ");
+    destinationSession.setIndicator({ state: "stopped" });
+
     page().getByRole("button", { name: "Move back to page" }).click();
 
     expect(onMoveBackRequested).toHaveBeenCalledWith("Hello from the meeting");

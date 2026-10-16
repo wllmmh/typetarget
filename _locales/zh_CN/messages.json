@@ -367,6 +367,6 @@
     "message": "TypeTarget 文件"
   },
   "transcriptPlaceholder": {
-    "message": "转写的文字会显示在这里。你也可以在这里输入。"
+    "message": "转写的文字显示在这里。"
   }
 }

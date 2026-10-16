@@ -367,6 +367,6 @@
     "message": "TypeTarget 파일"
   },
   "transcriptPlaceholder": {
-    "message": "변환된 텍스트가 여기에 표시됩니다. 여기에 직접 입력할 수도 있습니다."
+    "message": "변환된 텍스트가 여기에 표시됩니다."
   }
 }

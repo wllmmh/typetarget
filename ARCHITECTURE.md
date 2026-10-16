@@ -59,7 +59,7 @@ and types the text into a text box the user picked, which may be in another tab.
   - `insert-text.ts` writes text without clobbering the user's own edits
     ([ADR 0011](docs/adr/0011-contenteditable-insertion-through-execcommand.md)).
   - `new-file-field.ts` is the "Type to new file" box. Text goes into it a slice per frame
-    (`type-out.ts`); a page's own text boxes get it at once.
+    (`type-out.ts`), as it does in the editor tab; a page's own text boxes get it at once.
 - **Editor tab** (`src/editor`) is a full-page text box that the new-file box can be moved
   into ("Open in new tab"). It runs the same bridge.
 - **Popup** (`src/popup`) is a view of `PublicAppState` plus controls. It is destroyed

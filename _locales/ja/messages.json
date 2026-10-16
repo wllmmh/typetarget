@@ -367,6 +367,6 @@
     "message": "TypeTarget ファイル"
   },
   "transcriptPlaceholder": {
-    "message": "文字起こしされたテキストがここに表示されます。ここに直接入力することもできます。"
+    "message": "ここに文字起こしが表示されます。"
   }
 }

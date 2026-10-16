@@ -73,7 +73,13 @@ class DestinationSession {
     };
     if (!(el instanceof HTMLElement)) return actions;
     if (this.onMoveBackRequested) {
-      return { ...actions, onMoveBack: () => this.onMoveBackRequested?.(textOf(el)) };
+      return {
+        ...actions,
+        onMoveBack: () => {
+          this.finishTyping();
+          this.onMoveBackRequested?.(textOf(el));
+        },
+      };
     }
     const field = this.newFileField;
     if (!field || el !== field) {
@@ -163,6 +169,9 @@ class DestinationSession {
   /** Set only in the editor tab (src/editor): adds Move back to page to the badge, which hands
    * the box's text back to the page the editor was opened from. */
   onMoveBackRequested: ((text: string) => void) | null = null;
+  /** Set only in the editor tab: its text box is TypeTarget's own, like the new-file box, so
+   * text is typed out there too. */
+  typesOutEverywhere = false;
 
   private trackPointer(el: HTMLElement | null): void {
     this.trackedElement?.removeEventListener("pointerenter", this.onPointerEnter);
@@ -311,8 +320,9 @@ class DestinationSession {
 
   /**
    * Inserts finalized text at the tracked boundary. Returns false if the destination is gone.
-   * The new-file box gets it typed out (see type-out.ts), after whatever is still being typed;
-   * a page's own text box gets it at once, as its scripts may react to every change.
+   * The new-file box and the editor tab's box get it typed out (see type-out.ts), after whatever
+   * is still being typed; a page's own text box gets it at once, as its scripts may react to
+   * every change.
    */
   insert(text: string, separator: string): boolean {
     if (!this.pickedElementId) return false;
@@ -320,7 +330,7 @@ class DestinationSession {
     if (!el) return false;
     const target = toInsertionTarget(el as HTMLElement);
     if (!target) return false;
-    if (el !== this.newFileField) {
+    if (el !== this.newFileField && !this.typesOutEverywhere) {
       this.insertionOffset = insertTranscriptText(target, text, separator, this.insertionOffset);
       return true;
     }

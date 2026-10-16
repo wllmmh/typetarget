@@ -220,6 +220,19 @@ describe("destinationSession", () => {
         expect(destinationSession.clearDestination()).toBe("said so far");
       });
 
+      it("types the text out in the editor tab's box too", () => {
+        destinationSession.typesOutEverywhere = true;
+        destinationSession.startSelecting();
+        textarea.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+
+        destinationSession.insert("hello", " ");
+        expect(textarea).toHaveValue("");
+
+        vi.advanceTimersByTime(TYPING_DURATION_MS);
+        expect(textarea).toHaveValue("hello");
+        destinationSession.typesOutEverywhere = false;
+      });
+
       it("types into a page's own text box at once", () => {
         destinationSession.startSelecting();
         textarea.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
