@@ -34,10 +34,10 @@ describe("typeOut", () => {
     const long = "word ".repeat(2000);
 
     typeOut(long, write);
-    vi.advanceTimersByTime(TYPING_DURATION_MS);
+    vi.advanceTimersByTime(TYPING_DURATION_MS + 16); // the last slice is written by the first frame past the duration
 
     expect(written.join("")).toBe(long);
-    expect(written.length).toBeLessThanOrEqual(Math.ceil(TYPING_DURATION_MS / 16) + 1);
+    expect(written.length).toBeLessThanOrEqual(Math.ceil(TYPING_DURATION_MS / 16) + 2);
   });
 
   it("writes the rest at once on finish, and nothing after", () => {

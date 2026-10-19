@@ -5,7 +5,7 @@
  */
 
 /** The longest one insertion takes to type out. */
-export const TYPING_DURATION_MS = 400;
+export const TYPING_DURATION_MS = 200;
 
 export type TypeOut = {
   /** Writes whatever is left at once. Safe to call again, or after the text is all in. */
