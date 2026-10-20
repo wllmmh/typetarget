@@ -164,6 +164,9 @@
       }
     }
   },
+  "chunkLengthOneSecond": {
+    "message": "1 segundo"
+  },
   "typingToHeading": {
     "message": "Tina-type sa"
   },

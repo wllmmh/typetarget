@@ -164,6 +164,9 @@
       }
     }
   },
+  "chunkLengthOneSecond": {
+    "message": "1 సెకను"
+  },
   "typingToHeading": {
     "message": "టైప్ అవుతున్న చోటు"
   },

@@ -164,6 +164,9 @@
       }
     }
   },
+  "chunkLengthOneSecond": {
+    "message": "1 giây"
+  },
   "typingToHeading": {
     "message": "Đang nhập vào"
   },

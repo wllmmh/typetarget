@@ -1,6 +1,6 @@
 {
   "name": "typetarget",
-  "version": "0.4.5",
+  "version": "0.4.6",
   "private": true,
   "description": "Chromium live audio transcriber extension (tab capture -> hosted or in-browser Whisper/Gemini -> cross-tab text insertion).",
   "type": "module",

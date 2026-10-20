@@ -114,7 +114,7 @@ const SAMPLE_RATE = 16_000;
 /** A connect that neither opens nor fails in this long is treated as failed. */
 const CONNECT_TIMEOUT_MS = 15_000;
 /** The free tier ends a connection at ~10 minutes; replace it at the first utterance
- * boundary after this. The chunk-length cap (25 s at most, plus CUT_SEARCH_MS) guarantees one
+ * boundary after this. The chunk-length cap (30 s at most, plus CUT_SEARCH_MS) guarantees one
  * comes in time. */
 const ROTATE_AFTER_MS = 9 * 60_000;
 /** Once an utterance reaches the cap, how long to look for a quiet frame to end it at before

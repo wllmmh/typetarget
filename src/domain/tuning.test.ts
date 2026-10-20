@@ -1,13 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { clampUtteranceCapMs, stretchedUtteranceCapMs, UTTERANCE_CAP_MAX_MS, UTTERANCE_CAP_MS } from "./tuning";
+import { clampUtteranceCapMs, stretchedUtteranceCapMs, UTTERANCE_CAP_MAX_MS, UTTERANCE_CAP_MIN_MS, UTTERANCE_CAP_MS } from "./tuning";
 
 describe("clampUtteranceCapMs", () => {
-  it("keeps a value inside the supported range", () => {
+  it("keeps a value inside the supported range, 1 to 30 seconds", () => {
     expect(clampUtteranceCapMs(8_000)).toBe(8_000);
+    expect(clampUtteranceCapMs(1_000)).toBe(1_000);
+    expect(clampUtteranceCapMs(30_000)).toBe(30_000);
   });
 
   it("clamps to the bounds rather than rejecting", () => {
-    expect(clampUtteranceCapMs(500)).toBe(UTTERANCE_CAP_MS);
+    expect(clampUtteranceCapMs(500)).toBe(UTTERANCE_CAP_MIN_MS);
     expect(clampUtteranceCapMs(120_000)).toBe(UTTERANCE_CAP_MAX_MS);
   });
 

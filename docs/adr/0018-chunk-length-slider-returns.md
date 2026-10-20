@@ -1,5 +1,6 @@
 # 0018. The chunk length slider returns, as a floor under the keep-up stretch
-- Status: Accepted
+- Status: Accepted; its 3–25 s range is widened to 1–30 s by
+  [ADR 0022](0022-chunk-length-from-1-to-30-seconds.md)
 - Date: 2026-10-16
 
 ## Context

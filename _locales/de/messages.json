@@ -164,6 +164,9 @@
       }
     }
   },
+  "chunkLengthOneSecond": {
+    "message": "1 Sekunde"
+  },
   "typingToHeading": {
     "message": "Schreibt in"
   },

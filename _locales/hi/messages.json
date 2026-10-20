@@ -164,6 +164,9 @@
       }
     }
   },
+  "chunkLengthOneSecond": {
+    "message": "1 सेकंड"
+  },
   "typingToHeading": {
     "message": "यहां टाइप हो रहा है"
   },

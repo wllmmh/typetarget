@@ -102,9 +102,10 @@
   },
   "chunkLengthValue": {
     "message": "$SECONDS$ seconds",
-    "description": "The chunk length setting's current value, beside its name. Always 3 to 25; where the word for seconds changes with the number, use the abbreviation.",
+    "description": "The chunk length setting's current value, beside its name. From 1.5 to 30 in half seconds, with the decimal separator already localized (1 has a message of its own); where the word for seconds changes with the number, use the abbreviation.",
     "placeholders": { "seconds": { "content": "$1", "example": "3" } }
   },
+  "chunkLengthOneSecond": { "message": "1 second", "description": "The chunk length setting's value when it is at its shortest, 1 second." },
   "typingToHeading": { "message": "Typing to", "description": "Heading above the name of the text box the transcript goes into." },
   "noFieldSelected": { "message": "No field selected" },
   "startTyping": { "message": "Start typing" },

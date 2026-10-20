@@ -164,6 +164,9 @@
       }
     }
   },
+  "chunkLengthOneSecond": {
+    "message": "1 วินาที"
+  },
   "typingToHeading": {
     "message": "พิมพ์ลงใน"
   },

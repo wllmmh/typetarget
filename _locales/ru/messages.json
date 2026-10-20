@@ -164,6 +164,9 @@
       }
     }
   },
+  "chunkLengthOneSecond": {
+    "message": "1 сек."
+  },
   "typingToHeading": {
     "message": "Ввод в"
   },

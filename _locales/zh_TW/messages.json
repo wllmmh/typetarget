@@ -164,6 +164,9 @@
       }
     }
   },
+  "chunkLengthOneSecond": {
+    "message": "1 秒"
+  },
   "typingToHeading": {
     "message": "輸入至"
   },

@@ -164,6 +164,9 @@
       }
     }
   },
+  "chunkLengthOneSecond": {
+    "message": "1 সেকেন্ড"
+  },
   "typingToHeading": {
     "message": "যেখানে লেখা হচ্ছে"
   },

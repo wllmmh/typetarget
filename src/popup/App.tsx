@@ -6,7 +6,7 @@ import { MODEL_CATALOG, keyProviderOf, type ModelId } from "../domain/models";
 import { ModelPicker } from "./model-picker";
 import { Dropdown, DropdownOption } from "./select-box";
 import { API_KEY_PAGES, API_KEY_PROVIDER_NAMES, type ApiKeyProvider } from "../domain/api-key";
-import { UTTERANCE_CAP_MAX_MS, UTTERANCE_CAP_MS, UTTERANCE_CAP_STEP_MS } from "../domain/tuning";
+import { UTTERANCE_CAP_MAX_MS, UTTERANCE_CAP_MIN_MS, UTTERANCE_CAP_STEP_MS } from "../domain/tuning";
 import { formatElapsed } from "../domain/elapsed";
 import { t, type MessageKey } from "../domain/i18n";
 import { spokenLanguageOptions } from "../domain/languages";
@@ -45,6 +45,10 @@ const ENGINE_LABEL: Record<string, MessageKey> = {
  * TypeTarget has no translation for lists the names in English, like the rest of the popup.
  */
 const SPOKEN_LANGUAGE_OPTIONS = spokenLanguageOptions(t("locale"));
+
+/** The chunk length in seconds, with the UI language's decimal separator ("1,5" in German). Latin
+ * digits, as every other number in the popup has. */
+const SECONDS_FORMAT = new Intl.NumberFormat(t("locale"), { numberingSystem: "latn" });
 
 /** Below the energy VAD's threshold (see worker/energy-vad.ts) nothing will ever be transcribed. */
 const QUIET_LEVEL = 0.02;
@@ -227,7 +231,8 @@ export const App = () => {
   const selectedKeyProvider = keyProviderOf(MODEL_CATALOG[state.selectedModel]);
   const keyMissingProvider =
     selectedKeyProvider !== null && !state.apiKeyProviders.includes(selectedKeyProvider) ? selectedKeyProvider : null;
-  const noAudio = state.pipeline !== null && state.pipeline.peakLevel < QUIET_LEVEL;
+  /** Only while capturing: the counters outlive Stop, for diagnostics, but the warning is about now. */
+  const noAudio = isCapturing && state.pipeline !== null && state.pipeline.peakLevel < QUIET_LEVEL;
   /** Gemini detects the spoken language itself and takes no setting for it. */
   const spokenLanguageSettable = modelProvider !== "gemini-live";
   /**
@@ -400,12 +405,14 @@ export const App = () => {
         <div className="chunk-length">
           <label htmlFor="chunk-length" className="chunk-length-label">
             {t("chunkLength")}
-            <span className="hint chunk-length-value">{t("chunkLengthValue", chunkMs / 1000)}</span>
+            <span className="hint chunk-length-value">
+              {chunkMs === 1_000 ? t("chunkLengthOneSecond") : t("chunkLengthValue", SECONDS_FORMAT.format(chunkMs / 1000))}
+            </span>
           </label>
           <input
             id="chunk-length"
             type="range"
-            min={UTTERANCE_CAP_MS}
+            min={UTTERANCE_CAP_MIN_MS}
             max={UTTERANCE_CAP_MAX_MS}
             step={UTTERANCE_CAP_STEP_MS}
             value={chunkMs}

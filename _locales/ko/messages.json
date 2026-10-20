@@ -164,6 +164,9 @@
       }
     }
   },
+  "chunkLengthOneSecond": {
+    "message": "1초"
+  },
   "typingToHeading": {
     "message": "입력 위치"
   },

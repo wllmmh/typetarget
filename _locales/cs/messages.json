@@ -164,6 +164,9 @@
       }
     }
   },
+  "chunkLengthOneSecond": {
+    "message": "1 s"
+  },
   "typingToHeading": {
     "message": "Psaní do"
   },

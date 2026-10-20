@@ -164,6 +164,9 @@
       }
     }
   },
+  "chunkLengthOneSecond": {
+    "message": "1 saniye"
+  },
   "typingToHeading": {
     "message": "Yazılan yer"
   },

@@ -27,10 +27,10 @@ All notable changes to this project are documented here. The format follows
 - In the model menu, each hosted provider's heading has an "API key" action that opens that
   provider's key dialog. The separate key button is gone.
 - Continuous speech is sent to the model in chunks, without waiting for a pause. A "Chunk
-  length" slider under Start listening sets how long they are, from 3 seconds (the default) to
-  25; it can be changed while listening. Longer chunks give the model more speech to detect the
+  length" slider under Start listening sets how long they are, from 1 second to 30 in
+  half seconds (3 by default); it can be changed while listening. Longer chunks give the model more speech to detect the
   language from, and shorter ones get text sooner. Local Whisper stretches past the slider, up
-  to 25 seconds, on a machine too slow to keep up, and shortens it again (never below the slider)
+  to 30 seconds, on a machine too slow to keep up, and shortens it again (never below the slider)
   when it can.
 - Right-click "TypeTarget" menu: Listen to this tab, Stop listening, Type to this field, Type
   to new file, Type to new tab and Stop typing. "Type to new tab" opens the full-page text box

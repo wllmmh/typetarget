@@ -164,6 +164,9 @@
       }
     }
   },
+  "chunkLengthOneSecond": {
+    "message": "1 ث"
+  },
   "typingToHeading": {
     "message": "الكتابة في"
   },
