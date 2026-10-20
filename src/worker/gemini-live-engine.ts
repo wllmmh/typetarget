@@ -15,8 +15,8 @@
  * the real API: with automatic detection, speech after each detected end was ignored for seconds at a time, losing
  * most of a continuous talk; and the server never sends `turnComplete` for transcription,
  * only `inputTranscription` per utterance. What proved lossless: automatic detection off,
- * `TURN_INCLUDES_ALL_INPUT`, `activityEnd` at a local pause (or the chunk-length cap), and
- * the next `activityStart` only once the server acknowledges the end — an `activityStart`
+ * `TURN_INCLUDES_ALL_INPUT`, `activityEnd` at a local pause (or a quiet frame past the
+ * chunk-length cap), and the next `activityStart` only once the server acknowledges the end — an `activityStart`
  * sent before that is silently dropped. Audio keeps streaming throughout; all-input
  * coverage folds the audio sent while waiting for the acknowledgement into the next turn.
  *
@@ -43,7 +43,7 @@ import type { VoiceActivityDetector } from "../domain/vad";
 import { UTTERANCE_CAP_MS } from "../domain/tuning";
 import type { StreamingOptions } from "./streaming-transcriber";
 import { TranscriptStabilizer } from "./stabilizer";
-import { EnergyVad } from "./energy-vad";
+import { DEFAULT_ENERGY_VAD_OPTIONS, EnergyVad } from "./energy-vad";
 import { float32ToPcm16Base64 } from "./pcm16-encode";
 
 /** The Live API model id for dedicated transcription (distinct from the batch
@@ -114,8 +114,16 @@ const SAMPLE_RATE = 16_000;
 /** A connect that neither opens nor fails in this long is treated as failed. */
 const CONNECT_TIMEOUT_MS = 15_000;
 /** The free tier ends a connection at ~10 minutes; replace it at the first utterance
- * boundary after this. The chunk-length cap (25 s at most) guarantees one comes in time. */
+ * boundary after this. The chunk-length cap (25 s at most, plus CUT_SEARCH_MS) guarantees one
+ * comes in time. */
 const ROTATE_AFTER_MS = 9 * 60_000;
+/** Once an utterance reaches the cap, how long to look for a quiet frame to end it at before
+ * ending it anyway. A cut in the middle of a word loses that word (docs/adr/0021). */
+const CUT_SEARCH_MS = 1_000;
+/** A frame is the unit a cut is placed by: its end is where a cap cut may fall. */
+const CUT_FRAME_SAMPLES = (20 / 1000) * SAMPLE_RATE;
+/** As quiet as the VAD's idea of silence. */
+const QUIET_RMS = DEFAULT_ENERGY_VAD_OPTIONS.energyThreshold;
 const BACKOFF_BASE_MS = 1_000;
 const BACKOFF_MAX_MS = 30_000;
 /** Failed connects — or connections lost soon after opening, before the server answered
@@ -152,6 +160,13 @@ const messageOf = (err: unknown, fallback: string): string => (err instanceof Er
 const sumSamples = (chunks: Float32Array[]): number => chunks.reduce((sum, chunk) => sum + chunk.length, 0);
 
 const audioInput = (samples: Float32Array) => ({ audio: { data: float32ToPcm16Base64(samples), mimeType: "audio/pcm;rate=16000" } });
+
+const msToSamples = (ms: number) => Math.round((ms / 1000) * SAMPLE_RATE);
+
+const isQuiet = (frame: Float32Array): boolean => {
+  const sumSquares = frame.reduce((sum, sample) => sum + sample * sample, 0);
+  return Math.sqrt(sumSquares / frame.length) < QUIET_RMS;
+};
 
 export class GeminiLiveEngine implements TranscriptionEngine {
   private status: EngineStatus = { state: "unloaded" };
@@ -259,27 +274,39 @@ export class GeminiLiveEngine implements TranscriptionEngine {
   }
 
   /** Streams one batch of 16 kHz mono PCM over the open session, and ends the utterance at
-   * a pause or at the chunk-length cap. While reconnecting — or after an idle disconnect,
-   * which this reopens — the audio is held and replayed once connected. Dropped silently
-   * if not loaded, matching how the controller already drops audio pushed before an
-   * engine reports "ready" (see asr-worker-controller.ts). */
+   * a pause or, past the chunk-length cap, at the next quiet frame. While reconnecting — or
+   * after an idle disconnect, which this reopens — the audio is held and replayed once
+   * connected. Dropped silently if not loaded, matching how the controller already drops
+   * audio pushed before an engine reports "ready" (see asr-worker-controller.ts). */
   pushAudio(samples: Float32Array): void {
     if (this.status.state !== "ready") return;
     this.lastAudioAt = Date.now();
-    this.current.push(samples);
-    this.utteranceSamples += samples.length;
     this.totalSamples += samples.length;
-    this.trimBuffer();
     const vadEvent = this.vad.processFrame(samples, (this.totalSamples / SAMPLE_RATE) * 1000);
     if (!this.session) {
+      this.send(samples);
       if (!this.reconnecting) this.reconnect("Reconnecting to Gemini after an idle disconnect.");
       return;
     }
-    this.session.sendRealtimeInput(audioInput(samples));
-    if (this.awaitingAck) return;
-    if (vadEvent?.type === "speech-end" || (this.utteranceSamples / SAMPLE_RATE) * 1000 >= this.maxUtteranceMs) {
-      this.endUtterance();
+    if (this.awaitingAck) {
+      this.send(samples);
+      return;
     }
+    if (vadEvent?.type === "speech-end") {
+      this.send(samples);
+      this.endUtterance();
+      return;
+    }
+    const cut = this.capCutIn(samples);
+    if (cut === null) {
+      this.send(samples);
+      return;
+    }
+    // The rest of the batch is the next utterance's start: all-input coverage folds audio
+    // sent before the next activityStart into it.
+    this.send(cut === samples.length ? samples : samples.subarray(0, cut));
+    this.endUtterance();
+    if (cut < samples.length) this.send(samples.subarray(cut));
   }
 
   /** Ends the current utterance and waits (bounded) for the server to close it, so a
@@ -304,6 +331,31 @@ export class GeminiLiveEngine implements TranscriptionEngine {
   /** Caps how long one utterance may run before it is sent (see domain/tuning.ts). */
   setOptions(options: Partial<StreamingOptions>): void {
     if (options.maxUtteranceMs !== undefined) this.maxUtteranceMs = options.maxUtteranceMs;
+  }
+
+  /** Adds audio to the open utterance, streaming it if connected. */
+  private send(samples: Float32Array): void {
+    this.current.push(samples);
+    this.utteranceSamples += samples.length;
+    this.trimBuffer();
+    this.session?.sendRealtimeInput(audioInput(samples));
+  }
+
+  /**
+   * Where in this batch an utterance at the chunk-length cap ends: after the first quiet frame
+   * ending at or past the cap, so the cut falls between words rather than inside one; or, if
+   * speech runs on, at the end of the batch that takes it CUT_SEARCH_MS past the cap. Null
+   * while it may run on. A partial frame at the end of the batch isn't judged, since a few
+   * samples can be quiet in the middle of a word.
+   */
+  private capCutIn(samples: Float32Array): number | null {
+    const capSamples = msToSamples(this.maxUtteranceMs);
+    const capAt = capSamples - this.utteranceSamples;
+    if (capAt > samples.length) return null;
+    for (let end = Math.max(CUT_FRAME_SAMPLES, capAt); end <= samples.length; end += CUT_FRAME_SAMPLES) {
+      if (isQuiet(samples.subarray(end - CUT_FRAME_SAMPLES, end))) return end;
+    }
+    return this.utteranceSamples + samples.length >= capSamples + msToSamples(CUT_SEARCH_MS) ? samples.length : null;
   }
 
   private endUtterance(): void {

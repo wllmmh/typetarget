@@ -69,6 +69,8 @@ All notable changes to this project are documented here. The format follows
   and in the browser's language; hover one for Chrome's own reason.
 - Gemini reconnects by itself, without losing audio, when a connection drops or reaches the
   free tier's time limit.
+- In continuous speech, Gemini ends a chunk at the first gap between words after the chunk
+  length, up to a second later, instead of cutting a word in two and losing it.
 - Capture continues across a service-worker restart, and stops with an error when the
   source tab's audio ends.
 - Popup styled like Chrome's own UI: pill buttons, hairline-divided sections, rounded

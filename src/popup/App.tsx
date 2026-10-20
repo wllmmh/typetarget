@@ -24,7 +24,6 @@ const STATUS_LABEL: Record<string, MessageKey> = {
 const MB = 1024 * 1024;
 
 const HELP_URL = "https://www.typetarget.com/#faq";
-const CONTACT_URL = "https://forms.gle/6YqZsnt4LDnqVw1cA";
 
 /**
  * Stands in for a saved API key in the dialog's field. The key itself never reaches the popup
@@ -500,9 +499,6 @@ export const App = () => {
           </button>
           <a href={HELP_URL} target="_blank" rel="noreferrer">
             {t("helpLink")}
-          </a>
-          <a href={CONTACT_URL} target="_blank" rel="noreferrer">
-            {t("contactLink")}
           </a>
           <span className="popup-version">{`v${chrome.runtime.getManifest().version}`}</span>
         </nav>

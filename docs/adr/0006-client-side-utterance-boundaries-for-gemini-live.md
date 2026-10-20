@@ -30,5 +30,5 @@ The client marks utterance boundaries itself:
   ended.
 - The chunk-length slider now affects Gemini too.
 - A boundary forced by the cap in the middle of a phrase loses the word that straddles it
-  (reproducibly "fellow" at a 3 s cap). Deferring a cap cut to the next low-energy frame
-  would fix it; this is tracked in [TODO.md](../../TODO.md).
+  (reproducibly "fellow" at a 3 s cap). [ADR 0021](0021-gemini-cap-cut-at-a-quiet-frame.md)
+  moves a cap cut to the next quiet frame.

@@ -14,6 +14,10 @@
 - [ ] Check how `activeTab` survives tab switches when selection follows the user. So far
       only host permissions have stood in for it.
 - [ ] Test contenteditable insertion in a genuinely hidden tab.
+- [ ] Stream `jfk.wav` to the real Gemini Live API at a 3 s chunk length and check that "fellow"
+      survives the cap cut now that it waits for a quiet frame
+      ([ADR 0021](docs/adr/0021-gemini-cap-cut-at-a-quiet-frame.md)). The quiet threshold
+      and frame length are untuned.
 - [ ] Check that injection still works with no `web_accessible_resources` (2026-10-08): Select
       field, the right-click menu's Type to this field and Type to new file, on a top-level page
       and inside an iframe. Then confirm from a page's console that
@@ -48,10 +52,6 @@
 
 - [ ] No space between utterances in languages written without spaces (Chinese, Japanese,
       Thai): `insert-text.ts` always adds one.
-
-- [ ] Gemini: a boundary forced by the 3 s utterance cap in mid-phrase loses the straddling word.
-      Defer a cap cut to the next low-energy frame
-      ([ADR 0006](docs/adr/0006-client-side-utterance-boundaries-for-gemini-live.md)).
 
 ## Tests
 

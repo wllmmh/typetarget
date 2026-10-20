@@ -125,7 +125,6 @@ End every task with:
 ## Repo addendum: TypeTarget
 
 - Never commit. The user commits manually.
-- `dist/` is committed, so a build shows up as changes there. Don't revert or clean it.
 - Read [ARCHITECTURE.md](ARCHITECTURE.md) first, and keep its invariants. Before touching
   the whisper.cpp engine, read [docs/specs/whisper-wasm-provenance.md](docs/specs/whisper-wasm-provenance.md).
 - Testing in Chrome has traps (stale injected content scripts, stale `dist/`, no `activeTab`

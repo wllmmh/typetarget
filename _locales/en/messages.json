@@ -124,7 +124,6 @@
   "outputErrorMoveBackGone": { "message": "The page the text came from is closed or has changed." },
 
   "helpLink": { "message": "Help", "description": "Link at the popup's foot to the FAQ on the website." },
-  "contactLink": { "message": "Contact", "description": "Link at the popup's foot to the contact form." },
   "diagnosticsHeading": { "message": "Diagnostics" },
   "diagnosticsModel": {
     "message": "Model: $STATE$",

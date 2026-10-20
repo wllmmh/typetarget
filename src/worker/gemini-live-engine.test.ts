@@ -69,8 +69,27 @@ const turnSignals = (session: { sendRealtimeInput: ReturnType<typeof vi.fn> } | 
     return "activityStart" in input ? ["start"] : "activityEnd" in input ? ["end"] : [];
   });
 
+/** Everything sent on a session, in order: "start", "end", or a batch of audio as its sample count. */
+const sent = (session: { sendRealtimeInput: ReturnType<typeof vi.fn> } | undefined) =>
+  (session?.sendRealtimeInput.mock.calls ?? []).flatMap(([input]: unknown[]): (string | number)[] => {
+    if (typeof input !== "object" || input === null) return [];
+    if ("activityStart" in input) return ["start"];
+    if ("activityEnd" in input) return ["end"];
+    if ("audio" in input && typeof input.audio === "object" && input.audio !== null && "data" in input.audio && typeof input.audio.data === "string") {
+      return [atob(input.audio.data).length / 2]; // PCM16: two bytes a sample
+    }
+    return [];
+  });
+
 /** One second of 16 kHz audio. */
 const oneSecond = () => new Float32Array(16_000);
+
+/** Audio as loud as speech for `ms`, then silent for `quietMs`. */
+const speech = (ms: number, quietMs = 0) => {
+  const samples = new Float32Array(((ms + quietMs) / 1000) * 16_000);
+  samples.fill(0.5, 0, (ms / 1000) * 16_000);
+  return samples;
+};
 
 afterEach(() => {
   vi.useRealTimers();
@@ -253,6 +272,34 @@ describe("GeminiLiveEngine utterance boundaries", () => {
 
     emitActivityEnd();
     expect(turnSignals(sessions[0])).toEqual(["start", "end", "start"]);
+  });
+
+  it("waits past the cap for a quiet frame to cut at, so a word isn't split", async () => {
+    const { connect, sessions } = createFakeConnect();
+    const engine = createEngine("test-key", [], connect);
+    await engine.load("gemini-3.5-transcribe-live");
+    engine.setOptions({ maxUtteranceMs: 1_000 });
+
+    engine.pushAudio(speech(1_000));
+    expect(turnSignals(sessions[0])).toEqual(["start"]);
+
+    // The cut falls after the batch's first quiet 20 ms frame; the rest of the batch goes after it.
+    engine.pushAudio(speech(300, 100));
+    expect(sent(sessions[0])).toEqual(["start", 16_000, 5_120, "end", 1_280]);
+  });
+
+  it("cuts anyway once speech runs on a second past the cap without a quiet frame", async () => {
+    const { connect, sessions } = createFakeConnect();
+    const engine = createEngine("test-key", [], connect);
+    await engine.load("gemini-3.5-transcribe-live");
+    engine.setOptions({ maxUtteranceMs: 1_000 });
+
+    engine.pushAudio(speech(1_000));
+    engine.pushAudio(speech(500));
+    expect(turnSignals(sessions[0])).toEqual(["start"]);
+
+    engine.pushAudio(speech(500));
+    expect(sent(sessions[0])).toEqual(["start", 16_000, 8_000, 8_000, "end"]);
   });
 
   it("ends the utterance early at a pause in speech", async () => {
