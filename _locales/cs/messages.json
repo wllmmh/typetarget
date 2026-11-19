@@ -214,6 +214,20 @@
   "helpLink": {
     "message": "Nápověda"
   },
+  "aboutHeading": {
+    "message": "O rozšíření TypeTarget"
+  },
+  "aboutVersion": {
+    "message": "Verze $VERSION$",
+    "placeholders": {
+      "version": {
+        "content": "$1"
+      }
+    }
+  },
+  "aboutWebsite": {
+    "message": "Web"
+  },
   "diagnosticsHeading": {
     "message": "Diagnostika"
   },

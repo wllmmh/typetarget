@@ -214,6 +214,20 @@
   "helpLink": {
     "message": "مساعدة"
   },
+  "aboutHeading": {
+    "message": "حول TypeTarget"
+  },
+  "aboutVersion": {
+    "message": "الإصدار $VERSION$",
+    "placeholders": {
+      "version": {
+        "content": "$1"
+      }
+    }
+  },
+  "aboutWebsite": {
+    "message": "الموقع الإلكتروني"
+  },
   "diagnosticsHeading": {
     "message": "التشخيص"
   },

@@ -214,6 +214,20 @@
   "helpLink": {
     "message": "सहायता"
   },
+  "aboutHeading": {
+    "message": "TypeTarget के बारे में"
+  },
+  "aboutVersion": {
+    "message": "संस्करण $VERSION$",
+    "placeholders": {
+      "version": {
+        "content": "$1"
+      }
+    }
+  },
+  "aboutWebsite": {
+    "message": "वेबसाइट"
+  },
   "diagnosticsHeading": {
     "message": "डायग्नोस्टिक्स"
   },

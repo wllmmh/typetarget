@@ -24,6 +24,8 @@ const STATUS_LABEL: Record<string, MessageKey> = {
 const MB = 1024 * 1024;
 
 const HELP_URL = "https://www.typetarget.com/#faq";
+const WEBSITE_URL = "https://www.typetarget.com";
+const GITHUB_URL = "https://github.com/wllmmh/typetarget";
 
 /**
  * Stands in for a saved API key in the dialog's field. The key itself never reaches the popup
@@ -112,6 +114,14 @@ const StopIcon = () => (
   </svg>
 );
 
+const InfoIcon = () => (
+  <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+    <circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" strokeWidth="1.3" />
+    <circle cx="8" cy="4.9" r="0.9" fill="currentColor" />
+    <path d="M8 7.3 V11.6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+  </svg>
+);
+
 export const App = () => {
   const state = useBackgroundState();
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -121,6 +131,7 @@ export const App = () => {
   const apiKeyDialogRef = useRef<HTMLDialogElement>(null);
   const apiKeyInputRef = useRef<HTMLInputElement>(null);
   const diagnosticsDialogRef = useRef<HTMLDialogElement>(null);
+  const aboutDialogRef = useRef<HTMLDialogElement>(null);
   /** Which provider's key the dialog edits: the one whose group header opened it, not the selected model's. */
   const [keyDialogProvider, setKeyDialogProvider] = useState<ApiKeyProvider | null>(null);
   const [apiKeyError, setApiKeyError] = useState<string | null>(null);
@@ -487,6 +498,28 @@ export const App = () => {
         </div>
       </dialog>
 
+      <dialog ref={aboutDialogRef}>
+        <h2>{t("aboutHeading")}</h2>
+        <div className="about-lines">
+          <p>{t("aboutVersion", chrome.runtime.getManifest().version)}</p>
+          <p>
+            <a href={WEBSITE_URL} target="_blank" rel="noreferrer">
+              {t("aboutWebsite")}
+            </a>
+          </p>
+          <p>
+            <a href={GITHUB_URL} target="_blank" rel="noreferrer">
+              GitHub
+            </a>
+          </p>
+        </div>
+        <div className="dialog-actions">
+          <button type="button" className="dialog-done" onClick={() => aboutDialogRef.current?.close()}>
+            {t("done")}
+          </button>
+        </div>
+      </dialog>
+
       <section>
         {/* What needs the user's attention (no audio, the download, errors) stays on the popup itself;
             the rest of the diagnostics is behind the link. */}
@@ -507,7 +540,15 @@ export const App = () => {
           <a href={HELP_URL} target="_blank" rel="noreferrer">
             {t("helpLink")}
           </a>
-          <span className="popup-version">{`v${chrome.runtime.getManifest().version}`}</span>
+          <button
+            type="button"
+            className="info-button"
+            aria-label={t("aboutHeading")}
+            title={t("aboutHeading")}
+            onClick={() => aboutDialogRef.current?.showModal()}
+          >
+            <InfoIcon />
+          </button>
         </nav>
       </section>
     </main>

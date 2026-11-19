@@ -214,6 +214,20 @@
   "helpLink": {
     "message": "Ayuda"
   },
+  "aboutHeading": {
+    "message": "Acerca de TypeTarget"
+  },
+  "aboutVersion": {
+    "message": "Versión $VERSION$",
+    "placeholders": {
+      "version": {
+        "content": "$1"
+      }
+    }
+  },
+  "aboutWebsite": {
+    "message": "Sitio web"
+  },
   "diagnosticsHeading": {
     "message": "Diagnóstico"
   },

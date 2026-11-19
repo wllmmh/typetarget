@@ -214,6 +214,20 @@
   "helpLink": {
     "message": "Tulong"
   },
+  "aboutHeading": {
+    "message": "Tungkol sa TypeTarget"
+  },
+  "aboutVersion": {
+    "message": "Bersyon $VERSION$",
+    "placeholders": {
+      "version": {
+        "content": "$1"
+      }
+    }
+  },
+  "aboutWebsite": {
+    "message": "Website"
+  },
   "diagnosticsHeading": {
     "message": "Diagnostics"
   },

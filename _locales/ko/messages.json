@@ -214,6 +214,20 @@
   "helpLink": {
     "message": "도움말"
   },
+  "aboutHeading": {
+    "message": "TypeTarget 정보"
+  },
+  "aboutVersion": {
+    "message": "버전 $VERSION$",
+    "placeholders": {
+      "version": {
+        "content": "$1"
+      }
+    }
+  },
+  "aboutWebsite": {
+    "message": "웹사이트"
+  },
   "diagnosticsHeading": {
     "message": "진단"
   },

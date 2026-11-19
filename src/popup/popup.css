@@ -74,11 +74,21 @@ body {
   margin-bottom: 8px;
 }
 
-/* The last item in .footer-links, pushed to the popup's bottom right corner. */
-.popup-version {
-  margin-left: auto;
-  font-size: 11px;
+/* The last item in .footer-links, pushed to the popup's bottom right corner (bottom left in
+   right-to-left languages). Opens the About dialog. */
+.footer-links .info-button {
+  margin-inline-start: auto;
+  align-self: center;
+  display: inline-flex;
+  padding: 0;
+  border: none;
+  background: transparent;
   color: var(--tt-text-secondary);
+  cursor: pointer;
+}
+
+.footer-links .info-button:hover {
+  color: var(--tt-text);
 }
 
 .popup-title {
@@ -469,6 +479,14 @@ button.heading-error:hover {
 
 .popup dialog input[type="password"]:focus {
   border-color: var(--tt-primary);
+}
+
+.about-lines p {
+  margin: 4px 0;
+}
+
+.about-lines a {
+  color: var(--tt-primary);
 }
 
 .popup dialog .dialog-actions {

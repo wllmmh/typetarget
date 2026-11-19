@@ -214,6 +214,20 @@
   "helpLink": {
     "message": "मदत"
   },
+  "aboutHeading": {
+    "message": "TypeTarget बद्दल"
+  },
+  "aboutVersion": {
+    "message": "आवृत्ती $VERSION$",
+    "placeholders": {
+      "version": {
+        "content": "$1"
+      }
+    }
+  },
+  "aboutWebsite": {
+    "message": "वेबसाइट"
+  },
   "diagnosticsHeading": {
     "message": "निदान"
   },

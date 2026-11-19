@@ -214,6 +214,20 @@
   "helpLink": {
     "message": "مدد"
   },
+  "aboutHeading": {
+    "message": "TypeTarget کے بارے میں"
+  },
+  "aboutVersion": {
+    "message": "ورژن $VERSION$",
+    "placeholders": {
+      "version": {
+        "content": "$1"
+      }
+    }
+  },
+  "aboutWebsite": {
+    "message": "ویب سائٹ"
+  },
   "diagnosticsHeading": {
     "message": "تشخیص"
   },

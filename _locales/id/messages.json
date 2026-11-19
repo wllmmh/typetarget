@@ -214,6 +214,20 @@
   "helpLink": {
     "message": "Bantuan"
   },
+  "aboutHeading": {
+    "message": "Tentang TypeTarget"
+  },
+  "aboutVersion": {
+    "message": "Versi $VERSION$",
+    "placeholders": {
+      "version": {
+        "content": "$1"
+      }
+    }
+  },
+  "aboutWebsite": {
+    "message": "Situs web"
+  },
   "diagnosticsHeading": {
     "message": "Diagnostik"
   },

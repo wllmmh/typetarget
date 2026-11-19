@@ -214,6 +214,20 @@
   "helpLink": {
     "message": "Yardım"
   },
+  "aboutHeading": {
+    "message": "TypeTarget hakkında"
+  },
+  "aboutVersion": {
+    "message": "Sürüm $VERSION$",
+    "placeholders": {
+      "version": {
+        "content": "$1"
+      }
+    }
+  },
+  "aboutWebsite": {
+    "message": "Web sitesi"
+  },
   "diagnosticsHeading": {
     "message": "Tanılama"
   },

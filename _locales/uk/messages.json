@@ -214,6 +214,20 @@
   "helpLink": {
     "message": "Довідка"
   },
+  "aboutHeading": {
+    "message": "Про TypeTarget"
+  },
+  "aboutVersion": {
+    "message": "Версія $VERSION$",
+    "placeholders": {
+      "version": {
+        "content": "$1"
+      }
+    }
+  },
+  "aboutWebsite": {
+    "message": "Вебсайт"
+  },
   "diagnosticsHeading": {
     "message": "Діагностика"
   },

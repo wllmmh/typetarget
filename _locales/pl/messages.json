@@ -214,6 +214,20 @@
   "helpLink": {
     "message": "Pomoc"
   },
+  "aboutHeading": {
+    "message": "O rozszerzeniu TypeTarget"
+  },
+  "aboutVersion": {
+    "message": "Wersja $VERSION$",
+    "placeholders": {
+      "version": {
+        "content": "$1"
+      }
+    }
+  },
+  "aboutWebsite": {
+    "message": "Strona internetowa"
+  },
   "diagnosticsHeading": {
     "message": "Diagnostyka"
   },

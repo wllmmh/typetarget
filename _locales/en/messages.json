@@ -125,6 +125,15 @@
   "outputErrorMoveBackGone": { "message": "The page the text came from is closed or has changed." },
 
   "helpLink": { "message": "Help", "description": "Link at the popup's foot to the FAQ on the website." },
+  "aboutHeading": {
+    "message": "About TypeTarget",
+    "description": "Title of the dialog opened by the info button at the popup's foot, and that button's label."
+  },
+  "aboutVersion": {
+    "message": "Version $VERSION$",
+    "placeholders": { "version": { "content": "$1", "example": "0.4.6" } }
+  },
+  "aboutWebsite": { "message": "Website" },
   "diagnosticsHeading": { "message": "Diagnostics" },
   "diagnosticsModel": {
     "message": "Model: $STATE$",

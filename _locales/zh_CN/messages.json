@@ -214,6 +214,20 @@
   "helpLink": {
     "message": "帮助"
   },
+  "aboutHeading": {
+    "message": "关于 TypeTarget"
+  },
+  "aboutVersion": {
+    "message": "版本 $VERSION$",
+    "placeholders": {
+      "version": {
+        "content": "$1"
+      }
+    }
+  },
+  "aboutWebsite": {
+    "message": "网站"
+  },
   "diagnosticsHeading": {
     "message": "诊断"
   },

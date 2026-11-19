@@ -214,6 +214,20 @@
   "helpLink": {
     "message": "ความช่วยเหลือ"
   },
+  "aboutHeading": {
+    "message": "เกี่ยวกับ TypeTarget"
+  },
+  "aboutVersion": {
+    "message": "เวอร์ชัน $VERSION$",
+    "placeholders": {
+      "version": {
+        "content": "$1"
+      }
+    }
+  },
+  "aboutWebsite": {
+    "message": "เว็บไซต์"
+  },
   "diagnosticsHeading": {
     "message": "การวินิจฉัย"
   },

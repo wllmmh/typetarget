@@ -61,6 +61,8 @@ All notable changes to this project are documented here. The format follows
   Diagnostics link at the popup's foot opens a dialog with the status and the numbers, so the
   popup fits without scrolling; the download bar and warnings stay visible.
 - Help and Contact links at the popup's foot, to the website's FAQ and the contact form.
+- An info button ("i") at the popup's bottom right, in place of the bare version number. It
+  opens an About dialog with the version and links to the website and the GitHub repository.
 - A hosted model with no saved key says "Gemini API key required" (or Groq) beside the Model
   heading, and the "no audible audio" warning sits beside "Listening to", instead of each taking
   a line of its own. The dot on the model menu is the error color. Clicking "API key

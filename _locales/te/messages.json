@@ -214,6 +214,20 @@
   "helpLink": {
     "message": "సహాయం"
   },
+  "aboutHeading": {
+    "message": "TypeTarget గురించి"
+  },
+  "aboutVersion": {
+    "message": "వెర్షన్ $VERSION$",
+    "placeholders": {
+      "version": {
+        "content": "$1"
+      }
+    }
+  },
+  "aboutWebsite": {
+    "message": "వెబ్‌సైట్"
+  },
   "diagnosticsHeading": {
     "message": "డయాగ్నస్టిక్స్"
   },
