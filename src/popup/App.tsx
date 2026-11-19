@@ -24,7 +24,7 @@ const STATUS_LABEL: Record<string, MessageKey> = {
 const MB = 1024 * 1024;
 
 const HELP_URL = "https://www.typetarget.com/#faq";
-const WEBSITE_URL = "https://www.typetarget.com";
+const WEBSITE_URL = "https://typetarget.com";
 const GITHUB_URL = "https://github.com/wllmmh/typetarget";
 
 /**
@@ -504,7 +504,7 @@ export const App = () => {
           <p>{t("aboutVersion", chrome.runtime.getManifest().version)}</p>
           <p>
             <a href={WEBSITE_URL} target="_blank" rel="noreferrer">
-              {t("aboutWebsite")}
+              {WEBSITE_URL}
             </a>
           </p>
           <p>

@@ -133,7 +133,6 @@
     "message": "Version $VERSION$",
     "placeholders": { "version": { "content": "$1", "example": "0.4.6" } }
   },
-  "aboutWebsite": { "message": "Website" },
   "diagnosticsHeading": { "message": "Diagnostics" },
   "diagnosticsModel": {
     "message": "Model: $STATE$",
