@@ -214,6 +214,9 @@
   "helpLink": {
     "message": "Bantuan"
   },
+  "contactLink": {
+    "message": "Kontak"
+  },
   "aboutHeading": {
     "message": "Tentang TypeTarget"
   },

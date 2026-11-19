@@ -214,6 +214,9 @@
   "helpLink": {
     "message": "ความช่วยเหลือ"
   },
+  "contactLink": {
+    "message": "ติดต่อ"
+  },
   "aboutHeading": {
     "message": "เกี่ยวกับ TypeTarget"
   },

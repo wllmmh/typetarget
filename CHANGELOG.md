@@ -42,7 +42,9 @@ All notable changes to this project are documented here. The format follows
   Its text grows with the window (15px in a 640x400 window, 30px at 1280x800) instead of staying
   at 15px. In it, and in the tab it opens in, each piece of text is typed out over at most 0.25
   seconds instead of appearing all at once (all at once in a background tab, or with reduced
-  motion on).
+  motion on). Text in these two boxes is broken into lines of at most 80 characters, at a
+  sentence end where one comes late enough, so a saved transcript of a long meeting opens in any
+  text editor. A page's own text boxes get no line breaks.
 - The popup has one Start/Stop button for listening and one for typing, replacing Pause and
   Select field. Start typing is "Type to new file" on the tab the popup was opened on; to type
   into an existing field, use right-click → Type to this field.
@@ -60,9 +62,10 @@ All notable changes to this project are documented here. The format follows
 - Popup diagnostics: audio level, finals, inference timings and model download progress. The
   Diagnostics link at the popup's foot opens a dialog with the status and the numbers, so the
   popup fits without scrolling; the download bar and warnings stay visible.
-- Help and Contact links at the popup's foot, to the website's FAQ and the contact form.
+- A Help link at the popup's foot, to the website's FAQ.
 - An info button ("i") at the popup's bottom right, in place of the bare version number. It
-  opens an About dialog with the version and links to the website and the GitHub repository.
+  opens an About dialog with the version and links to the website, the GitHub repository and
+  the contact form.
 - A hosted model with no saved key says "Gemini API key required" (or Groq) beside the Model
   heading, and the "no audible audio" warning sits beside "Listening to", instead of each taking
   a line of its own. The dot on the model menu is the error color. Clicking "API key

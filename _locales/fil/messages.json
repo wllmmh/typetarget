@@ -214,6 +214,9 @@
   "helpLink": {
     "message": "Tulong"
   },
+  "contactLink": {
+    "message": "Makipag-ugnayan"
+  },
   "aboutHeading": {
     "message": "Tungkol sa TypeTarget"
   },

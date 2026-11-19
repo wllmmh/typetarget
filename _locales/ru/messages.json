@@ -214,6 +214,9 @@
   "helpLink": {
     "message": "Справка"
   },
+  "contactLink": {
+    "message": "Связаться"
+  },
   "aboutHeading": {
     "message": "О TypeTarget"
   },

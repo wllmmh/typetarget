@@ -12,6 +12,7 @@ import { setSessionBadge, type BadgeActions } from "./session-badge";
 import { createNewFileField, setNewFileFieldMinimized } from "./new-file-field";
 import { saveTextFile, textOf } from "./save-text-file";
 import { typeOut, type TypeOut } from "./type-out";
+import { columnAt, wrapLines } from "./wrap-lines";
 import { isUserEvent } from "./user-event";
 import type { SessionIndicator } from "../domain/messages";
 import { t } from "../domain/i18n";
@@ -321,8 +322,8 @@ class DestinationSession {
   /**
    * Inserts finalized text at the tracked boundary. Returns false if the destination is gone.
    * The new-file box and the editor tab's box get it typed out (see type-out.ts), after whatever
-   * is still being typed; a page's own text box gets it at once, as its scripts may react to
-   * every change.
+   * is still being typed, and broken into lines (see wrap-lines.ts); a page's own text box gets
+   * it at once and unbroken, as its scripts may react to every change.
    */
   insert(text: string, separator: string): boolean {
     if (!this.pickedElementId) return false;
@@ -335,8 +336,13 @@ class DestinationSession {
       return true;
     }
     this.finishTyping();
-    let sliceSeparator = separator; // goes before the first slice only
-    this.typing = typeOut(text, (slice) => {
+    // Read after finishTyping, which moves the boundary to the end of the previous text.
+    const wrapped =
+      target.kind === "text-field"
+        ? wrapLines(separator + text, columnAt(target.element.value, this.insertionOffset))
+        : separator + text;
+    let sliceSeparator = wrapped.slice(0, separator.length); // goes before the first slice only
+    this.typing = typeOut(wrapped.slice(separator.length), (slice) => {
       this.insertionOffset = insertTranscriptText(target, slice, sliceSeparator, this.insertionOffset);
       sliceSeparator = "";
     });

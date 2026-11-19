@@ -81,7 +81,9 @@ and types the text into a text box the user picked, which may be in another tab.
 4. `transcript-router.ts` chains insertions in order and sends `insert-text` to the
    destination's frame only.
 5. The content script inserts at its tracked boundary. A space goes before the text unless
-   the boundary is at the very start of the field.
+   the boundary is at the very start of the field. In TypeTarget's own boxes, spaces become
+   line breaks to keep lines within 80 characters
+   ([ADR 0023](docs/adr/0023-line-breaks-in-saved-transcripts.md)).
 
 ## State and persistence
 

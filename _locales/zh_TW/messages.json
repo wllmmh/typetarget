@@ -214,6 +214,9 @@
   "helpLink": {
     "message": "說明"
   },
+  "contactLink": {
+    "message": "聯絡我們"
+  },
   "aboutHeading": {
     "message": "關於 TypeTarget"
   },

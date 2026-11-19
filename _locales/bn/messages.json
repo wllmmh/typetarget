@@ -214,6 +214,9 @@
   "helpLink": {
     "message": "সাহায্য"
   },
+  "contactLink": {
+    "message": "যোগাযোগ"
+  },
   "aboutHeading": {
     "message": "TypeTarget সম্পর্কে"
   },

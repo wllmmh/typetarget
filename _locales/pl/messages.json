@@ -214,6 +214,9 @@
   "helpLink": {
     "message": "Pomoc"
   },
+  "contactLink": {
+    "message": "Kontakt"
+  },
   "aboutHeading": {
     "message": "O rozszerzeniu TypeTarget"
   },

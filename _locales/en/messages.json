@@ -125,6 +125,7 @@
   "outputErrorMoveBackGone": { "message": "The page the text came from is closed or has changed." },
 
   "helpLink": { "message": "Help", "description": "Link at the popup's foot to the FAQ on the website." },
+  "contactLink": { "message": "Contact", "description": "Link in the About dialog to the contact form." },
   "aboutHeading": {
     "message": "About TypeTarget",
     "description": "Title of the dialog opened by the info button at the popup's foot, and that button's label."

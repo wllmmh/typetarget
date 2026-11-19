@@ -26,6 +26,7 @@ const MB = 1024 * 1024;
 const HELP_URL = "https://www.typetarget.com/#faq";
 const WEBSITE_URL = "https://typetarget.com";
 const GITHUB_URL = "https://github.com/wllmmh/typetarget";
+const CONTACT_URL = "https://forms.gle/cC8sx8DXiJhBpzBx8";
 
 /**
  * Stands in for a saved API key in the dialog's field. The key itself never reaches the popup
@@ -510,6 +511,11 @@ export const App = () => {
           <p>
             <a href={GITHUB_URL} target="_blank" rel="noreferrer">
               GitHub
+            </a>
+          </p>
+          <p>
+            <a href={CONTACT_URL} target="_blank" rel="noreferrer">
+              {t("contactLink")}
             </a>
           </p>
         </div>

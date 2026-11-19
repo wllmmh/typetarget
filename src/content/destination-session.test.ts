@@ -213,6 +213,18 @@ describe("destinationSession", () => {
         expect(newFileField()).toHaveValue("first final second final");
       });
 
+      it("breaks the box's text into lines as it goes in", () => {
+        destinationSession.openNewFileField();
+        const final = "we went through the budget for the next quarter and agreed on it";
+        for (let i = 0; i < 5; i++) destinationSession.insert(final, " ");
+        vi.advanceTimersByTime(2 * TYPING_DURATION_MS);
+
+        const { value } = newFileField() as HTMLTextAreaElement;
+        expect(value.split("\n").length).toBeGreaterThan(1);
+        expect(Math.max(...value.split("\n").map((line) => line.length))).toBeLessThanOrEqual(80);
+        expect(value.replaceAll("\n", " ")).toBe(Array(5).fill(final).join(" "));
+      });
+
       it("hands over all of a text still being typed", () => {
         destinationSession.openNewFileField();
         destinationSession.insert("said so far", " ");
@@ -240,6 +252,16 @@ describe("destinationSession", () => {
         destinationSession.insert("hello", " ");
 
         expect(textarea).toHaveValue("hello");
+      });
+
+      it("never puts line breaks in a page's own text box", () => {
+        destinationSession.startSelecting();
+        textarea.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+        const final = "we went through the budget for the next quarter and agreed on it";
+
+        for (let i = 0; i < 5; i++) destinationSession.insert(final, " ");
+
+        expect(textarea).toHaveValue(Array(5).fill(final).join(" "));
       });
     });
 

@@ -214,6 +214,9 @@
   "helpLink": {
     "message": "Aide"
   },
+  "contactLink": {
+    "message": "Contact"
+  },
   "aboutHeading": {
     "message": "À propos de TypeTarget"
   },
