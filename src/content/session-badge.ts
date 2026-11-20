@@ -95,8 +95,6 @@ const createIcon = (state: BadgeIndicator["state"]): SVGElement => createSvg(ICO
 const ROW_HEIGHT_PX = 36;
 const BUTTON_SIZE_PX = 32;
 const ROW_GAP_PX = 4;
-/** The chips' corners; a button's are 2px tighter, so they stay concentric with its bar's. */
-const CHIP_RADIUS_PX = 8;
 
 /** Shared by the title chip and the button bar: white text on translucent near-black. */
 const CHIP_STYLE = [
@@ -106,7 +104,7 @@ const CHIP_STYLE = [
   "box-sizing: border-box",
   "align-items: center",
   `height: ${ROW_HEIGHT_PX}px`,
-  `border-radius: ${CHIP_RADIUS_PX}px`,
+  "border-radius: 999px", // fully round ends
   
   "background: rgb(16 16 16 / 0.8)",
   "backdrop-filter: blur(8px)",
@@ -119,7 +117,7 @@ const TITLE_STYLE = [
   ...CHIP_STYLE,
   "pointer-events: none",
   "gap: 8px",
-  "padding: 0 12px 0 8px",
+  "padding: 0 16px 0 12px", // clear of the round end
   "font: 500 13px/16px system-ui, sans-serif",
   "font-variant-numeric: tabular-nums",
 ].join("; ");
@@ -136,7 +134,7 @@ const BUTTON_STYLE = [
   "box-sizing: border-box",
   `width: ${BUTTON_SIZE_PX}px`,
   `height: ${BUTTON_SIZE_PX}px`,
-  `border-radius: ${CHIP_RADIUS_PX - 2}px`,
+  "border-radius: 50%",
   "color: inherit",
   "cursor: pointer",
 ].join("; ");

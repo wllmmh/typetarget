@@ -97,7 +97,7 @@ describe("destinationSession", () => {
   it("rounds the frame's corners around a square element, and follows those of an element that has its own", () => {
     destinationSession.startSelecting();
     textarea.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
-    expect(document.getElementById("typetarget-destination-frame")?.style.borderRadius).toBe("14px"); // 8px assumed, plus the frame's 6px reach
+    expect(document.getElementById("typetarget-destination-frame")?.style.borderRadius).toBe("10px"); // 4px assumed, plus the frame's 6px reach
 
     destinationSession.clearDestination();
     textarea.style.borderTopLeftRadius = "12px";

@@ -23,7 +23,7 @@ const FRAME_WIDTH_PX = 2;
 const FRAME_GAP_PX = 4;
 /** How far the frame's outer edge is from the element's: the badge sits beyond it. */
 export const DESTINATION_REACH_PX = FRAME_WIDTH_PX + FRAME_GAP_PX;
-const SQUARE_ELEMENT_RADIUS_PX = 8;
+const SQUARE_ELEMENT_RADIUS_PX = 4;
 
 export const DESTINATION_FRAME_ID = "typetarget-destination-frame";
 const DESTINATION_CLASS = "typetarget-destination";

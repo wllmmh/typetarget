@@ -54,7 +54,7 @@ const baseStyle = (colors: Colors): string => [
   "box-sizing: border-box",
   `padding: ${PADDING_Y_PX}px 16px`,
   "border: none", // the destination frame around it (highlight.ts) is its one border
-  "border-radius: 12px",
+  "border-radius: 8px",
   "resize: none",
   "overflow: auto",
   "white-space: pre-wrap",
