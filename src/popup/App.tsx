@@ -101,25 +101,27 @@ const sessionCaption = (state: PublicAppState): string => {
 };
 
 /**
- * Minimal inline icons (no asset files, no icon library).
+ * Material Icons (https://github.com/google/material-design-icons, Apache 2.0) as inline
+ * 24px paths: play_arrow, stop and info (outlined); no asset files, no icon library.
  * `currentColor` so they follow the button's text color in both themes.
  */
 const PlayIcon = () => (
-  <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
-    <path d="M2 1.2 L10.5 6 L2 10.8 Z" fill="currentColor" />
+  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+    <path d="M8 5v14l11-7z" fill="currentColor" />
   </svg>
 );
 const StopIcon = () => (
-  <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
-    <rect x="1.5" y="1.5" width="9" height="9" fill="currentColor" />
+  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+    <path d="M6 6h12v12H6z" fill="currentColor" />
   </svg>
 );
 
 const InfoIcon = () => (
-  <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
-    <circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" strokeWidth="1.3" />
-    <circle cx="8" cy="4.9" r="0.9" fill="currentColor" />
-    <path d="M8 7.3 V11.6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+    <path
+      d="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"
+      fill="currentColor"
+    />
   </svg>
 );
 

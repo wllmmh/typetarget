@@ -1,23 +1,28 @@
 /**
- * The listening timer, drawn as a small tab sitting on top of the destination's double
- * outline (see highlight.ts), which takes on its color: green while listening, the app icon's
- * red when stopped, grey while paused or while a lost connection is being re-established.
+ * The listening timer and the output's buttons, drawn as two rounded chips on translucent near-black
+ * (blurring the page behind) just above the destination's rounded frame (see highlight.ts). The
+ * text and icons are neutral white; the frame carries the state: green while
+ * listening, the app icon's red when stopped, grey while paused or while a lost connection is
+ * being re-established. The title chip is on the left: state icon, then "TypeTarget" and the
+ * timer while listening, or "Not listening" when stopped. Never the source tab's name: this is
+ * the destination page's DOM, which its scripts can read.
  * Fixed-positioned at the document root rather than inserted beside the element, so the
  * page's layout and `overflow: hidden` containers can't move or clip it. It is re-placed on
  * every animation frame, not just on scroll/resize: chat boxes grow as text is typed and
- * pages shift layout without firing either event. Only ever one, for the one destination. Reads: state icon, then "TypeTarget" and the timer while listening, or "Not listening" when stopped.
- * Never the source tab's name: this is the destination page's DOM, which its scripts can read.
+ * pages shift layout without firing either event. Only ever one, for the one destination.
  *
- * A second tab of the same color sits on the outline's top right with the output's buttons:
- * Save (downloads the box's text as .txt) and X (the same as the right-click menu's Stop typing).
- * Minimize (or Restore) and Open in new tab sit between them — on a page's own text box, both
- * move the output into a new-file box or editor tab; in that editor tab, Move back to page does.
+ * The buttons share one button bar at the row's right end (a separate element, so the title
+ * can let clicks through to the page): Save (downloads the box's text as .txt) and X (the same as the
+ * right-click menu's Stop typing). Minimize (or Restore) and Open in new tab sit between them —
+ * on a page's own text box, both move the output into a new-file box or editor tab; in that
+ * editor tab, Move back to page does. Icons are Material Icons (Apache 2.0), 24px paths.
  */
 import { formatElapsed } from "../domain/elapsed";
 import { t } from "../domain/i18n";
 import type { SessionIndicator } from "../domain/messages";
-import { DESTINATION_COLOR, setDestinationColor } from "./highlight";
+import { DESTINATION_COLOR, DESTINATION_REACH_PX, setDestinationColor } from "./highlight";
 import { isUserEvent } from "./user-event";
+import { findClippers, visibleBox } from "./visible-box";
 
 /** What the badge shows: the background's session state, or — local to this frame — a "Type to
  * new file" box kept on the page after Stop typing, which is no longer the output. */
@@ -49,102 +54,104 @@ const COLOR: Record<BadgeIndicator["state"], string> = {
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
-type IconShape = { tag: "path" | "rect"; attrs: Record<string, string> };
-
-/** Shapes on the same 12x12 grid as the popup's icons: play while listening, pause bars when
- * paused, a cross while reconnecting, a square when stopped. The badge is only this and the timer. */
-const ICON_SHAPES: Record<BadgeIndicator["state"], IconShape> = {
-  listening: { tag: "path", attrs: { d: "M2 1.2 L10.5 6 L2 10.8 Z", fill: "currentColor" } },
-  paused: { tag: "path", attrs: { d: "M1.5 1 H4.5 V11 H1.5 Z M7.5 1 H10.5 V11 H7.5 Z", fill: "currentColor" } },
-  reconnecting: { tag: "path", attrs: { d: "M2.5 2.5 L9.5 9.5 M9.5 2.5 L2.5 9.5", stroke: "currentColor", "stroke-width": "2", fill: "none" } },
-  stopped: { tag: "rect", attrs: { x: "1.5", y: "1.5", width: "9", height: "9", fill: "currentColor" } },
-  "not-typing": { tag: "rect", attrs: { x: "1.5", y: "1.5", width: "9", height: "9", fill: "currentColor" } },
+/** Material Icons' 24px paths (https://github.com/google/material-design-icons): play_arrow,
+ * pause, sync, stop. The badge's icon is only this and the timer. */
+const ICON_PATHS: Record<BadgeIndicator["state"], string> = {
+  listening: "M8 5v14l11-7z",
+  paused: "M6 19h4V5H6v14zm8-14v14h4V5h-4z",
+  reconnecting:
+    "M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z",
+  stopped: "M6 6h12v12H6z",
+  "not-typing": "M6 6h12v12H6z",
 };
 
-const CLOSE_SHAPE: IconShape = {
-  tag: "path",
-  attrs: { d: "M2.5 2.5 L9.5 9.5 M9.5 2.5 L2.5 9.5", stroke: "currentColor", "stroke-width": "1.75", fill: "none" },
-};
-const SAVE_SHAPE: IconShape = {
-  tag: "path",
-  attrs: { d: "M6 1 V8 M3 5 L6 8 L9 5 M1.5 10.75 H10.5", stroke: "currentColor", "stroke-width": "1.5", fill: "none" },
-};
+/** close, file_download, remove, crop_square, open_in_new, arrow_back. */
+const CLOSE_PATH = "M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z";
+const SAVE_PATH = "M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z";
+const MINIMIZE_PATH = "M19 13H5v-2h14v2z";
+const RESTORE_PATH = "M18 4H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H6V6h12v12z";
+const OPEN_IN_TAB_PATH =
+  "M19 19H5V5h7V3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z";
+/** A left arrow: the text goes back where it came from. */
+const MOVE_BACK_PATH = "M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z";
 
-const MINIMIZE_SHAPE: IconShape = { tag: "path", attrs: { d: "M2 9.5 H10", stroke: "currentColor", "stroke-width": "1.75", fill: "none" } };
-const RESTORE_SHAPE: IconShape = {
-  tag: "rect",
-  attrs: { x: "2", y: "2", width: "8", height: "8", stroke: "currentColor", "stroke-width": "1.5", fill: "none" },
-};
-/** A box with an arrow leaving it: the text opens elsewhere. */
-const OPEN_IN_TAB_SHAPE: IconShape = {
-  tag: "path",
-  attrs: { d: "M7 1.5 H10.5 V5 M10.5 1.5 L5.5 6.5 M9 7.5 V10.5 H1.5 V3 H4.5", stroke: "currentColor", "stroke-width": "1.5", fill: "none" },
-};
-
-/** An arrow turning back down-left: the text goes back where it came from. */
-const MOVE_BACK_SHAPE: IconShape = {
-  tag: "path",
-  attrs: { d: "M10 2 V7 H3 M5.5 4.5 L3 7 L5.5 9.5", stroke: "currentColor", "stroke-width": "1.5", fill: "none" },
-};
-
-const createSvg = (shape: IconShape, style: string): SVGElement => {
+const createSvg = (path: string, size: number, style: string): SVGElement => {
   const svg = document.createElementNS(SVG_NS, "svg");
-  svg.setAttribute("viewBox", "0 0 12 12");
-  svg.setAttribute("width", "10");
-  svg.setAttribute("height", "10");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("width", String(size));
+  svg.setAttribute("height", String(size));
   svg.setAttribute("aria-hidden", "true");
   svg.setAttribute("style", style);
-  const el = document.createElementNS(SVG_NS, shape.tag);
-  for (const [name, value] of Object.entries(shape.attrs)) el.setAttribute(name, value);
+  const el = document.createElementNS(SVG_NS, "path");
+  el.setAttribute("d", path);
+  el.setAttribute("fill", "currentColor");
   svg.append(el);
   return svg;
 };
 
-const createIcon = (state: BadgeIndicator["state"]): SVGElement =>
-  createSvg(ICON_SHAPES[state], "display: inline-block; vertical-align: -1px; margin-right: 4px");
+const createIcon = (state: BadgeIndicator["state"]): SVGElement => createSvg(ICON_PATHS[state], 20, "display: block; flex: none");
 
-/** `all: initial` first, so page styles for `div` can't reshape it. */
-const BASE_STYLE = [
+/** On Material's 4px grid: 32px buttons with 20px icons in a 36px bar, 4px above the frame. */
+const ROW_HEIGHT_PX = 36;
+const BUTTON_SIZE_PX = 32;
+const ROW_GAP_PX = 4;
+/** The chips' corners; a button's are 2px tighter, so they stay concentric with its bar's. */
+const CHIP_RADIUS_PX = 8;
+
+/** Shared by the title chip and the button bar: white text on translucent near-black. */
+const CHIP_STYLE = [
   "all: initial",
   "position: fixed",
   "z-index: 2147483647",
-  "pointer-events: none",
   "box-sizing: border-box",
-  "padding: 1px 6px",
-  "border-radius: 3px 3px 0 0",
+  "align-items: center",
+  `height: ${ROW_HEIGHT_PX}px`,
+  `border-radius: ${CHIP_RADIUS_PX}px`,
+  
+  "background: rgb(16 16 16 / 0.8)",
+  "backdrop-filter: blur(8px)",
   "color: #fff",
-  "font: 600 11px/16px system-ui, sans-serif",
-  "font-variant-numeric: tabular-nums",
   "white-space: nowrap",
+];
+
+/** `all: initial` first, so page styles for `div` can't reshape it. `display` is set by place(). */
+const TITLE_STYLE = [
+  ...CHIP_STYLE,
+  "pointer-events: none",
+  "gap: 8px",
+  "padding: 0 12px 0 8px",
+  "font: 500 13px/16px system-ui, sans-serif",
+  "font-variant-numeric: tabular-nums",
 ].join("; ");
 
-/** The buttons' tab: the badge's look, but clickable. */
-const CONTROLS_STYLE = [BASE_STYLE, "pointer-events: auto", "padding: 1px 2px"].join("; ");
+/** The button bar: clickable, the buttons edge to edge inside a 2px inset. */
+const CONTROLS_STYLE = [...CHIP_STYLE, "padding: 0 2px"].join("; ");
 
+/** Material's icon button, in the bar's color. */
 const BUTTON_STYLE = [
   "all: initial",
-  "display: inline-block",
+  "display: flex",
+  "align-items: center",
+  "justify-content: center",
   "box-sizing: border-box",
-  "width: 20px",
-  "height: 16px",
-  "border-radius: 2px",
-  "color: #fff",
+  `width: ${BUTTON_SIZE_PX}px`,
+  `height: ${BUTTON_SIZE_PX}px`,
+  `border-radius: ${CHIP_RADIUS_PX - 2}px`,
+  "color: inherit",
   "cursor: pointer",
-  "text-align: center",
-  "vertical-align: top",
-  "line-height: 16px",
 ].join("; ");
 
-/** Hover and keyboard focus show the same light wash; `all: initial` removed the focus ring. */
-const BUTTON_HIGHLIGHT = "rgba(255, 255, 255, 0.3)";
+/* Hover and keyboard focus show the same wash (the button's state layer); `all: initial`
+ * removed the focus ring. */
+const BUTTON_HIGHLIGHT = "color-mix(in srgb, currentColor 14%, transparent)";
 
-const createButton = (label: string, shape: IconShape, onClick: () => void): HTMLButtonElement => {
+const createButton = (label: string, path: string, onClick: () => void): HTMLButtonElement => {
   const button = document.createElement("button");
   button.type = "button";
   button.setAttribute("style", BUTTON_STYLE);
   button.setAttribute("aria-label", label);
   button.title = label;
-  button.append(createSvg(shape, "display: inline-block; vertical-align: -1px"));
+  button.append(createSvg(path, 20, "display: block"));
   const highlight = (on: boolean) => () => {
     button.style.background = on ? BUTTON_HIGHLIGHT : "";
   };
@@ -183,17 +190,17 @@ const controlsLayout = ({ windowControls, onMoveBack, closeLabel }: BadgeActions
 
 const fillControls = (el: HTMLElement, { windowControls, onMoveBack, closeLabel }: BadgeActions): void => {
   el.replaceChildren(
-    createButton(t("badgeSave"), SAVE_SHAPE, () => actions?.onSave()),
+    createButton(t("badgeSave"), SAVE_PATH, () => actions?.onSave()),
     ...(windowControls
       ? [
           windowControls.minimized
-            ? createButton(t("badgeRestore"), RESTORE_SHAPE, () => actions?.windowControls?.onToggleMinimize())
-            : createButton(t("badgeMinimize"), MINIMIZE_SHAPE, () => actions?.windowControls?.onToggleMinimize()),
-          createButton(t("badgeOpenInTab"), OPEN_IN_TAB_SHAPE, () => actions?.windowControls?.onOpenInTab()),
+            ? createButton(t("badgeRestore"), RESTORE_PATH, () => actions?.windowControls?.onToggleMinimize())
+            : createButton(t("badgeMinimize"), MINIMIZE_PATH, () => actions?.windowControls?.onToggleMinimize()),
+          createButton(t("badgeOpenInTab"), OPEN_IN_TAB_PATH, () => actions?.windowControls?.onOpenInTab()),
         ]
       : []),
-    ...(onMoveBack ? [createButton(t("badgeMoveBack"), MOVE_BACK_SHAPE, () => actions?.onMoveBack?.())] : []),
-    createButton(closeLabel ?? t("badgeStopTyping"), CLOSE_SHAPE, () => actions?.onClose()),
+    ...(onMoveBack ? [createButton(t("badgeMoveBack"), MOVE_BACK_PATH, () => actions?.onMoveBack?.())] : []),
+    createButton(closeLabel ?? t("badgeStopTyping"), CLOSE_PATH, () => actions?.onClose()),
   );
 };
 
@@ -226,62 +233,16 @@ const render = (): void => {
       : indicator.state === "stopped"
         ? t("badgeNotListening")
         : `TypeTarget ${formatElapsed(Date.now() - indicator.since)}`;
-  badge.style.background = COLOR[indicator.state];
-  if (controls) controls.style.background = COLOR[indicator.state];
   setDestinationColor(COLOR[indicator.state]); // the outline always matches the label's color
   placed = ""; // the text may have changed the badge's height
   clippers = findClippers(anchor);
   place();
 };
 
-/** The element's parent, stepping out of shadow roots too. */
-const parentOf = (node: Node): Element | null => {
-  if (node.parentElement) return node.parentElement;
-  const root = node.getRootNode();
-  return root instanceof ShadowRoot ? root.host : null;
-};
-
-/** Ancestors that clip their contents (any `overflow` other than visible). Found by walking
- * computed styles, so it is refreshed on the timer tick rather than every frame. */
-const findClippers = (el: Element): Element[] => {
-  const found: Element[] = [];
-  for (let node = parentOf(el); node; node = parentOf(node)) {
-    // The root and body only clip to the viewport, which the badge (position: fixed) already respects.
-    if (node === document.documentElement || node === document.body) continue;
-    const { overflowX, overflowY } = getComputedStyle(node);
-    if (overflowX !== "visible" || overflowY !== "visible") found.push(node);
-  }
-  return found;
-};
-
-type Box = { top: number; left: number; bottom: number; right: number };
-
-/**
- * The part of the element's box the user can see: its bounding box trimmed by every clipping
- * ancestor's padding box. Chat composers often let the editor stick out past a clipping
- * container (an empty field is taller than its row), and the page only paints the outline
- * where it is not clipped, so the badge has to attach to this, not to the raw box. Null when
- * nothing is visible.
- */
-const visibleBox = (el: Element): Box | null => {
-  const { top, left, bottom, right } = el.getBoundingClientRect();
-  const box: Box = { top, left, bottom, right };
-  for (const clipper of clippers) {
-    const r = clipper.getBoundingClientRect();
-    const style = getComputedStyle(clipper);
-    const px = (value: string) => parseFloat(value) || 0;
-    box.top = Math.max(box.top, r.top + px(style.borderTopWidth));
-    box.left = Math.max(box.left, r.left + px(style.borderLeftWidth));
-    box.bottom = Math.min(box.bottom, r.bottom - px(style.borderBottomWidth));
-    box.right = Math.min(box.right, r.right - px(style.borderRightWidth));
-  }
-  return box.bottom > box.top && box.right > box.left ? box : null;
-};
-
 /** Keeps the badge and its buttons sitting on the outline's top edge. Cheap enough to run every frame. */
 const place = (): void => {
   if (!badge || !controls || !anchor) return;
-  const rect = anchor.isConnected ? visibleBox(anchor) : null;
+  const rect = anchor.isConnected ? visibleBox(anchor, clippers) : null;
   if (!rect) {
     if (placed !== "hidden") {
       badge.style.display = "none";
@@ -291,22 +252,22 @@ const place = (): void => {
     return;
   }
   if (placed === "hidden" || placed === "") {
-    badge.style.display = "block";
-    controls.style.display = "block";
+    badge.style.display = "flex";
+    controls.style.display = "flex";
   }
-  // The outline (highlight.ts) is drawn inside the element's edge, so the badge's left edge is
-  // the element's own (the buttons' right edge likewise), and its bottom sits 1px inside the top
-  // edge so it joins the outline's outer line. Where the element is at the top of the viewport
-  // it goes inside the top edge instead.
-  const edge = rect.top + 1;
-  const topOf = ({ offsetHeight }: HTMLElement) => {
-    const above = edge - offsetHeight;
-    return `${above >= 0 ? above : edge}px`;
-  };
-  const top = topOf(badge);
-  const left = `${Math.max(0, rect.left)}px`;
-  const controlsTop = topOf(controls);
-  const controlsLeft = `${Math.max(0, Math.min(rect.right, window.innerWidth) - controls.offsetWidth)}px`;
+  // The frame (highlight.ts) is drawn outside the element, so the title's left edge is the
+  // frame's outer edge (the button bar's right edge likewise), and the row's bottom sits a gap
+  // above the frame. Where that is off the top of the viewport the row goes just inside the
+  // element's top edge instead.
+  const reach = DESTINATION_REACH_PX;
+  const rowBottom = rect.top - reach - ROW_GAP_PX;
+  const inside = rect.top + ROW_GAP_PX;
+  const above = rowBottom - badge.offsetHeight;
+  const top = `${above >= 0 ? above : inside}px`;
+  const left = `${Math.max(0, rect.left - reach)}px`;
+  const controlsAbove = rowBottom - controls.offsetHeight;
+  const controlsTop = `${controlsAbove >= 0 ? controlsAbove : inside}px`;
+  const controlsLeft = `${Math.max(0, Math.min(rect.right + reach, window.innerWidth) - controls.offsetWidth)}px`;
   const key = `${top} ${left} ${controlsTop} ${controlsLeft}`;
   if (placed === key) return;
   placed = key;
@@ -356,7 +317,7 @@ export const setSessionBadge = (el: Element | null, next: BadgeIndicator | null,
     document.getElementById(SESSION_BADGE_CONTROLS_ID)?.remove();
     badge = document.createElement("div");
     badge.id = SESSION_BADGE_ID;
-    badge.setAttribute("style", BASE_STYLE);
+    badge.setAttribute("style", TITLE_STYLE);
     badge.setAttribute("aria-hidden", "true");
     controls = createControls();
     document.documentElement.append(badge, controls);

@@ -62,7 +62,7 @@ describe("with indicators on the page turned off", () => {
     expect(outlined(textarea)).toBe(false);
     expect(badge()).toBeNull();
     expect(controls()).toBeNull();
-    expect(document.getElementById("typetarget-destination-style")).toBeNull();
+    expect(document.getElementById("typetarget-destination-frame")).toBeNull();
   });
 
   it("still types into the field", () => {
@@ -116,24 +116,23 @@ describe("session badge over the destination", () => {
 
     destinationSession.setIndicator({ since: 100_000 - 65_000, state: "listening" });
     expect(badge()?.textContent).toBe("TypeTarget 1:05");
-    expect(badge()?.style.left).toBe("40px");
-    expect(badge()?.style.background).toBe("rgb(31, 157, 85)");
-    expect(document.getElementById("typetarget-destination-style")?.textContent).toContain("#1f9d55");
+    expect(badge()?.style.left).toBe("34px");
+    expect(document.getElementById("typetarget-destination-frame")?.style.borderColor).toBe("rgb(31, 157, 85)");
 
     vi.advanceTimersByTime(2_000);
     expect(badge()?.textContent).toBe("TypeTarget 1:07");
   });
 
-  it("sits with its bottom 1px inside the element's top edge and flush with its left edge (the outline is drawn inside the element)", () => {
+  it("sits 4px above the frame and flush with its left edge (the frame is drawn 6px outside the element)", () => {
     pickTextarea(); // laid out at (40, 100); jsdom badges have no height of their own
 
     destinationSession.setIndicator({ since: Date.now(), state: "listening" });
 
-    expect(badge()?.style.top).toBe("101px");
-    expect(badge()?.style.left).toBe("40px");
+    expect(badge()?.style.top).toBe("90px");
+    expect(badge()?.style.left).toBe("34px");
   });
 
-  it("shows a square and Not listening in a red badge while a destination is picked but nothing is listening", () => {
+  it("shows a square and Not listening in a red outline while a destination is picked but nothing is listening", () => {
     vi.useFakeTimers({ now: 50_000 });
     pickTextarea();
 
@@ -142,39 +141,49 @@ describe("session badge over the destination", () => {
     vi.advanceTimersByTime(5_000);
 
     expect(badge()?.textContent).toBe("Not listening");
-    expect(badge()?.style.background).toBe("rgb(226, 39, 38)");
-    expect(document.getElementById("typetarget-destination-style")?.textContent).toContain("#e22726");
+    expect(document.getElementById("typetarget-destination-frame")?.style.borderColor).toBe("rgb(226, 39, 38)");
   });
 
-  it("shows a play triangle while listening, a cross while reconnecting, a square when stopped, and pause bars when paused", () => {
+  it("shows a play arrow while listening, sync arrows while reconnecting, a square when stopped, and pause bars when paused (Material Icons)", () => {
     pickTextarea();
-    const icon = () => badge()?.querySelector("svg > *")?.outerHTML ?? null;
+    const icon = () => badge()?.querySelector("svg > path")?.getAttribute("d") ?? null;
 
     destinationSession.setIndicator({ since: Date.now(), state: "listening" });
-    expect(icon()).toContain('d="M2 1.2 L10.5 6 L2 10.8 Z"');
+    expect(icon()).toBe("M8 5v14l11-7z");
 
     destinationSession.setIndicator({ since: Date.now(), state: "reconnecting" });
-    expect(icon()).toContain("M2.5 2.5 L9.5 9.5 M9.5 2.5 L2.5 9.5");
+    expect(icon()).toMatch(/^M12 4V1L8 5l4 4V6/);
 
     destinationSession.setIndicator({ state: "stopped" });
-    expect(icon()).toMatch(/^<rect/);
+    expect(icon()).toBe("M6 6h12v12H6z");
 
     destinationSession.setIndicator({ since: Date.now(), state: "paused" });
-    expect(icon()).toContain("M1.5 1 H4.5 V11 H1.5 Z");
+    expect(icon()).toBe("M6 19h4V5H6v14zm8-14v14h4V5h-4z");
     expect(badge()?.textContent).toBe("TypeTarget 0:00");
+  });
+
+  it("frames the element 4px out, on its own fixed element that no container can clip", () => {
+    pickTextarea(); // laid out at (40, 100), 200x60
+    const frame = document.getElementById("typetarget-destination-frame");
+
+    expect(frame?.parentElement).toBe(document.documentElement);
+    expect(frame?.style.top).toBe("94px");
+    expect(frame?.style.left).toBe("34px");
+    expect(frame?.style.width).toBe("212px");
+    expect(frame?.style.height).toBe("72px");
   });
 
   it("stays on the outline when the element moves without a scroll or resize (e.g. a chat box growing)", async () => {
     const textarea = pickTextarea();
     destinationSession.setIndicator({ since: Date.now(), state: "listening" });
-    expect(badge()?.style.top).toBe("101px");
+    expect(badge()?.style.top).toBe("90px");
 
     textarea.getBoundingClientRect = () => new DOMRect(60, 40, 200, 120);
     await new Promise((resolve) => requestAnimationFrame(resolve));
     await new Promise((resolve) => requestAnimationFrame(resolve));
 
-    expect(badge()?.style.top).toBe("41px");
-    expect(badge()?.style.left).toBe("60px");
+    expect(badge()?.style.top).toBe("30px");
+    expect(badge()?.style.left).toBe("54px");
   });
 
   it("shows only an icon, the tab name and the timer when reconnecting or paused", () => {
@@ -188,20 +197,19 @@ describe("session badge over the destination", () => {
     expect(badge()?.textContent).toBe("TypeTarget 0:00");
   });
 
-  it("gives the destination's outline the badge's color, and restores it afterwards", () => {
+  it("gives the destination's frame the session's color, and restores it afterwards", () => {
     const textarea = pickTextarea();
-    const outline = () => document.getElementById("typetarget-destination-style")?.textContent;
-    expect(outline()).toContain("#e22726");
+    const outline = () => document.getElementById("typetarget-destination-frame")?.style.borderColor;
+    expect(outline()).toBe("rgb(226, 39, 38)");
 
     destinationSession.setIndicator({ since: Date.now(), state: "reconnecting" });
-    expect(outline()).toContain("#6b7280");
-    expect(badge()?.style.background).toBe("rgb(107, 114, 128)");
+    expect(outline()).toBe("rgb(107, 114, 128)");
 
     destinationSession.setIndicator({ since: Date.now(), state: "paused" });
-    expect(outline()).toContain("#6b7280");
+    expect(outline()).toBe("rgb(107, 114, 128)");
 
     destinationSession.setIndicator(null);
-    expect(outline()).toContain("#e22726");
+    expect(outline()).toBe("rgb(226, 39, 38)");
     expect(textarea.classList.contains("typetarget-destination")).toBe(true);
   });
 
@@ -230,8 +238,8 @@ describe("session badge over the destination", () => {
 
     destinationSession.setIndicator({ since: Date.now(), state: "listening" });
 
-    expect(badge()?.style.top).toBe("107px"); // 106 + 1, not 100 + 1
-    expect(badge()?.style.left).toBe("40px"); // the textarea still starts right of the row's left edge
+    expect(badge()?.style.top).toBe("96px"); // 106 - 6 - 4, not 100 - 6 - 4
+    expect(badge()?.style.left).toBe("34px"); // the textarea still starts right of the row's left edge
   });
 
   it("hides when a clipping parent leaves none of the element visible", () => {
@@ -263,19 +271,15 @@ describe("session badge over the destination", () => {
     expect(document.querySelectorAll(`#${SESSION_BADGE_CONTROLS_ID}`)).toHaveLength(1);
   });
 
-  it("puts the Save and X buttons on the outline's top right, in the badge's color", () => {
+  it("puts the Save and X buttons at the right end of the row", () => {
     pickTextarea(); // laid out at (40, 100), 200 wide
 
     destinationSession.setIndicator({ since: Date.now(), state: "listening" });
 
     expect(page().getByRole("button", { name: "Save as .txt" })).toBeVisible();
     expect(page().getByRole("button", { name: "Stop typing here" })).toBeVisible();
-    expect(controls()?.style.top).toBe("101px");
-    expect(controls()?.style.left).toBe("240px"); // its right edge on the element's (jsdom gives it no width)
-    expect(controls()?.style.background).toBe("rgb(31, 157, 85)");
-
-    destinationSession.setIndicator({ state: "stopped" });
-    expect(controls()?.style.background).toBe("rgb(226, 39, 38)");
+    expect(controls()?.style.top).toBe("90px");
+    expect(controls()?.style.left).toBe("246px"); // its right edge on the element's (jsdom gives it no width)
   });
 
   it("asks to stop typing when X is clicked", () => {
@@ -456,14 +460,13 @@ describe("a new-file box kept after Stop typing", () => {
     expect(destinationSession.insert("more", " ")).toBe(false);
   });
 
-  it("keeps its outline, in the grey of its buttons", () => {
+  it("keeps its outline, in grey", () => {
     openNewFile();
     destinationSession.clearDestination(true);
     destinationSession.setIndicator(null); // the background removing the session badge must not take the outline
 
     expect(document.getElementById(NEW_FILE_FIELD_ID)?.classList.contains("typetarget-destination")).toBe(true);
-    expect(document.getElementById("typetarget-destination-style")?.textContent).toContain("4px double #6b7280");
-    expect(controls()?.style.background).toBe(badge()?.style.background);
+    expect(document.getElementById("typetarget-destination-frame")?.style.borderColor).toBe("rgb(107, 114, 128)");
   });
 
   it("keeps its X when the background then removes the session badge", () => {
@@ -485,7 +488,7 @@ describe("a new-file box kept after Stop typing", () => {
 
     expect(document.getElementById(NEW_FILE_FIELD_ID)).toBeNull();
     expect(badge()).toBeNull();
-    expect(document.getElementById("typetarget-destination-style")).toBeNull();
+    expect(document.getElementById("typetarget-destination-frame")).toBeNull();
     expect(onStopTypingRequested).not.toHaveBeenCalled();
   });
 

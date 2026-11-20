@@ -37,8 +37,14 @@ All notable changes to this project are documented here. The format follows
   straight away, without going through the new-file box's Open in new tab button. After Stop
   typing in a new tab, right-clicking its text box and choosing "Type to this field" starts
   typing there again.
+- The picked text field is framed by one rounded 2px border in the session's color, 4px out from
+  the field, shown as soon as it is picked and never clipped by the page's containers. The timer
+  and the buttons sit just above it, in white on translucent near-black rounded chips (the
+  buttons share one bar), with Material icons. The popup uses Material icons too.
 - "Type to new file": a text box over the bottom third of the page. It can be minimized,
-  opened in a new tab and moved back, and stays on the page after Stop typing.
+  opened in a new tab and moved back, and stays on the page after Stop typing. It and the tab
+  it opens in are styled like the popup: a field in Chrome's colors that follow the
+  system's light or dark theme.
   Its text grows with the window (15px in a 640x400 window, 30px at 1280x800) instead of staying
   at 15px. In it, and in the tab it opens in, each piece of text is typed out over at most 0.25
   seconds instead of appearing all at once (all at once in a background tab, or with reduced

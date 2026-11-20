@@ -94,17 +94,29 @@ describe("destinationSession", () => {
     expect(destinationSession.insert("text", " ")).toBe(false);
   });
 
+  it("rounds the frame's corners around a square element, and follows those of an element that has its own", () => {
+    destinationSession.startSelecting();
+    textarea.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    expect(document.getElementById("typetarget-destination-frame")?.style.borderRadius).toBe("14px"); // 8px assumed, plus the frame's 6px reach
+
+    destinationSession.clearDestination();
+    textarea.style.borderTopLeftRadius = "12px";
+    destinationSession.startSelecting();
+    textarea.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+    expect(document.getElementById("typetarget-destination-frame")?.style.borderRadius).toBe("18px");
+  });
+
   it("outlines the picked element until the destination is cleared", () => {
     destinationSession.startSelecting();
     textarea.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
 
     expect(textarea.classList.contains("typetarget-destination")).toBe(true);
-    expect(document.getElementById("typetarget-destination-style")?.textContent).toContain("double");
+    expect(document.getElementById("typetarget-destination-frame")).not.toBeNull();
 
     destinationSession.clearDestination();
 
     expect(textarea.classList.contains("typetarget-destination")).toBe(false);
-    expect(document.getElementById("typetarget-destination-style")).toBeNull();
+    expect(document.getElementById("typetarget-destination-frame")).toBeNull();
   });
 
   it("moves the outline when a different element is picked", () => {
@@ -126,7 +138,7 @@ describe("destinationSession", () => {
     destinationSession.stopSelecting();
 
     expect(textarea.classList.contains("typetarget-destination")).toBe(true);
-    expect(document.getElementById("typetarget-destination-style")).not.toBeNull();
+    expect(document.getElementById("typetarget-destination-frame")).not.toBeNull();
   });
 
   it("reports the pointer entering and leaving the picked element, until it's cleared", () => {
@@ -169,8 +181,8 @@ describe("destinationSession", () => {
       expect(field).toBeInstanceOf(HTMLTextAreaElement);
       expect(document.activeElement).toBe(field);
       expect(field?.style.position).toBe("fixed");
-      expect(field?.style.bottom).toBe("12px"); // a margin on the left, right and below
-      expect(field?.style.left).toBe("12px");
+      expect(field?.style.bottom).toBe("16px"); // a margin on the left, right and below
+      expect(field?.style.left).toBe("16px");
       expect(field?.style.height).toMatch(/33\.33/); // a third of the viewport, however the browser serializes it
       expect(field?.classList.contains("typetarget-destination")).toBe(true);
       expect(onPicked).toHaveBeenCalledWith(expect.objectContaining({ label: "TypeTarget new file" }));
